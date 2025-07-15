@@ -1,5 +1,13 @@
-import { ENV } from "~/constant";
 import { ENV_TYPE } from "~/types/enum";
+import { logger } from "~/utils/logger";
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+export const ENV = process.env.NODE_ENV as ENV_TYPE;
+export const PORT = process.env.PORT;
+export const MONGO_URI = process.env.MONGO_URI as string;
+
 
 const { DEVELOPMENT, TESTING, PRODUCTION } = ENV_TYPE;
 
@@ -32,6 +40,7 @@ const config = {
 };
 
 const envConfig = config[ENV];
+logger.info(`Environment: ${ENV}`);
 export const BASE_URL = envConfig.BASE_URL;
 export const CLIENT_URL = envConfig.CLIENT_URL;
 export const REDIS_URL = envConfig.REDIS;

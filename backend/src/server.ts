@@ -1,53 +1,36 @@
-import express from "express";
-import dotenv from "dotenv";
-import cors from "cors";
-import helmet from "helmet";
-dotenv.config();
+// src/server.ts
+import dotenv from 'dotenv';
 
-import CONNECT_MONGO_DB from "~/db";
-import { ENV, PORT } from "~/constant";
-import { CLIENT_URL, DEFAULT_API_URL } from "~/config";
-import { errorHandler } from "./middleware/errorHandler";
-import { requestLogger } from '~/middleware/requestLogger';
+
+import { createApp } from '~/app';
+import { connectDB } from '~/db';
 import { logger } from '~/utils/logger';
-import swaggerUI from 'swagger-ui-express';
-import { swaggerSpec } from '~/utils/swagger';
-import userRoutes from '~/routes/userRoutes';
+import mongoose from 'mongoose';
+import { PORT } from './config';
+dotenv.config();
+const app = createApp();
 
+connectDB()
+  .then(() => {
+    const server = app.listen(PORT, () => {
+      logger.info(`⚡️[server]: Server is running at http://localhost:${PORT}`);
+    });
 
-const app = express();
-app.use(
-  '/api-docs',
-  swaggerUI.serve,
-  swaggerUI.setup(swaggerSpec, { explorer: true })
-);
+    const shutdown = async () => {
+      logger.info('🛑 Shutting down…');
+      // close Mongo connection
+      await mongoose.disconnect();
+      // stop accepting new requests, then exit
+      server.close(() => {
+        logger.info('👋 Goodbye.');
+        process.exit(0);
+      });
+    };
 
-app.use(requestLogger);
-
-
-app.set("trust proxy", 1);
-app.use(express.json());
-app.use(helmet());
-app.use(
-  cors({
-    origin: [CLIENT_URL],
+    process.on('SIGINT', shutdown);
+    process.on('SIGTERM', shutdown);
   })
-);
-
-app.use('/api/users', userRoutes);
-
-app.get("/", async (req, res) => {
-  res.send("Hello World!");
-});
-
-app.get('/health', (_req, res) => res.send('OK'));
-
-
-app.use(errorHandler);
-
-
-CONNECT_MONGO_DB();
- 
-app.listen(PORT, () =>{
-  logger.info(`⚡️[server]: Server is running at http://localhost:${PORT}`);
-});
+  .catch((err) => {
+    logger.error('❌ Server startup failed', err);
+    process.exit(1);
+  });
