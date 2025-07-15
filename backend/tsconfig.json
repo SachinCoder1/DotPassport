@@ -8,11 +8,11 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-
-    // for `~` imports
     "baseUrl": ".",
     "paths": {
       "~/*": ["src/*"]
-    }
+    },
+
+    
   }
 }

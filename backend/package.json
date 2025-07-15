@@ -3,9 +3,6 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "_moduleAliases": {
-    "~": "dist"
-  },
   "scripts": {
     "dev": "nodemon",
     "build": "tsc",
@@ -14,22 +11,32 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "module",
+  "type": "commonjs",
   "dependencies": {
+    "@types/cors": "^2.8.19",
     "cors": "^2.8.5",
     "dotenv": "^17.2.0",
     "express": "^5.1.0",
+    "express-winston": "^4.2.0",
     "helmet": "^8.1.0",
     "module-alias": "^2.2.3",
-    "mongoose": "^8.16.3"
+    "mongoose": "^8.16.3",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
+    "winston": "^3.17.0",
+    "zod": "^4.0.5"
   },
   "devDependencies": {
     "@types/express": "^5.0.3",
+    "@types/express-winston": "^3.0.4",
     "@types/module-alias": "^2.0.4",
     "@types/mongoose": "^5.11.96",
     "@types/node": "^24.0.13",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
     "typescript": "^5.8.3"
   }
 }
