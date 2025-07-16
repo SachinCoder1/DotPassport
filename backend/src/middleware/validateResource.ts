@@ -1,36 +1,42 @@
-// src/middleware/validateResource.ts
+// src/middleware/validateRequest.ts
 
-import { NextFunction, Request, Response } from "express";
-import { ZodError, ZodTypeAny } from "zod";
-import { HttpError } from "~/errors/HttpError";
-import { logger } from "~/utils/logger";
+import { Request, Response, NextFunction } from 'express';
+import { ObjectSchema } from 'joi';
+import { HttpError } from '~/errors/HttpError';
+import { logger } from '~/utils/logger';
 
-/**
- * Middleware to validate request data against a Zod schema.
- * Throws a 400 HttpError with detailed messages if validation fails.
- * @param schema - Zod schema capable of parsing { body, params, query }
- */
-export const validateResource =
-  (schema: ZodTypeAny) =>
+interface Schemas {
+  body?: ObjectSchema;
+  query?: ObjectSchema;
+  params?: ObjectSchema;
+}
+
+export const validateRequest =
+  (schemas: Schemas) =>
   (req: Request, _res: Response, next: NextFunction) => {
-    try {
-      schema.parse({
-        body: req.body,
-        params: req.params,
-        query: req.query,
-      });
-      return next();
-    } catch (err: unknown) {
-      if (err instanceof ZodError) {
-        // ZodError contains 'issues' array with detailed error info
-        const details = err.issues.map((issue) => {
-          const path = issue.path.join(".") || "input";
-          return `${path}: ${issue.message}`;
-        });
-        logger.warn("Validation error", { errors: details });
-        return next(new HttpError(400, "Validation error"));
-      }
-      logger.error("Unknown validation error", { error: err });
-      return next(new HttpError(400, "Validation error"));
+    const errs: string[] = [];
+
+    // validation options: don't stop on first error, allow unknown other fields
+    const opts = { abortEarly: false, allowUnknown: false };
+
+    if (schemas.body) {
+      const { error } = schemas.body.validate(req.body, opts);
+      if (error) errs.push(...error.details.map(d => d.message));
     }
+    if (schemas.query) {
+      const { error } = schemas.query.validate(req.query, opts);
+      if (error) errs.push(...error.details.map(d => d.message));
+    }
+    if (schemas.params) {
+      const { error } = schemas.params.validate(req.params, opts);
+      if (error) errs.push(...error.details.map(d => d.message));
+    }
+
+    if (errs.length) {
+      const msg = `Validation error: ${errs.join('; ')}`;
+      logger.warn(msg);
+      return next(new HttpError(400, msg));
+    }
+
+    return next();
   };

@@ -3,15 +3,17 @@ import cors from "cors";
 import helmet from "helmet";
 import swaggerUI from "swagger-ui-express";
 import rateLimit from "express-rate-limit";
-import mongoSanitize from "express-mongo-sanitize";
 import compression from "compression";
+import fs from "fs";
+import path from "path";
+import yaml from "js-yaml";
 
 import { CLIENT_URL, DEFAULT_API_URL } from "~/config";
 import { requestLogger } from "~/middleware/requestLogger";
 import { errorHandler } from "~/middleware/errorHandler";
-import { swaggerSpec } from "~/utils/swagger";
 import userRoutes from "~/routes/userRoutes";
 import authRoutes from "~/routes/authRoutes";
+import { OpenAPIV3 } from "openapi-types";
 
 export function createApp() {
   const app = express();
@@ -20,6 +22,7 @@ export function createApp() {
   app.use(compression());
 
   app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
   app.use(helmet());
   app.use(cors({ origin: [CLIENT_URL] }));
 
@@ -35,10 +38,15 @@ export function createApp() {
   app.use(requestLogger);
 
   // --- Swagger UI
+  const specPath = path.join(__dirname, "../docs/openapi.yaml");
+  const fileContents = fs.readFileSync(specPath, "utf8");
+  const swaggerDocument = yaml.load(fileContents) as OpenAPIV3.Document;
+
+  // serve Swagger UI
   app.use(
     "/api-docs",
     swaggerUI.serve,
-    swaggerUI.setup(swaggerSpec, { explorer: true })
+    swaggerUI.setup(swaggerDocument, { explorer: true })
   );
 
   // --- API routes

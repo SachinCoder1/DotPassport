@@ -1,0 +1,121 @@
+openapi: 3.0.0
+info:
+  title: DotPassport API
+  version: 1.0.0
+  description: REST API for DotPassport
+servers:
+  - url: http://localhost:4000
+    description: Local server
+
+tags:
+  - name: Auth
+    description: Authentication endpoints
+
+paths:
+  /api/v1/auth/challenge:
+    post:
+      tags:
+        - Auth
+      summary: Get a one-time challenge to sign
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - address
+              properties:
+                address:
+                  type: string
+                  description: Polkadot SS58 address
+      responses:
+        '200':
+          description: Challenge message
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '400':
+          description: Invalid address or bad request
+
+  /api/v1/auth/polkadot:
+    post:
+      tags:
+        - Auth
+      summary: Verify signed challenge and issue tokens
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - address
+                - message
+                - signature
+              properties:
+                address:
+                  type: string
+                message:
+                  type: string
+                signature:
+                  type: string
+      responses:
+        '200':
+          description: Access & refresh tokens
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+                  refreshToken:
+                    type: string
+        '400':
+          description: Bad challenge / mismatch
+        '401':
+          description: Invalid signature
+
+  /api/v1/auth/refresh:
+    post:
+      tags:
+        - Auth
+      summary: Refresh your access token
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: New access token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+        '401':
+          description: Invalid or expired refresh token
+
+  /api/v1/auth/logout:
+    post:
+      tags:
+        - Auth
+      summary: Log out (revoke session)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Logged out successfully
+        '401':
+          description: No valid bearer token
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer

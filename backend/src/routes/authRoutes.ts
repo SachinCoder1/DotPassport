@@ -1,17 +1,32 @@
 import { Router } from "express";
+import { challengeSchema, polkadotLoginSchema } from "~/schemas/auth.schema";
 import {
-  logout,
+  requestChallenge,
   polkadotLogin,
   refreshToken,
+  logout,
 } from "~/controller/authController";
-import { authMiddleware } from "~/middleware/auth";
-import { validateResource } from "~/middleware/validateResource";
-import { polkadotLoginSchema } from "~/schemas/auth.schema";
+import { validateRequest } from "~/middleware/validateResource";
 
 const router = Router();
 
-router.post("/polkadot", validateResource(polkadotLoginSchema), polkadotLogin);
+// 1. Get a fresh challenge
+router.post(
+  "/challenge",
+  validateRequest({ body: challengeSchema }),
+  requestChallenge
+);
+
+// 2. Sign & verify
+router.post(
+  "/polkadot",
+  validateRequest({ body: polkadotLoginSchema }),
+  polkadotLogin
+);
+
+// 3. Refresh & logout
+// Note: These routes are not protected, as they are used to refresh tokens or log out
 router.post("/refresh", refreshToken);
-router.post("/logout", authMiddleware, logout);
+router.post("/logout", logout);
 
 export default router;
