@@ -11,12 +11,12 @@ import { requestLogger } from "~/middleware/requestLogger";
 import { errorHandler } from "~/middleware/errorHandler";
 import { swaggerSpec } from "~/utils/swagger";
 import userRoutes from "~/routes/userRoutes";
+import authRoutes from "~/routes/authRoutes";
 
 export function createApp() {
   const app = express();
 
   // --- Third‑party middleware
-  app.use(mongoSanitize()); // prevents Mongo operator injection
   app.use(compression());
 
   app.use(express.json());
@@ -43,6 +43,7 @@ export function createApp() {
 
   // --- API routes
   app.use(`${DEFAULT_API_URL}/user`, userRoutes);
+  app.use(`${DEFAULT_API_URL}/auth`, authRoutes);
 
   // --- Health & root
   app.get("/", (_req, res) => res.send("Hello World!"));
