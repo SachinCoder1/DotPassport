@@ -4,7 +4,7 @@ import { Request, Response, NextFunction } from "express";
 import { signatureVerify } from "@polkadot/util-crypto";
 import jwt from "jsonwebtoken";
 import { User } from "~/models/User";
-import { JWT_SECRET, JWT_REFRESH_SECRET } from "~/constant";
+import { JWT_REFRESH_SECRET } from "~/constant";
 import { HttpError } from "~/errors/HttpError";
 import { logger } from "~/utils/logger";
 import { generateAccessToken, generateRefreshToken } from "~/utils/authTokens";
