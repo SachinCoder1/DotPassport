@@ -1,4 +1,4 @@
-import { ExtrinsicDepthReason, GovernanceReason, LongevityReason, ModuleReason, NftActivityReason, NftHoldingsReason, StakingNominatorsReason, StakingRewardsReason, StakingSlashReason, TokenDiversityReason, TxCountReason, TxVolumeReason } from "~/config/scoreReasons";
+import { ExtrinsicDepthReason, GovernanceReason, LongevityReason, ModuleReason, NftActivityReason, NftHoldingsReason, StakingNominatorsReason, StakingRewardsReason, StakingSlashReason, TokenDiversityReason, TxCountReason, TxVolumeReason } from "./scoreDefinitions";
 import { parseUnits } from "~/utils/balanceFormatter";
 import { CategoryScore } from "./types";
 

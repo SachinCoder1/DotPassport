@@ -12,7 +12,7 @@ import {
   NftHoldingsReason,
   NftActivityReason,
   ExtrinsicDepthReason,
-} from "~/config/scoreReasons";
+} from "./scoreDefinitions";
 
 /**
  * A collection of all raw metrics needed for score calculations.

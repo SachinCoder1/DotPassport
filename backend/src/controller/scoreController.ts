@@ -1,10 +1,10 @@
 import { Request, Response, NextFunction } from "express";
 import { User } from "~/models/User";
 import { Score, ICategoryScore } from "~/models/Score";
-import { DetailsMap, CategoryKey } from "~/config/scoreReasons";
+import { DetailsMap, CategoryKey } from "~/service/score/scoreDefinitions";
 import { HttpError } from "~/errors/HttpError";
 import { logger } from "~/utils/logger";
-import { calculateScore } from "~/service/score_generator";
+import { calculateScore } from "~/service/score";
 import { Category } from "~/models/Category";
 
 enum ScoreRefreshStatus {
@@ -177,7 +177,13 @@ export async function getScoreCategories(
       .sort({ order: 1 })
       .lean();
 
-    res.status(200).json(categories);
+    res
+      .status(200)
+      .json({
+        categories,
+        success: true,
+        message: "Score categories retrieved successfully.",
+      });
   } catch (err: any) {
     logger.error("Error getting score categories", { error: err });
     return next(new HttpError(500, "Could not retrieve score categories"));

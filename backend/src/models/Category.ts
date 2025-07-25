@@ -1,6 +1,6 @@
 // src/models/Category.ts
 import { Schema, model, Document } from "mongoose";
-import { CategoryKey } from "~/config/scoreReasons";
+import { CategoryKey } from "~/service/score/scoreDefinitions";
 
 export interface ThresholdDetail {
   label: string; // e.g. "≥ 7 days"

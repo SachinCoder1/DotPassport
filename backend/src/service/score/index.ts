@@ -1,6 +1,6 @@
 import { parseUnits } from "~/utils/balanceFormatter";
 import { logger } from "~/utils/logger";
-import { CategoryKey } from "~/config/scoreReasons";
+import { CategoryKey } from "./scoreDefinitions"
 import { HttpError } from "~/errors/HttpError";
 
 import { getOwnedNfts, NftItem } from "../kodadot";
