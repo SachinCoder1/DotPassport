@@ -13,6 +13,7 @@ import { requestLogger } from "~/middleware/requestLogger";
 import { errorHandler } from "~/middleware/errorHandler";
 import userRoutes from "~/routes/userRoutes";
 import authRoutes from "~/routes/authRoutes";
+import scoreRoutes from "~/routes/scoreRoutes";
 import { OpenAPIV3 } from "openapi-types";
 
 export function createApp() {
@@ -52,6 +53,7 @@ export function createApp() {
   // --- API routes
   app.use(`${DEFAULT_API_URL}/user`, userRoutes);
   app.use(`${DEFAULT_API_URL}/auth`, authRoutes);
+  app.use(`${DEFAULT_API_URL}/score`, scoreRoutes);
 
   // --- Health & root
   app.get("/", (_req, res) => res.send("Hello World!"));

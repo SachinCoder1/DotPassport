@@ -53,68 +53,58 @@ export async function polkadotLogin(
   const { address, message, signature } = req.body;
 
   try {
-    // Lookup & validate the challenge
+    // 1) Lookup & validate the challenge
     const chal = await Challenge.findOne({ address, used: false });
     if (!chal) throw new HttpError(400, "No challenge found for address");
-    if (chal.expiresAt < new Date())
-      throw new HttpError(400, "Challenge expired");
+    if (chal.expiresAt < new Date()) throw new HttpError(400, "Challenge expired");
     if (chal.message !== message) throw new HttpError(400, "Message mismatch");
 
-    // Verify on‑chain signature
+    // 2) Verify on‑chain signature
     const { isValid } = signatureVerify(message, signature, address);
     if (!isValid) throw new HttpError(401, "Invalid signature");
 
     logger.info("Polkadot login successful", { address });
 
-    // Consume challenge (preventing replay)
+    // 3) Consume challenge (prevent replay)
     chal.used = true;
     chal.usedAt = new Date();
     await chal.save();
 
-    // Upsert user by address
-    let user = await User.findOneAndUpdate(
-      { addresses: address },
-      { $addToSet: { addresses: address } },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
-    );
+    // 4) Find or create the User
+    let user = await User.findOne({ addresses: address });
 
     if (!user) {
-      logger.error("Failed to create or find user", { address });
-      return next(new HttpError(500, "User creation failed"));
+      // No user yet → create one with an array
+      user = await User.create({ addresses: [address] });
+    } else if (!user.addresses.includes(address)) {
+      // User exists but doesn’t have this address → append it
+      user.addresses.push(address);
+      await user.save();
     }
 
-    // Ensure Profile exists
+    // 5) Ensure Profile exists
     let profile = await Profile.findOne({ user: user._id });
     if (!profile) {
       profile = await Profile.create({ user: user._id });
     }
 
-    // Stamp lastLogin & record in history
-    user.profile = profile._id as Types.ObjectId;
+    // 6) Stamp lastLogin & record in LoginHistory
+    user.profile   = profile._id as Types.ObjectId;
     user.lastLogin = new Date();
+
     const hist = await LoginHistory.create({
-      user: user._id,
+      user:      user._id,
       address,
-      ip: req.ip,
+      ip:        req.ip,
       userAgent: req.get("user-agent") || "",
-      success: true,
+      success:   true,
     });
-    if (hist._id) {
-      logger.info("Login history created", {
-        user: user._id,
-        address,
-        historyId: hist._id,
-      });
-    } else {
-      logger.warn("Login history creation failed", { user: user._id, address });
-    }
 
     user.loginHistory.push(hist._id as Types.ObjectId);
-
     await user.save();
 
-    // Issue JWTs
-    const accessToken = generateAccessToken(user.id);
+    // 7) Issue JWTs
+    const accessToken  = generateAccessToken(user.id);
     const refreshToken = generateRefreshToken(user.id);
 
     return res.json({
@@ -122,13 +112,11 @@ export async function polkadotLogin(
       refreshToken,
       user: { id: user._id, address, profile: profile._id },
     });
+
   } catch (err: any) {
+    console.log("Polkadot login error", { error: err });
     logger.error("Error in polkadotLogin", { error: err });
-    return next(
-      err instanceof HttpError
-        ? err
-        : new HttpError(500, "Authentication failed")
-    );
+    return next(err instanceof HttpError ? err : new HttpError(500, "Authentication failed"));
   }
 }
 

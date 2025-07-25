@@ -1,3 +1,4 @@
+import NodeCache from "node-cache";
 import { subscanRequest } from "./subscanClient";
 import { logger } from "~/utils/logger";
 import { HttpError } from "~/errors/HttpError";
@@ -25,15 +26,47 @@ import {
 
 const ROW_LIMIT_DEFAULT = 100;
 
-/**
- * Fetch native-token balance history for an address between two dates.
- * @param address Polkadot address
- * @param start ISO date string, e.g. "2024-01-02"
- * @param end   ISO date string, e.g. "2024-01-31"
- * @returns     Array of balance history entries
- */
+// Create a cache instance with a standard Time-To-Live (TTL) of 10 minutes (600 seconds)
+const apiCache = new NodeCache({ stdTTL: 600 });
 
-export async function fetchBalanceHistory(
+/**
+ * A higher-order function that adds a caching layer to any async function.
+ * @param fn The async function to wrap.
+ * @param functionName A unique name for the function to serve as a namespace for the cache key.
+ * @returns A new function that is a cached version of the original.
+ */
+function withCache<T extends (...args: any[]) => Promise<any>>(
+  fn: T,
+  functionName: string
+): T {
+  return (async (...args: Parameters<T>): Promise<ReturnType<T>> => {
+    // Create a unique cache key from the function name and its arguments.
+    // JSON.stringify ensures that calls with different arguments have different keys.
+    const key = `${functionName}:${JSON.stringify(args)}`;
+
+    // Attempt to retrieve data from the cache.
+    const cachedData = apiCache.get(key);
+    if (cachedData) {
+      logger.info(`[CACHE HIT] for key: ${key}`);
+      return cachedData as ReturnType<T>;
+    }
+
+    // If not in cache (cache miss), execute the original function.
+    logger.info(`[CACHE MISS] for key: ${key}. Fetching from API.`);
+    const result = await fn(...args);
+
+    // Store the fresh result in the cache. The default TTL (10 minutes) will be applied.
+    apiCache.set(key, result);
+
+    return result;
+  }) as T;
+}
+
+// ====================================================================================
+// API FUNCTIONS (Original implementations are now private)
+// ====================================================================================
+
+async function _fetchBalanceHistory(
   address: string,
   start: string,
   end: string
@@ -46,7 +79,6 @@ export async function fetchBalanceHistory(
     return res.data.history;
   } catch (err: any) {
     logger.error("fetchBalanceHistory failed", { address, start, end, err });
-    // wrap or rethrow
     throw new HttpError(
       err.status || 500,
       `Balance history fetch error: ${err.message}`
@@ -54,13 +86,7 @@ export async function fetchBalanceHistory(
   }
 }
 
-/**
- * Fetch all token balances for an address (DOT + any other assets).
- * @param address Polkadot address
- * @returns       Array of token balances
- */
-
-export async function fetchAccountTokenList(
+async function _fetchAccountTokenList(
   address: string
 ): Promise<TokenBalance[]> {
   try {
@@ -78,17 +104,7 @@ export async function fetchAccountTokenList(
   }
 }
 
-/**
- * Fetch total staking rewards for an address over a given period.
- *
- * @param opts.address     Polkadot address
- * @param opts.start       ISO start date, e.g. "2023-05-01"
- * @param opts.end         ISO end date, e.g. "2023-06-01"
- * @param opts.block_range Optional block range string, e.g. "10000"
- * @returns               Total reward sum (as number)
- */
-
-export async function fetchStakingRewardSum(opts: {
+async function _fetchStakingRewardSum(opts: {
   address: string;
   start: string;
   end: string;
@@ -113,17 +129,7 @@ export async function fetchStakingRewardSum(opts: {
   }
 }
 
-/**
- * Fetch the list of transfers for a given address.
- *
- * @param params.address        Polkadot address (required)
- * @param params.include_total  Whether to return per‑token sent/received totals
- * @param params.order          'asc' | 'desc' (defaults to 'desc')
- * @param params.success        Filter only successful transfers
- * @param params.page           Page number (default 0)
- * @param params.row            Rows per page (default 100)
- */
-export async function fetchTransfersList(params: {
+async function _fetchTransfersList(params: {
   address: string;
   row?: number;
   include_total?: boolean;
@@ -167,24 +173,7 @@ export async function fetchTransfersList(params: {
   }
 }
 
-/**
- * Fetch the list of events for a given address.
- *
- * @param params.address         Polkadot address (required)
- * @param params.after_id        Return events after this ID
- * @param params.block_num       Only events in this block
- * @param params.block_range     Range of blocks, e.g. "1000-2000"
- * @param params.event_id        Filter by specific event ID
- * @param params.extrinsic_index Filter by extrinsic index
- * @param params.finalized       Only finalized events
- * @param params.focus           Focus field (string)
- * @param params.module          Filter by module, e.g. "balances"
- * @param params.order           'asc' | 'desc' (default 'desc')
- * @param params.page            Page number (default 0)
- * @param params.phase           Phase value (0 | 1 | 2)
- * @param params.row             Rows per page (default 100, max 100)
- */
-export async function fetchEventsList(params: {
+async function _fetchEventsList(params: {
   address: string;
   after_id?: number;
   block_num?: number;
@@ -248,13 +237,7 @@ export async function fetchEventsList(params: {
   }
 }
 
-/**
- * Fetch staking nominator info for an address.
- *
- * @param address Polkadot address
- * @returns       Nominator stash, display info, bonded amount, status, and optional controller/reward info
- */
-export async function fetchNominatorInfo(
+async function _fetchNominatorInfo(
   address: string
 ): Promise<NominatorInfoData> {
   try {
@@ -272,12 +255,7 @@ export async function fetchNominatorInfo(
   }
 }
 
-/**
- * Fetch the list of validators this address has voted for.
- *
- * @param address Polkadot address
- */
-export async function fetchVotedValidatorsList(
+async function _fetchVotedValidatorsList(
   address: string
 ): Promise<VotedValidator[] | null> {
   try {
@@ -295,18 +273,7 @@ export async function fetchVotedValidatorsList(
   }
 }
 
-/**
- * Fetch the list of staking rewards and slashes for an address.
- *
- * @param params.address        Polkadot address (required)
- * @param params.block_range    Optional block range string, e.g. "10000-20000"
- * @param params.category       "Reward" | "Slash"
- * @param params.claimed_filter "unclaimed" | "claimed"
- * @param params.is_stash       true to filter by stash account
- * @param params.page           Page number (default 0)
- * @param params.row            Rows per page (default 100, max 100)
- */
-export async function fetchAccountRewardSlashList(params: {
+async function _fetchAccountRewardSlashList(params: {
   address: string;
   block_range?: string;
   category?: "Reward" | "Slash";
@@ -352,17 +319,7 @@ export async function fetchAccountRewardSlashList(params: {
   }
 }
 
-/**
- * Fetch extrinsics for an address, optionally filtered by module.
- *
- * @param params.address  Polkadot address (required)
- * @param params.module   e.g. "balances" | "democracy" | "staking" | "xcmpallet" | "utility"
- * @param params.success  only successful extrinsics
- * @param params.order    'asc' | 'desc' (default 'asc')
- * @param params.page     Page number (default 0)
- * @param params.row      Rows per page (default 100)
- */
-export async function fetchExtrinsicsList(params: {
+async function _fetchExtrinsicsList(params: {
   address: string;
   module?: string;
   success?: boolean;
@@ -404,19 +361,7 @@ export async function fetchExtrinsicsList(params: {
   }
 }
 
-/**
- * Fetch referenda votes for a given account.
- *
- * @param params.account           Polkadot address (required)
- * @param params.order             'asc' | 'desc' (default 'desc')
- * @param params.page              Page number (default 0)
- * @param params.referendum_index  Specific referendum index
- * @param params.row               Rows per page (default 100)
- * @param params.sort              'conviction' | 'amount' | 'votes'
- * @param params.status            'Ayes' | 'Nays' | 'Abstains'
- * @param params.valid             true for valid votes only
- */
-export async function fetchReferendaVotes(params: {
+async function _fetchReferendaVotes(params: {
   account: string;
   order?: "asc" | "desc";
   page?: number;
@@ -466,30 +411,71 @@ export async function fetchReferendaVotes(params: {
   }
 }
 
-/**
- * Account Age (days)
- * Calculate how many days since the first on-chain extrinsic for an address.
- * @param address Polkadot address
- * @returns       Number of days since first extrinsic (0 if none)
- */
-export async function fetchAccountAgeDays(address: string): Promise<number> {
+// NOTE: This function calls another wrapped function, so it will benefit
+// from the cache on `fetchExtrinsicsList` automatically.
+async function _fetchAccountAgeDays(address: string): Promise<number> {
   try {
+    // We call the *new* cached version here
     const { extrinsics } = await fetchExtrinsicsList({
       address,
       order: "asc",
       page: 0,
-      row: 10,
+      row: 1, // Only need the very first one
     });
-    if (!extrinsics.length) return 0;
+    if (!extrinsics || !extrinsics.length) return 0;
 
     const firstTsMs = extrinsics[0].block_timestamp * 1000;
     const ageMs = Date.now() - firstTsMs;
     return Math.floor(ageMs / (1000 * 60 * 60 * 24));
   } catch (err: any) {
     logger.error("fetchAccountAgeDays failed", { address, err });
-    throw new HttpError(
-      err.status || 500,
-      `Account age fetch error: ${err.message}`
-    );
+    // Re-throw the error, as it might already be an HttpError from the wrapped function
+    throw err;
   }
 }
+
+// ====================================================================================
+// EXPORTS (Exporting the cached versions of the functions)
+// ====================================================================================
+
+export const fetchBalanceHistory = withCache(
+  _fetchBalanceHistory,
+  "fetchBalanceHistory"
+);
+export const fetchAccountTokenList = withCache(
+  _fetchAccountTokenList,
+  "fetchAccountTokenList"
+);
+export const fetchStakingRewardSum = withCache(
+  _fetchStakingRewardSum,
+  "fetchStakingRewardSum"
+);
+export const fetchTransfersList = withCache(
+  _fetchTransfersList,
+  "fetchTransfersList"
+);
+export const fetchEventsList = withCache(_fetchEventsList, "fetchEventsList");
+export const fetchNominatorInfo = withCache(
+  _fetchNominatorInfo,
+  "fetchNominatorInfo"
+);
+export const fetchVotedValidatorsList = withCache(
+  _fetchVotedValidatorsList,
+  "fetchVotedValidatorsList"
+);
+export const fetchAccountRewardSlashList = withCache(
+  _fetchAccountRewardSlashList,
+  "fetchAccountRewardSlashList"
+);
+export const fetchExtrinsicsList = withCache(
+  _fetchExtrinsicsList,
+  "fetchExtrinsicsList"
+);
+export const fetchReferendaVotes = withCache(
+  _fetchReferendaVotes,
+  "fetchReferendaVotes"
+);
+export const fetchAccountAgeDays = withCache(
+  _fetchAccountAgeDays,
+  "fetchAccountAgeDays"
+);

@@ -29,8 +29,8 @@ export enum CategoryKey {
   StakingRewards = 'stakingRewards',
   StakingNominators = 'stakingNominators',
   StakingSlash = 'stakingSlash',
-  TokenDiversity = 'tokenDiversity',
   NftHoldings = 'nftHoldings',
+  TokenDiversity = 'tokenDiversity',
   NftActivity = 'nftActivity',
   ExtrinsicDepth = 'extrinsicDepth',
 }
