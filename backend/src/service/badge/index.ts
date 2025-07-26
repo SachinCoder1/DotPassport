@@ -72,7 +72,6 @@ async function fetchOnChainBadgeMetrics(
     slashRes,
     rewardsInfo, // This will now hold the initial rewards call result
     tokenList,
-    nftRes,
   ] = await Promise.all([
     fetchAllExtrinsics(address).catch(() => ({ count: 0, extrinsics: [] })),
     fetchAccountAgeDays(address).catch(() => 0),
@@ -88,8 +87,11 @@ async function fetchOnChainBadgeMetrics(
       () => ({ count: 0, list: [] })
     ),
     fetchAccountTokenList(address).catch(() => []),
-    getOwnedNfts(address).catch(() => ({ totalCount: 0, data: [] })),
+    
   ]);
+
+  const nftRes = await getOwnedNfts(address).catch(() => ({ totalCount: 0, data: [] }));
+  logger.info("Fetched NFTs for address", { address, count: nftRes.totalCount });   
 
   // --- Step 2: Calculate Nominator Active Months (with correct pagination) ---
   let nominatorActiveMonths = 0;
