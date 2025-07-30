@@ -9,16 +9,25 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@headlessui/react": "^2.2.6",
+    "@polkadot/extension-dapp": "^0.61.4",
+    "@polkadot/extension-inject": "^0.61.4",
+    "@polkadot/util": "^13.5.3",
+    "lucide-react": "^0.527.0",
+    "next": "15.4.4",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "next": "15.4.4"
+    "react-hot-toast": "^2.5.2",
+    "sonner": "^2.0.6",
+    "usehooks-ts": "^3.1.1",
+    "zustand": "^5.0.6"
   },
   "devDependencies": {
-    "typescript": "^5",
+    "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4"
+    "tailwindcss": "^4",
+    "typescript": "^5"
   }
 }
