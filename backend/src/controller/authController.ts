@@ -31,11 +31,7 @@ export async function requestChallenge(
 
   try {
     // upsert the challenge
-    await Challenge.findOneAndUpdate(
-      { address },
-      { address, nonce, message, expiresAt },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
-    );
+    await Challenge.insertOne({ address, nonce, message, expiresAt });
 
     return res.json({ message });
   } catch (err: any) {
@@ -54,9 +50,14 @@ export async function polkadotLogin(
 
   try {
     // 1) Lookup & validate the challenge
-    const chal = await Challenge.findOne({ address, used: false });
+    const chal = await Challenge.findOne({
+      address,
+      used: false,
+      expiresAt: { $gt: new Date() },
+    });
     if (!chal) throw new HttpError(400, "No challenge found for address");
-    if (chal.expiresAt < new Date()) throw new HttpError(400, "Challenge expired");
+    if (chal.expiresAt < new Date())
+      throw new HttpError(400, "Challenge expired");
     if (chal.message !== message) throw new HttpError(400, "Message mismatch");
 
     // 2) Verify on‑chain signature
@@ -89,22 +90,22 @@ export async function polkadotLogin(
     }
 
     // 6) Stamp lastLogin & record in LoginHistory
-    user.profile   = profile._id as Types.ObjectId;
+    user.profile = profile._id as Types.ObjectId;
     user.lastLogin = new Date();
 
     const hist = await LoginHistory.create({
-      user:      user._id,
+      user: user._id,
       address,
-      ip:        req.ip,
+      ip: req.ip,
       userAgent: req.get("user-agent") || "",
-      success:   true,
+      success: true,
     });
 
     user.loginHistory.push(hist._id as Types.ObjectId);
     await user.save();
 
     // 7) Issue JWTs
-    const accessToken  = generateAccessToken(user.id);
+    const accessToken = generateAccessToken(user.id);
     const refreshToken = generateRefreshToken(user.id);
 
     return res.json({
@@ -112,11 +113,14 @@ export async function polkadotLogin(
       refreshToken,
       user: { id: user._id, address, profile: profile._id },
     });
-
   } catch (err: any) {
     console.log("Polkadot login error", { error: err });
     logger.error("Error in polkadotLogin", { error: err });
-    return next(err instanceof HttpError ? err : new HttpError(500, "Authentication failed"));
+    return next(
+      err instanceof HttpError
+        ? err
+        : new HttpError(500, "Authentication failed")
+    );
   }
 }
 
@@ -158,4 +162,35 @@ export async function logout(req: Request, res: Response, next: NextFunction) {
   // For stateless JWT, you can just respond OK and let the frontend drop tokens.
   logger.info("User logged out", { user: req.user?.id });
   return res.status(200).json({ message: "Logged out" });
+}
+
+// get logged in user only the name, wallet, and other details including the profile details referenced with it's id.. along with proper errors
+
+export async function getLoggedInUser(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const user = await User.findById(req.user?.id)
+      .populate("profile")
+      .select("addresses profile reputationScore lastLogin isActive")
+      .lean();
+    if (!user) {
+      return next(new HttpError(404, "User not found"));
+    }
+
+    return res.json({
+      name: user.addresses[0],
+      wallet: user.addresses[0],
+      profile: user.profile,
+      reputationScore: user.reputationScore,
+      lastLogin: user.lastLogin,
+      isActive: user.isActive,
+      success: true,
+    });
+  } catch (err: any) {
+    logger.error("Error in getLoggedInUser", { error: err });
+    return next(new HttpError(500, "Internal Server Error"));
+  }
 }

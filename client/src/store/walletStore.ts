@@ -1,11 +1,20 @@
+// src/store/walletStore.ts
+
 "use client";
 
 import { create } from "zustand";
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
-// ✅ All imports from '@polkadot/extension-dapp' have been removed from here.
 import { stringToHex } from "@polkadot/util";
+import { isAxiosError } from "axios";
+import {
+  requestChallenge,
+  loginWithPolkadot,
+  logoutUser,
+  getMe,
+  type LoggedInUser,
+} from "@/service/authService";
 
-// Define the state interface
+// State and Action Interfaces
 interface WalletState {
   isConnected: boolean;
   accounts: InjectedAccountWithMeta[];
@@ -20,44 +29,31 @@ interface WalletState {
     | "signing"
     | "success";
   statusMessage: string | null;
-  connectedWalletSource: string | null; // Stores the source of the connected wallet
-  isLoading: boolean; // General loading for wallet operations
-  isSigning: boolean; // Specific loading for signing operations
-  signature: string | null; // Stores the last generated signature
+  connectedWalletSource: string | null;
+  isLoading: boolean;
+  isSigning: boolean;
+  isAuthenticated: boolean;
+  isInitializing: boolean;
+  user: LoggedInUser | null;
   unsubscribeAccounts: (() => void) | undefined;
 }
 
-// Define the actions interface
 interface WalletActions {
-  // Connect to a specific wallet source (e.g., 'polkadot-js', 'talisman')
+  initialize: (dAppAppName: string) => Promise<void>;
   connectWallet: (source: string, dAppAppName: string) => Promise<boolean>;
+  login: () => Promise<boolean>;
+  logout: () => Promise<void>;
   disconnectWallet: () => void;
   setSelectedAccount: (account: InjectedAccountWithMeta | null) => void;
-  signMessage: (message: string) => Promise<boolean>; // Action to sign a message
-  initializeWallet: (dAppAppName: string) => Promise<void>; // For auto-reconnect
-
-  // Internal setters (prefixed with _ for clarity)
-  _setStatus: (status: WalletState["status"], message?: string | null) => void;
-  _setLoading: (loading: boolean) => void;
-  _setAccounts: (accounts: InjectedAccountWithMeta[]) => void;
-  _setConnectedWalletSource: (source: string | null) => void;
-  _setUnsubscribeAccounts: (unsub: (() => void) | undefined) => void;
-  _setIsSigning: (signing: boolean) => void;
-  _setSignature: (signature: string | null) => void;
 }
 
-// Combine state and actions
 type WalletStore = WalletState & WalletActions;
 
-// Helper function (can be moved to a utils file)
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
-
-// LocalStorage key for persisting connected wallet source
 const LAST_CONNECTED_WALLET_KEY = "last_connected_polkadot_wallet_source";
 
-// Create the Zustand store
 export const useWalletStore = create<WalletStore>((set, get) => ({
-  // Initial state
+  // Initial State
   isConnected: false,
   accounts: [],
   selectedAccount: null,
@@ -66,239 +62,181 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
   connectedWalletSource: null,
   isLoading: false,
   isSigning: false,
-  signature: null,
+  isAuthenticated: false,
+  isInitializing: true,
+  user: null,
   unsubscribeAccounts: undefined,
 
-  // Actions
-  _setStatus: (status, message = null) =>
-    set({ status, statusMessage: message }),
-  _setLoading: (loading) => set({ isLoading: loading }),
-  _setAccounts: (accounts) => set({ accounts }),
-  _setConnectedWalletSource: (source) => set({ connectedWalletSource: source }),
-  _setUnsubscribeAccounts: (unsub) => set({ unsubscribeAccounts: unsub }),
-  _setIsSigning: (signing) => set({ isSigning: signing }),
-  _setSignature: (signature) => set({ signature }),
+  // --- ACTIONS ---
 
-  // Main connection logic
-  connectWallet: async (source: string, dAppAppName: string) => {
-    // ✅ MODIFICATION: Dynamically import only when the function is called.
+  initialize: async (dAppAppName) => {
+    try {
+      const accessToken =
+        typeof window !== "undefined"
+          ? localStorage.getItem("accessToken")
+          : null;
+      if (accessToken) {
+        try {
+          const userData = await getMe();
+          set({ user: userData, isAuthenticated: true });
+        } catch (error) {
+          console.error("Session check failed:", error);
+          set({ isAuthenticated: false, user: null });
+        }
+      }
+      const lastConnectedSource =
+        typeof window !== "undefined"
+          ? localStorage.getItem(LAST_CONNECTED_WALLET_KEY)
+          : null;
+      if (lastConnectedSource) {
+        await get().connectWallet(lastConnectedSource, dAppAppName);
+      }
+    } catch (error) {
+      console.error("Initialization error:", error);
+    } finally {
+      set({ isInitializing: false });
+    }
+  },
+
+  connectWallet: async (source, dAppAppName) => {
     const { web3Enable, web3AccountsSubscribe } = await import(
       "@polkadot/extension-dapp"
     );
+    set({
+      isLoading: true,
+      status: "connecting",
+      statusMessage: `Connecting to ${capitalize(source)}...`,
+    });
 
-    const {
-      _setStatus,
-      _setLoading,
-      _setAccounts,
-      _setConnectedWalletSource,
-      _setUnsubscribeAccounts,
-      selectedAccount: currentSelectedAccount,
-      unsubscribeAccounts: currentUnsubscribe,
-    } = get();
-
-    _setLoading(true);
-    _setStatus(
-      "connecting",
-      `Requesting connection to ${capitalize(source)}...`
-    );
-
-    // Clean up any existing subscription first
-    if (currentUnsubscribe) {
-      currentUnsubscribe();
-      _setUnsubscribeAccounts(undefined);
-    }
+    get().unsubscribeAccounts?.();
 
     try {
-      // Step 1: Enable the extension (this prompts the user)
       const extensions = await web3Enable(dAppAppName);
-      if (extensions.length === 0) {
-        _setStatus(
-          "error",
-          "No Polkadot extensions found or permission denied."
-        );
-        _setLoading(false);
-        return false;
-      }
+      if (extensions.length === 0)
+        throw new Error("No Polkadot extensions found or permission denied.");
 
       const foundExtension = extensions.find((ext) => ext.name === source);
-      if (!foundExtension) {
-        _setStatus("error", `${capitalize(source)} not found or not enabled.`);
-        _setLoading(false);
-        return false;
-      }
+      if (!foundExtension)
+        throw new Error(
+          `${capitalize(source)} wallet not found or not enabled.`
+        );
 
-      // Step 2: Subscribe to accounts
       const unsub = await web3AccountsSubscribe((allAccounts) => {
         const accountsFromSource = allAccounts.filter(
           (acc) => acc.meta.source === source
         );
-        _setAccounts(accountsFromSource);
 
         if (accountsFromSource.length > 0) {
-          // If previously selected account for this source is still available, keep it
-          const newSelectedAccount =
+          const currentSelected = get().selectedAccount;
+          const newSelected =
             accountsFromSource.find(
-              (acc) => acc.address === currentSelectedAccount?.address
+              (acc) => acc.address === currentSelected?.address
             ) || accountsFromSource[0];
-          set({ selectedAccount: newSelectedAccount, isConnected: true });
-          _setStatus("connected", `Connected to ${capitalize(source)}.`);
-          // Persist the connected wallet source
-          if (typeof window !== "undefined") {
-            localStorage.setItem(LAST_CONNECTED_WALLET_KEY, source);
-          }
+          set({
+            accounts: accountsFromSource,
+            selectedAccount: newSelected,
+            isConnected: true,
+            status: "connected",
+            statusMessage: `Connected to ${capitalize(source)}.`,
+            isLoading: false, // ✅ THIS IS THE FIX
+          });
+          localStorage.setItem(LAST_CONNECTED_WALLET_KEY, source);
         } else {
-          // No accounts found for this source after connection
-          set({ selectedAccount: null, isConnected: false });
-          _setStatus(
-            "error",
-            `No accounts found in ${capitalize(source)} wallet.`
-          );
-          // Clear persisted wallet if no accounts are found
-          if (typeof window !== "undefined") {
-            localStorage.removeItem(LAST_CONNECTED_WALLET_KEY);
-          }
+          get().disconnectWallet();
         }
-        _setLoading(false); // Ensure loading is set to false after accounts are processed
       });
-      _setUnsubscribeAccounts(() => unsub); // Store unsubscribe function
 
-      _setConnectedWalletSource(source);
+      set({ unsubscribeAccounts: unsub, connectedWalletSource: source });
       return true;
     } catch (error: any) {
       console.error("Connection error:", error);
-      _setStatus(
-        "error",
-        `Failed to connect to ${capitalize(source)}: ${
-          error.message || "Unknown error"
-        }`
-      );
-      _setLoading(false);
       set({
-        isConnected: false,
-        accounts: [],
-        selectedAccount: null,
-        connectedWalletSource: null,
+        status: "error",
+        statusMessage: `Connection failed: ${error.message}`,
+        isLoading: false,
       });
-      // Clear persisted wallet on connection failure
-      if (typeof window !== "undefined") {
-        localStorage.removeItem(LAST_CONNECTED_WALLET_KEY);
-      }
       return false;
     }
   },
 
-  // Disconnect logic
-  disconnectWallet: () => {
-    const { unsubscribeAccounts } = get();
-    if (unsubscribeAccounts) {
-      unsubscribeAccounts();
+  login: async () => {
+    const { selectedAccount } = get();
+    if (!selectedAccount) {
+      set({ status: "error", statusMessage: "No account selected." });
+      return false;
     }
     set({
+      isSigning: true,
+      status: "signing",
+      statusMessage: "Requesting challenge...",
+    });
+    try {
+      const { message } = await requestChallenge(selectedAccount.address);
+      set({ statusMessage: "Please sign the message in your wallet..." });
+      const { web3FromSource } = await import("@polkadot/extension-dapp");
+      const injector = await web3FromSource(selectedAccount.meta.source);
+      if (!injector.signer.signRaw)
+        throw new Error("Wallet does not support signing.");
+      const { signature } = await injector.signer.signRaw({
+        address: selectedAccount.address,
+        data: stringToHex(message),
+        type: "bytes",
+      });
+      set({ statusMessage: "Verifying..." });
+      const {user,accessToken} = await loginWithPolkadot({
+        address: selectedAccount.address,
+        message,
+        signature,
+      });
+      if(!user || !accessToken) {
+        throw new Error("Login failed, user data not returned.");
+      }
+      const userData = await getMe();
+
+      set({
+        isAuthenticated: true,
+        user: userData,
+        status: "success",
+        statusMessage: "Login successful!",
+      });
+      return true;
+    } catch (err: any) {
+      const message = isAxiosError(err)
+        ? err.response?.data?.message
+        : err.message;
+      set({ status: "error", statusMessage: `Login failed: ${message}` });
+      return false;
+    } finally {
+      set({ isSigning: false });
+    }
+  },
+
+  logout: async () => {
+    try {
+      await logoutUser();
+    } catch (error) {
+      console.error("Backend logout failed.", error);
+    } finally {
+      get().disconnectWallet();
+    }
+  },
+
+  disconnectWallet: () => {
+    get().unsubscribeAccounts?.();
+    set({
+      isAuthenticated: false,
+      user: null,
       isConnected: false,
       accounts: [],
       selectedAccount: null,
       status: "disconnected",
       statusMessage: "Wallet disconnected.",
       connectedWalletSource: null,
-      isLoading: false,
-      isSigning: false,
-      signature: null,
       unsubscribeAccounts: undefined,
+      isLoading: false,
     });
-    if (typeof window !== "undefined") {
-      localStorage.removeItem(LAST_CONNECTED_WALLET_KEY);
-    }
+    localStorage.removeItem(LAST_CONNECTED_WALLET_KEY);
   },
 
-  // Set selected account
-  setSelectedAccount: (account) => {
-    set({ selectedAccount: account });
-  },
-
-  // Sign message logic
-  signMessage: async (message: string) => {
-    const { selectedAccount, _setStatus, _setIsSigning, _setSignature } = get();
-
-    if (!selectedAccount) {
-      _setStatus("error", "No account selected for signing.");
-      return false;
-    }
-    if (!message.trim()) {
-      _setStatus("error", "Please enter a message to sign.");
-      return false;
-    }
-
-    _setIsSigning(true);
-    _setSignature(null);
-    _setStatus("signing", "Requesting signature...");
-
-    try {
-      // ✅ MODIFICATION: Dynamically import web3FromSource right before using it.
-      const { web3FromSource } = await import("@polkadot/extension-dapp");
-      const injector = await web3FromSource(selectedAccount.meta.source);
-      const signRaw = injector?.signer?.signRaw;
-
-      if (!!signRaw) {
-        const { signature } = await signRaw({
-          address: selectedAccount.address,
-          data: stringToHex(message),
-          type: "bytes",
-        });
-        _setSignature(signature);
-        _setStatus("success", "Message signed successfully!");
-        return true;
-      } else {
-        _setStatus("error", "Signer not available for the selected account.");
-        return false;
-      }
-    } catch (error: any) {
-      console.error("Error signing message:", error);
-      _setStatus(
-        "error",
-        `Failed to sign message: ${
-          error.message || "User rejected or error occurred"
-        }`
-      );
-      return false;
-    } finally {
-      _setIsSigning(false);
-    }
-  },
-
-  // Initialize wallet (for auto-reconnect)
-  initializeWallet: async (dAppAppName: string) => {
-    const { connectWallet, isConnected, _setStatus, _setLoading } = get();
-
-    if (isConnected) {
-      _setStatus("connected", "Wallet already connected.");
-      return;
-    }
-
-    if (typeof window === "undefined") {
-      // Don't run on server
-      return;
-    }
-
-    const lastConnectedSource = localStorage.getItem(LAST_CONNECTED_WALLET_KEY);
-
-    if (lastConnectedSource) {
-      _setLoading(true);
-      _setStatus(
-        "connecting",
-        `Attempting to reconnect to ${capitalize(lastConnectedSource)}...`
-      );
-      // This will now use the connectWallet function with the dynamic import
-      const success = await connectWallet(lastConnectedSource, dAppAppName);
-      if (!success) {
-        _setStatus(
-          "disconnected",
-          "Failed to auto-reconnect. Please connect manually."
-        );
-        localStorage.removeItem(LAST_CONNECTED_WALLET_KEY); // Clear if auto-reconnect fails
-      }
-      _setLoading(false); // Ensure loading is reset
-    } else {
-      _setStatus("idle", "Ready to connect wallet.");
-    }
-  },
+  setSelectedAccount: (account) => set({ selectedAccount: account }),
 }));

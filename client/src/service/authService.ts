@@ -1,0 +1,97 @@
+import axios from "axios";
+import api, { publicApi } from "@/lib/api"; // Our authenticated instance from the previous step
+
+// --- TYPE DEFINITIONS ---
+
+interface LoginPayload {
+  address: string;
+  message: string;
+  signature: string;
+}
+
+export interface LoginResponse {
+  accessToken: string;
+  refreshToken: string;
+  user: {
+    id: string;
+    address: string;
+    profile: string;
+  };
+}
+
+/**
+ * Requests a sign-in message (challenge) from the server.
+ * This is a public route and does not use authentication.
+ * @param {string} address The user's Polkadot wallet address.
+ * @returns {Promise<{ message: string }>} The challenge message to be signed.
+ */
+export const requestChallenge = async (address: string) => {
+  const response = await publicApi.post<{ message: string }>(
+    "/auth/challenge",
+    { address }
+  );
+  return response.data;
+};
+
+/**
+ * Submits the signed message to log in the user and get tokens.
+ * This is a public route that returns auth tokens upon success.
+ * @param {LoginPayload} payload The address, original message, and signature.
+ * @returns {Promise<LoginResponse>} Auth tokens and basic user information.
+ */
+export const loginWithPolkadot = async (payload: LoginPayload) => {
+  const response = await publicApi.post<LoginResponse>(
+    "/auth/polkadot",
+    payload
+  );
+
+  // After a successful login, we immediately store the tokens
+  const { accessToken, refreshToken } = response.data;
+  if (typeof window !== "undefined") {
+    localStorage.setItem("accessToken", accessToken);
+    localStorage.setItem("refreshToken", refreshToken);
+  }
+
+  return response.data;
+};
+
+/**
+ * Logs the current user out.
+ * This uses the authenticated 'api' instance because the server needs
+ * to know which user is logging out via their access token.
+ */
+export const logoutUser = async () => {
+  const response = await api.post<{ message: string }>("/auth/logout");
+
+  // After a successful logout, clear tokens from storage
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+  }
+
+  return response.data;
+};
+
+
+
+
+export interface LoggedInUser {
+  name: string;
+  wallet: string;
+  profile: any; // Define your Profile type here for better safety
+  reputationScore: number;
+  lastLogin: Date;
+  isActive: boolean;
+  success: boolean;
+}
+
+/**
+ * Fetches the currently logged-in user's data using the access token.
+ * This uses the authenticated 'api' instance, so the token is sent automatically.
+ * The interceptor will handle refreshing the token if it's expired.
+ * @returns {Promise<LoggedInUser>} The user's profile data.
+ */
+export const getMe = async (): Promise<LoggedInUser> => {
+  const response = await api.get<LoggedInUser>('/user/me');
+  return response.data;
+};
