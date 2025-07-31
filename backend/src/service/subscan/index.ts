@@ -434,6 +434,29 @@ async function _fetchAccountAgeDays(address: string): Promise<number> {
   }
 }
 
+
+
+
+
+
+
+async function _fetchAccountDetailsByAddress(address: string): Promise<any> {
+  try {
+    // api link: /api/v2/scan/search and pass key as address
+    const res = await subscanRequest(`/api/v2/scan/search`, { address });
+    if (!res || !res.data) {
+      throw new HttpError(404, "Account details not found");
+    }
+    return res.data;
+  } catch (err: any) {
+    logger.error("fetchAccountDetailsByAddress failed", { address, err });
+    throw new HttpError(
+      err.status || 500,
+      `Account details fetch error: ${err.message}`
+    );
+  }
+}
+
 // ====================================================================================
 // EXPORTS (Exporting the cached versions of the functions)
 // ====================================================================================
@@ -478,4 +501,9 @@ export const fetchReferendaVotes = withCache(
 export const fetchAccountAgeDays = withCache(
   _fetchAccountAgeDays,
   "fetchAccountAgeDays"
+);
+
+export const fetchAccountDetailsByAddress = withCache(
+  _fetchAccountDetailsByAddress,
+  "fetchAccountDetailsByAddress"
 );

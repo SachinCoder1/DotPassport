@@ -278,3 +278,35 @@ export interface ReferendaVotesResponse {
     list: ReferendumVoteRecord[];
   };
 }
+
+
+
+
+
+export interface SubscanJudgement {
+  index: number;
+  judgement: string;
+}
+
+export interface SubscanAccountData {
+  address: string;
+  display?: string | null;
+  legal?: string | null;
+  email?: string | null;
+  web?: string | null;
+  twitter?: string | null;
+  github?: string | null;
+  matrix?: string | null;
+  discord?: string | null;
+  judgements?: SubscanJudgement[] | null;
+  role?: string | null;
+  nonce?: number | null;
+}
+
+export interface SubscanApiResponse {
+  code: number;
+  message: string;
+  data?: {
+    account?: SubscanAccountData | null;
+  } | null;
+}

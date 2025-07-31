@@ -10,9 +10,11 @@ import { logger } from "~/utils/logger";
 import { generateAccessToken, generateRefreshToken } from "~/utils/authTokens";
 import crypto from "crypto";
 import { Challenge } from "~/models/Challenge";
-import { Profile } from "~/models/Profile";
+import { IPolkadotIdentity, Profile } from "~/models/Profile";
 import { LoginHistory } from "~/models/LoginHistory";
 import { Types } from "mongoose";
+import { fetchAccountDetailsByAddress } from "~/service/subscan";
+import { SubscanApiResponse } from "~/service/subscan/types";
 
 // Request a new challenge
 export async function requestChallenge(
@@ -55,14 +57,21 @@ export async function polkadotLogin(
       used: false,
       expiresAt: { $gt: new Date() },
     });
-    if (!chal) throw new HttpError(400, "No challenge found for address");
-    if (chal.expiresAt < new Date())
+    if (!chal) {
+      throw new HttpError(400, "No challenge found for address");
+    }
+    if (chal.expiresAt < new Date()) {
       throw new HttpError(400, "Challenge expired");
-    if (chal.message !== message) throw new HttpError(400, "Message mismatch");
+    }
+    if (chal.message !== message) {
+      throw new HttpError(400, "Message mismatch");
+    }
 
-    // 2) Verify on‑chain signature
+    // 2) Verify on-chain signature
     const { isValid } = signatureVerify(message, signature, address);
-    if (!isValid) throw new HttpError(401, "Invalid signature");
+    if (!isValid) {
+      throw new HttpError(401, "Invalid signature");
+    }
 
     logger.info("Polkadot login successful", { address });
 
@@ -73,14 +82,21 @@ export async function polkadotLogin(
 
     // 4) Find or create the User
     let user = await User.findOne({ addresses: address });
+    const isNewUser = !user;
+    const isNewAddressForUser = isNewUser || !user?.addresses.includes(address);
 
     if (!user) {
-      // No user yet → create one with an array
+      // No user yet -> create one
       user = await User.create({ addresses: [address] });
-    } else if (!user.addresses.includes(address)) {
-      // User exists but doesn’t have this address → append it
+    } else if (isNewAddressForUser) {
+      // User exists but doesn't have this address -> append it
+      // The save operation is deferred to the end of the function.
       user.addresses.push(address);
-      await user.save();
+    }
+
+    // This check ensures 'user' is not null for the rest of the function.
+    if (!user) {
+      throw new HttpError(500, "User could not be found or created.");
     }
 
     // 5) Ensure Profile exists
@@ -89,6 +105,57 @@ export async function polkadotLogin(
       profile = await Profile.create({ user: user._id });
     }
 
+    // 5a) NEW & TYPESAFE: Fetch and save on-chain identity for new addresses
+    if (isNewAddressForUser) {
+      try {
+        // Assume fetchAccountDetailsByAddress now returns Promise<SubscanApiResponse>
+        const details: SubscanApiResponse = await fetchAccountDetailsByAddress(
+          address
+        );
+        console.log("Fetched on-chain details:", details.data);
+        const onChainData = details?.data?.account;
+
+        // Type guard: ensures onChainData is not null/undefined before proceeding
+        if (onChainData) {
+          const newIdentity: IPolkadotIdentity = {
+            address: onChainData.address,
+            display: onChainData.display ?? undefined,
+            legal: onChainData.legal ?? undefined,
+            email: onChainData.email ?? undefined,
+            web: onChainData.web ?? undefined,
+            twitter: onChainData.twitter ?? undefined,
+            github: onChainData.github ?? undefined,
+            matrix: onChainData.matrix ?? undefined,
+            discord: onChainData.discord ?? undefined,
+            judgements: onChainData.judgements ?? [],
+            role: onChainData.role ?? undefined,
+            nonce: onChainData.nonce ?? undefined,
+          };
+
+          profile.polkadotIdentities.push(newIdentity);
+
+          // Pre-fill main profile fields only on the very first sign-up
+          if (isNewUser) {
+            profile.displayName = onChainData.display || profile.displayName;
+            if (onChainData.web)
+              profile?.socialLinks?.set("website", onChainData.web);
+            if (onChainData.twitter)
+              profile.socialLinks?.set("twitter", onChainData.twitter);
+            if (onChainData.github)
+              profile.socialLinks?.set("github", onChainData.github);
+          }
+        }
+      } catch (err) {
+        logger.error("Failed to fetch Subscan details during login", {
+          address,
+          error: err,
+        });
+      }
+    }
+
+    // Save any changes made to the profile (like adding identities)
+    await profile.save();
+
     // 6) Stamp lastLogin & record in LoginHistory
     user.profile = profile._id as Types.ObjectId;
     user.lastLogin = new Date();
@@ -96,13 +163,13 @@ export async function polkadotLogin(
     const hist = await LoginHistory.create({
       user: user._id,
       address,
-      ip: req.ip,
+      ip: req.ip ?? "unknown",
       userAgent: req.get("user-agent") || "",
       success: true,
     });
 
     user.loginHistory.push(hist._id as Types.ObjectId);
-    await user.save();
+    await user.save(); // Final save for all user object changes
 
     // 7) Issue JWTs
     const accessToken = generateAccessToken(user.id);
@@ -111,16 +178,15 @@ export async function polkadotLogin(
     return res.json({
       accessToken,
       refreshToken,
-      user: { id: user._id, address, profile: profile._id },
+      user: { id: user.id, address, profile: profile.id },
     });
-  } catch (err: any) {
-    console.log("Polkadot login error", { error: err });
+  } catch (err) {
     logger.error("Error in polkadotLogin", { error: err });
-    return next(
-      err instanceof HttpError
-        ? err
-        : new HttpError(500, "Authentication failed")
-    );
+    // Type guard for the error object
+    if (err instanceof HttpError) {
+      return next(err);
+    }
+    return next(new HttpError(500, "Authentication failed"));
   }
 }
 
