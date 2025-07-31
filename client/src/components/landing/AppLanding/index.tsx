@@ -4,7 +4,7 @@ import AppLandingWrapper from "./AppLandingWrapper";
 import dynamic from "next/dynamic";
 
 const DynamicPolkadotWalletConnect = dynamic(
-  () => import("../../WalletConnect"),
+  () => import("../../PolkadotWalletConnect"),
   { ssr: false }
 );
 

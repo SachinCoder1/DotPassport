@@ -4,16 +4,16 @@ export const commonWallets: Omit<WalletOption, "installed">[] = [
   {
     id: "polkadot-js",
     name: "Polkadot.js Extension",
-    logo: "https://polkadot.js.org/extension/badges/Polkadot_icon.svg",
+    logo: "/wallet_logos/polkadot_js.svg",
   },
   {
     id: "talisman",
     name: "Talisman",
-    logo: "https://talisman.xyz/logo-icon-svg.svg",
+    logo: "/wallet_logos/talisman.svg",
   },
   {
     id: "subwallet-js",
     name: "SubWallet",
-    logo: "https://subwallet.app/static/media/logo.548f07470f1a26d71391.svg",
+    logo: "/wallet_logos/subwallet.svg",
   },
 ];
