@@ -10,9 +10,9 @@ import {
   requestChallenge,
   loginWithPolkadot,
   logoutUser,
-  getMe,
-  type LoggedInUser,
 } from "@/service/authService";
+import type { LoggedInUser } from "@/types/api";
+import { getMe } from "@/service/profileService";
 
 // State and Action Interfaces
 interface WalletState {
@@ -183,12 +183,12 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
         type: "bytes",
       });
       set({ statusMessage: "Verifying..." });
-      const {user,accessToken} = await loginWithPolkadot({
+      const { user, accessToken } = await loginWithPolkadot({
         address: selectedAccount.address,
         message,
         signature,
       });
-      if(!user || !accessToken) {
+      if (!user || !accessToken) {
         throw new Error("Login failed, user data not returned.");
       }
       const userData = await getMe();

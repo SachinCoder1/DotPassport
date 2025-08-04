@@ -1,36 +1,10 @@
 import { Request, Response, NextFunction } from "express";
-import { User } from "~/models/User";
-import { Score, ICategoryScore } from "~/models/Score";
-import { DetailsMap, CategoryKey } from "~/service/score/scoreDefinitions";
+import { Score } from "~/models/Score";
 import { HttpError } from "~/errors/HttpError";
 import { logger } from "~/utils/logger";
-import { calculateScore } from "~/service/score";
+import { updateUserScore } from "~/service/score";
 import { Category } from "~/models/Category";
-
-enum ScoreRefreshStatus {
-  Created = "CREATED",
-  Updated = "UPDATED",
-  NoChange = "NO_CHANGE",
-}
-
-/**
- * Refreshes the score for the authenticated user.
- * If a score exists, it archives the old one and saves the new one.
- * If no score exists, it creates a new one.
- */
-function areCategoriesEqual(
-  map1: Map<CategoryKey, ICategoryScore>,
-  map2: Map<CategoryKey, ICategoryScore>
-): boolean {
-  if (map1.size !== map2.size) {
-    return false;
-  }
-  // A practical way to deep-compare the content for this structure
-  return (
-    JSON.stringify(Array.from(map1.entries())) ===
-    JSON.stringify(Array.from(map2.entries()))
-  );
-}
+import { ScoreRefreshStatus } from "~/service/score/types";
 
 export async function refreshScore(
   req: Request,
@@ -38,83 +12,33 @@ export async function refreshScore(
   next: NextFunction
 ) {
   const userId = req.user?.id;
+  if (!userId) {
+    return next(new HttpError(401, "User not authenticated"));
+  }
 
   try {
-    const user = await User.findById(userId);
-    if (!user || !user.addresses || user.addresses.length === 0) {
-      return next(new HttpError(404, "User or user address not found"));
-    }
-    const address = user.addresses[0];
+    // Call the generic service function
+    const { status, score } = await updateUserScore(userId);
 
-    logger.info("Starting score refresh", { userId, address });
+    // Map the service status to a user-friendly message and HTTP status
+    let httpStatus = 200;
+    let message = "Score refreshed successfully";
 
-    const { total: newTotalScore, categories: newCategories } =
-      await calculateScore(address);
-    const newCategoriesMap = new Map(Object.entries(newCategories)) as Map<
-      CategoryKey,
-      ICategoryScore
-    >;
-
-    const existingScore = await Score.findOne({ user: userId });
-
-    // No score exists yet. Create it.
-    if (!existingScore) {
-      const newScore = await Score.create({
-        user: userId,
-        totalScore: newTotalScore,
-        categories: newCategoriesMap,
-      });
-      user.reputationScore = newTotalScore;
-      await user.save();
-      logger.info("New score created for user", { userId });
-
-      return res.status(201).json({
-        status: ScoreRefreshStatus.Created,
-        message: "Score created successfully",
-        score: newScore.toObject(),
-      });
+    if (status === ScoreRefreshStatus.Created) {
+      httpStatus = 201;
+      message = "Score created successfully";
+    } else if (status === ScoreRefreshStatus.NoChange) {
+      message = "Score is already up to date";
     }
 
-    // Case 2: Score exists. Compare it to see if there's a change.
-    const hasChanged =
-      existingScore.totalScore !== newTotalScore ||
-      !areCategoriesEqual(existingScore.categories, newCategoriesMap);
-
-    if (!hasChanged) {
-      // If nothing changed, just touch the timestamp and report back.
-      // Calling .save() on an unmodified document will still update the `updatedAt` timestamp.
-      await existingScore.save();
-      logger.info("Score refresh checked, no changes detected.", { userId });
-
-      return res.status(200).json({
-        status: ScoreRefreshStatus.NoChange,
-        message: "Score is already up to date",
-        score: existingScore.toObject(),
-      });
-    }
-
-    // Case 3: Score exists and has changed. Archive the old one and update.
-    existingScore.history.push({
-      totalScore: existingScore.totalScore,
-      categories: existingScore.categories,
-      calculatedAt: existingScore.updatedAt,
-    });
-
-    existingScore.totalScore = newTotalScore;
-    existingScore.categories = newCategoriesMap;
-    user.reputationScore = newTotalScore;
-
-    await Promise.all([existingScore.save(), user.save()]);
-    logger.info("Score updated and previous version archived", { userId });
-
-    res.status(200).json({
-      status: ScoreRefreshStatus.Updated,
-      message: "Score refreshed successfully",
-      score: existingScore.toObject(),
+    res.status(httpStatus).json({
+      status,
+      message,
+      score,
     });
   } catch (err: any) {
-    console.log("Error refreshing score", { error: err });
-    logger.error("Error refreshing score", { userId, error: err });
+    console.error("Error refreshing score", { userId, error: err });
+    logger.error("Error in refreshScore handler", { userId, error: err });
     return next(
       err instanceof HttpError
         ? err
@@ -138,27 +62,28 @@ export async function getScore(
   }
 
   try {
-    const scoreDoc = await Score.findOne({ user: userId }).lean();
+    let scoreDoc = await Score.findOne({ user: userId });
 
+    // If no score exists, call the service to create it
     if (!scoreDoc) {
-      // It's good practice to return a predictable shape even if no score exists
-      return res.status(200).json({
-        totalScore: 0,
-        calculatedAt: null,
-        categories: {}, // Return empty object
-        score_exists: false,
-      });
+      logger.info("No score found for user, initiating creation.", { userId });
+      const { score: newScore } = await updateUserScore(userId);
+      scoreDoc = newScore;
     }
 
     res.status(200).json({
       totalScore: scoreDoc.totalScore,
       calculatedAt: scoreDoc.updatedAt,
       categories: scoreDoc.categories,
-      score_exists: true,
+      score_exists: true, // This will always be true now
     });
   } catch (err: any) {
-    logger.error("Error getting score", { userId, error: err });
-    return next(new HttpError(500, "Could not retrieve score"));
+    logger.error("Error in getScore handler", { userId, error: err });
+    return next(
+      err instanceof HttpError
+        ? err
+        : new HttpError(500, "Could not retrieve or create score")
+    );
   }
 }
 
@@ -177,13 +102,11 @@ export async function getScoreCategories(
       .sort({ order: 1 })
       .lean();
 
-    res
-      .status(200)
-      .json({
-        categories,
-        success: true,
-        message: "Score categories retrieved successfully.",
-      });
+    res.status(200).json({
+      categories,
+      success: true,
+      message: "Score categories retrieved successfully.",
+    });
   } catch (err: any) {
     logger.error("Error getting score categories", { error: err });
     return next(new HttpError(500, "Could not retrieve score categories"));

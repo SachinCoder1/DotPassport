@@ -16,7 +16,7 @@ export interface IBadgeLevelDefinition {
   title: string;
   constraints: IConstraintDetail[];
   advice: string[];
-  shortDescription: string; // The short title for this level, e.g., "90+ Days Active"
+  shortDescription: string; // The short title for this  level, e.g., "90+ Days Active"
   longDescription: string; // A more detailed explanation of this level's achievement
 }
 

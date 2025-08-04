@@ -19,7 +19,8 @@ export interface ReasonDetail {
 export interface CategoryDoc extends Document {
   key: CategoryKey;
   displayName: string;
-  description: string;
+  short_description: string;
+  long_description: string;
   order: number;
   active: boolean;
   reasons: ReasonDetail[];
@@ -54,7 +55,8 @@ const CategorySchema = new Schema<CategoryDoc>(
       enum: Object.values(CategoryKey),
     },
     displayName: { type: String, required: true },
-    description: { type: String, required: true },
+    short_description: { type: String, required: true },
+    long_description: { type: String, required: true },
     order: { type: Number, default: 0 },
     active: { type: Boolean, default: true },
     reasons: { type: [ReasonSchema], default: [] },

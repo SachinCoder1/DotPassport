@@ -75,3 +75,29 @@ export type ScoreBreakdown = {
       : never
   >;
 };
+
+
+
+
+export enum ScoreRefreshStatus {
+  /**
+   * A new score was created because none existed.
+   */
+  Created = "Created",
+
+  /**
+   * The score existed and was updated with new values.
+   */
+  Updated = "Updated",
+
+  /**
+   * The score was checked, but no changes were detected.
+   */
+  NoChange = "NoChange",
+}
+
+
+
+
+
+

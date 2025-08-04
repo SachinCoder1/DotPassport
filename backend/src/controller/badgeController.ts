@@ -47,12 +47,13 @@ export async function getUserBadges(
 
   try {
     const userBadges = await UserBadge.find({ user: userId }).lean();
+    console.log("User badges retrieved", userBadges);
     res.status(200).json({
       badges: userBadges,
       message: "User badges retrieved successfully.",
       count: userBadges.length,
       success: true,
-      needs_refresh: userBadges.length === 0,
+      badge_exists: !!userBadges,
     });
   } catch (err: any) {
     logger.error("Error getting user badges", { userId, error: err });
@@ -166,6 +167,7 @@ export async function refreshUserBadges(
       badges: latestBadges,
     });
   } catch (err: any) {
+    console.log("Error refreshing user badges", { userId, error: err });
     logger.error("Error refreshing user badges", { userId, error: err });
     return next(new HttpError(500, "Could not refresh user badges"));
   }

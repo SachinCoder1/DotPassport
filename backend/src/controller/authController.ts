@@ -15,6 +15,8 @@ import { LoginHistory } from "~/models/LoginHistory";
 import { Types } from "mongoose";
 import { fetchAccountDetailsByAddress } from "~/service/subscan";
 import { SubscanApiResponse } from "~/service/subscan/types";
+import { Score } from "~/models/Score";
+import { UserBadge } from "~/models/UserBadge";
 
 // Request a new challenge
 export async function requestChallenge(
@@ -230,33 +232,3 @@ export async function logout(req: Request, res: Response, next: NextFunction) {
   return res.status(200).json({ message: "Logged out" });
 }
 
-// get logged in user only the name, wallet, and other details including the profile details referenced with it's id.. along with proper errors
-
-export async function getLoggedInUser(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
-  try {
-    const user = await User.findById(req.user?.id)
-      .populate("profile")
-      .select("addresses profile reputationScore lastLogin isActive")
-      .lean();
-    if (!user) {
-      return next(new HttpError(404, "User not found"));
-    }
-
-    return res.json({
-      name: user.addresses[0],
-      wallet: user.addresses[0],
-      profile: user.profile,
-      reputationScore: user.reputationScore,
-      lastLogin: user.lastLogin,
-      isActive: user.isActive,
-      success: true,
-    });
-  } catch (err: any) {
-    logger.error("Error in getLoggedInUser", { error: err });
-    return next(new HttpError(500, "Internal Server Error"));
-  }
-}

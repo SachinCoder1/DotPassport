@@ -1,7 +1,9 @@
+import Badges from "@/components/Badge";
+
 export default function BadgesPage() {
   return (
     <div className="">
-      Badges Page Content
+      <Badges />
     </div>
   );
 }

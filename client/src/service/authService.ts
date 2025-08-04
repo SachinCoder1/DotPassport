@@ -71,27 +71,3 @@ export const logoutUser = async () => {
 
   return response.data;
 };
-
-
-
-
-export interface LoggedInUser {
-  name: string;
-  wallet: string;
-  profile: any; // Define your Profile type here for better safety
-  reputationScore: number;
-  lastLogin: Date;
-  isActive: boolean;
-  success: boolean;
-}
-
-/**
- * Fetches the currently logged-in user's data using the access token.
- * This uses the authenticated 'api' instance, so the token is sent automatically.
- * The interceptor will handle refreshing the token if it's expired.
- * @returns {Promise<LoggedInUser>} The user's profile data.
- */
-export const getMe = async (): Promise<LoggedInUser> => {
-  const response = await api.get<LoggedInUser>('/user/me');
-  return response.data;
-};

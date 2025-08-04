@@ -1,5 +1,5 @@
 import { Schema, model, Document, Types } from "mongoose";
-import { CategoryKey } from "~/config/scoreReasons";
+import { CategoryKey } from "~/service/score/scoreDefinitions";
 
 /**
  * Interface for a single category's score and its corresponding reason key.
@@ -7,6 +7,7 @@ import { CategoryKey } from "~/config/scoreReasons";
 export interface ICategoryScore {
   score: number;
   reason: string;
+  title: string
 }
 
 /**
@@ -35,6 +36,7 @@ const CategoryScoreSchema = new Schema<ICategoryScore>(
   {
     score: { type: Number, required: true },
     reason: { type: String, required: true },
+    title: { type: String, required: true },
   },
   { _id: false }
 );

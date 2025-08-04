@@ -28,13 +28,14 @@ export function createApp() {
   app.use(helmet());
   app.use(cors({ origin: [CLIENT_URL] }));
 
-  app.use(
-    "/api",
-    rateLimit({
-      windowMs: 15 * 60 * 1000, // 15 minutes
-      max: 100, // limit each IP to 100 requests per window
-    })
-  );
+  // app.use(
+  //   "/api",
+  //   rateLimit({
+  //     windowMs: 15 * 60 * 1000, // 15 minutes
+  //     max: 100, // limit each IP to 100 requests per window
+      
+  //   })
+  // );
 
   // --- Logging
   app.use(requestLogger);
@@ -52,8 +53,8 @@ export function createApp() {
   );
 
   // --- API routes
-  app.use(`${DEFAULT_API_URL}/user`, userRoutes);
   app.use(`${DEFAULT_API_URL}/auth`, authRoutes);
+  app.use(`${DEFAULT_API_URL}/user`, userRoutes);
   app.use(`${DEFAULT_API_URL}/score`, scoreRoutes);
   app.use(`${DEFAULT_API_URL}/badge`, badgeRoutes);
 
