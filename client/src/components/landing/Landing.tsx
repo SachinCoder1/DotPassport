@@ -61,7 +61,7 @@ const LandingPage = () => {
                 onClick={() => {
                   navigation.push("/app");
                 }}
-                className="flex items-center space-x-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white px-8 py-4 rounded-full font-semibold text-lg hover:shadow-xl hover:scale-105 transition-all duration-300 group"
+                className="cursor-pointer flex items-center space-x-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white px-8 py-4 rounded-full font-semibold text-lg hover:shadow-xl hover:scale-105 transition-all duration-300 group"
               >
                 <span>Get Started</span>
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -167,7 +167,7 @@ const LandingPage = () => {
           </p>
           <button
             onClick={() => navigation.push("/app")}
-            className="inline-flex items-center space-x-2 bg-white text-purple-900 px-8 py-4 rounded-full font-bold text-lg hover:bg-purple-50 hover:scale-105 transition-all duration-300 group"
+            className="cursor-pointer inline-flex items-center space-x-2 bg-white text-purple-900 px-8 py-4 rounded-full font-bold text-lg hover:bg-purple-50 hover:scale-105 transition-all duration-300 group"
           >
             <span>Start Building</span>
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />

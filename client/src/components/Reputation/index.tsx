@@ -50,6 +50,7 @@ import {
   RefreshScoreResponse,
 } from "@/types/api";
 import { formatAgo } from "@/lib/formatAgo";
+import { toast } from "sonner";
 
 // Component Props Interfaces
 interface ScoreCardProps {
@@ -648,21 +649,55 @@ const Reputation: React.FC = () => {
   };
 
   // Refresh score
+// Refresh score
   const handleRefresh = async (): Promise<void> => {
     setIsRefreshing(true);
-    try {
-      const refreshResult: RefreshScoreResponse = await refreshUserScore();
-      console.log("Score refresh result:", refreshResult);
 
-      // Reload data after refresh
-      await loadReputationData();
-    } catch (err) {
-      console.error("Failed to refresh score:", err);
-    } finally {
+    // This promise encapsulates the entire refresh and data-fetching logic for sonner
+    const refreshProcess = new Promise(async (resolve, reject) => {
+      try {
+        // 1. Store the timestamp from the current state before refreshing
+        const previousCalculatedAt = userScore?.calculatedAt;
+
+        // 2. Trigger the backend refresh process
+        await refreshUserScore();
+
+        // 3. Fetch the new, potentially updated score data.
+        // We don't need to re-fetch categories as they are static definitions.
+        const newScoreData = await getUserScore().catch(() => null);
+
+        if (newScoreData) {
+          // Update the score state with the new data
+          setUserScore(newScoreData);
+
+          // 4. Compare timestamps to see if the score was actually recalculated
+          if (newScoreData.calculatedAt !== previousCalculatedAt) {
+            resolve('Reputation score updated successfully!');
+          } else {
+            resolve('Your score is already up-to-date.');
+          }
+        } else {
+          // This handles the case where getUserScore might fail after a successful refresh trigger
+          throw new Error("Could not retrieve score after refresh.");
+        }
+      } catch (err) {
+        console.error("Failed to refresh score:", err);
+        reject('Failed to refresh your score. Please try again.');
+      }
+    });
+
+    // Pass the promise to sonner to automatically handle UI feedback
+    toast.promise(refreshProcess, {
+      loading: 'Refreshing your reputation score...',
+      success: (message) => `${message}`,
+      error: (errorMessage) => `${errorMessage}`,
+    });
+
+    // Finally, ensure the button's loading state is reset when the process is complete
+    refreshProcess.finally(() => {
       setIsRefreshing(false);
-    }
+    });
   };
-
   useEffect(() => {
     loadReputationData();
   }, []);
@@ -704,7 +739,7 @@ const Reputation: React.FC = () => {
               <p className="text-gray-500 mb-6">{error}</p>
               <button
                 onClick={loadReputationData}
-                className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-3 rounded-full font-semibold hover:shadow-lg transition-all duration-200"
+                className="cursor-pointer bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-3 rounded-full font-semibold hover:shadow-lg transition-all duration-200"
               >
                 Try Again
               </button>
@@ -735,7 +770,7 @@ const Reputation: React.FC = () => {
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="flex items-center space-x-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white px-8 py-4 rounded-full font-semibold hover:shadow-lg hover:scale-105 transition-all duration-200 disabled:opacity-70 mx-auto"
+              className="cursor-pointer flex items-center space-x-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white px-8 py-4 rounded-full font-semibold hover:shadow-lg hover:scale-105 transition-all duration-200 disabled:opacity-70 mx-auto"
             >
               <RefreshCw
                 className={`w-5 h-5 ${isRefreshing ? "animate-spin" : ""}`}
@@ -811,7 +846,7 @@ const Reputation: React.FC = () => {
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="flex items-center space-x-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-3 rounded-full font-semibold hover:shadow-lg hover:scale-105 transition-all duration-200 disabled:opacity-70"
+              className="cursor-pointer flex items-center space-x-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-3 rounded-full font-semibold hover:shadow-lg hover:scale-105 transition-all duration-200 disabled:opacity-70"
             >
               <RefreshCw
                 className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`}

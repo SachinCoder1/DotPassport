@@ -1,7 +1,18 @@
 "use client";
 
 import { useWalletStore } from "@/store/walletStore";
-import { ArrowRight, Shield, Wallet, User, Award, TrendingUp, Home, BookOpen, Users, Settings } from "lucide-react";
+import {
+  ArrowRight,
+  Shield,
+  Wallet,
+  User,
+  Award,
+  TrendingUp,
+  Home,
+  BookOpen,
+  Users,
+  Settings,
+} from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useIsClient } from "usehooks-ts";
 import {
@@ -15,7 +26,7 @@ const Navbar = () => {
   const pathname = usePathname();
   const client = useIsClient();
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
-  
+
   const { isConnected, isAuthenticated } = useWalletStore();
 
   const onNavigate = (page: string) => {
@@ -34,13 +45,33 @@ const Navbar = () => {
   };
 
   const currentPage = pathname === "/" ? "home" : "app";
-  
+
   // Navigation items for authenticated users
   const authenticatedNavItems = [
-    { name: "Dashboard", href: "/app", icon: Home, active: pathname === "/app" },
-    { name: "Badges", href: "/app/badges", icon: Award, active: pathname.startsWith("/app/badges") },
-    { name: "Reputation", href: "/app/reputation", icon: TrendingUp, active: pathname.startsWith("/app/reputation") },
-    { name: "Profile", href: "/app/profile", icon: User, active: pathname.startsWith("/app/profile") },
+    {
+      name: "Dashboard",
+      href: "/app",
+      icon: Home,
+      active: pathname === "/app",
+    },
+    {
+      name: "Badges",
+      href: "/app/badges",
+      icon: Award,
+      active: pathname.startsWith("/app/badges"),
+    },
+    {
+      name: "Reputation",
+      href: "/app/reputation",
+      icon: TrendingUp,
+      active: pathname.startsWith("/app/reputation"),
+    },
+    {
+      name: "Profile",
+      href: "/app/profile",
+      icon: User,
+      active: pathname.startsWith("/app/profile"),
+    },
     // { name: "Community", href: "/app/community", icon: Users, active: pathname.startsWith("/app/community") },
   ];
 
@@ -84,34 +115,32 @@ const Navbar = () => {
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-1">
-              {isAuthenticated ? (
-                // Authenticated navigation
-                authenticatedNavItems.map((item) => (
-                  <button
-                    key={item.name}
-                    onClick={() => router.push(item.href)}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-full transition-all duration-200 font-medium ${
-                      item.active
-                        ? 'bg-gradient-to-r from-pink-50 to-purple-50 text-purple-700 border border-purple-200'
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                    }`}
-                  >
-                    <item.icon className="w-4 h-4" />
-                    <span>{item.name}</span>
-                  </button>
-                ))
-              ) : (
-                // Public navigation
-                publicNavItems.map((item) => (
-                  <a
-                    key={item.name}
-                    href={item.href}
-                    className="text-gray-600 hover:text-gray-900 transition-colors font-medium px-4 py-2 rounded-full hover:bg-gray-50"
-                  >
-                    {item.name}
-                  </a>
-                ))
-              )}
+              {isAuthenticated
+                ? // Authenticated navigation
+                  authenticatedNavItems.map((item) => (
+                    <button
+                      key={item.name}
+                      onClick={() => router.push(item.href)}
+                      className={`cursor-pointer flex items-center space-x-2 px-4 py-2 rounded-full border-purple-200 transition-colors duration-200 font-medium ${
+                        item.active
+                          ? "bg-gradient-to-r from-pink-50 to-purple-50  text-purple-700 border "
+                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                      }`}
+                    >
+                      <item.icon className="w-4 h-4" />
+                      <span>{item.name}</span>
+                    </button>
+                  ))
+                : // Public navigation
+                  publicNavItems.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className="text-gray-600 hover:text-gray-900 transition-colors font-medium px-4 py-2 rounded-full hover:bg-gray-50"
+                    >
+                      {item.name}
+                    </a>
+                  ))}
             </div>
 
             {/* Right side buttons */}
@@ -122,12 +151,12 @@ const Navbar = () => {
                   onOpenModal={() => setIsWalletModalOpen(true)}
                 />
               )}
-              
+
               {/* Launch App button for home page when not authenticated */}
               {currentPage === "home" && !isAuthenticated && (
                 <button
                   onClick={() => onNavigate("app")}
-                  className="flex items-center space-x-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-2.5 rounded-full font-semibold hover:shadow-lg hover:scale-105 transition-all duration-200"
+                  className="cursor-pointer flex items-center space-x-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-2.5 rounded-full font-semibold hover:shadow-lg hover:scale-105 transition-all duration-200"
                 >
                   <span>Launch App</span>
                   <ArrowRight className="w-4 h-4" />
@@ -138,7 +167,7 @@ const Navbar = () => {
               {isAuthenticated && (
                 <button
                   onClick={() => router.push("/app/settings")}
-                  className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-all duration-200"
+                  className="cursor-pointer p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-all duration-200"
                   title="Settings"
                 >
                   <Settings className="w-5 h-5" />
@@ -157,10 +186,10 @@ const Navbar = () => {
                   <button
                     key={item.name}
                     onClick={() => router.push(item.href)}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-full whitespace-nowrap transition-all duration-200 text-sm font-medium ${
+                    className={`cursor-pointer flex items-center space-x-2 px-4 py-2 rounded-full whitespace-nowrap transition-all duration-200 text-sm font-medium ${
                       item.active
-                        ? 'bg-gradient-to-r from-pink-50 to-purple-50 text-purple-700 border border-purple-200'
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                        ? "bg-gradient-to-r from-pink-50 to-purple-50 text-purple-700 border border-purple-200"
+                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                     }`}
                   >
                     <item.icon className="w-4 h-4" />

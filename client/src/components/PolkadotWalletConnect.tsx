@@ -50,7 +50,7 @@ export const NavbarWalletButton: React.FC<NavbarWalletButtonProps> = ({ onOpenMo
     return (
       <button 
         onClick={onOpenModal}
-        className="flex items-center space-x-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-2.5 rounded-full font-semibold hover:shadow-lg hover:scale-105 transition-all duration-200"
+        className="cursor-pointer flex items-center space-x-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-2.5 rounded-full font-semibold hover:shadow-lg hover:scale-105 transition-all duration-200"
       >
         <Wallet className="w-4 h-4" />
         <span>Connect Wallet</span>
@@ -62,7 +62,7 @@ export const NavbarWalletButton: React.FC<NavbarWalletButtonProps> = ({ onOpenMo
     <div className="relative">
       <button 
         onClick={onOpenModal}
-        className="flex items-center space-x-3 bg-white/80 backdrop-blur-sm border border-gray-200 text-gray-700 px-4 py-2.5 rounded-full font-medium hover:bg-white hover:shadow-md transition-all duration-200 group"
+        className="cursor-pointer flex items-center space-x-3 bg-white/80 backdrop-blur-sm border border-gray-200 text-gray-700 px-4 py-2.5 rounded-full font-medium hover:bg-white hover:shadow-md transition-all duration-200 group"
       >
         <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center">
           <User className="w-4 h-4 text-white" />
@@ -139,7 +139,7 @@ const AccountSelector: React.FC<{
               <button
                 onClick={() => onSelectAccount(account)}
                 disabled={isLoading}
-                className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                className={`cursor-pointer px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
                   selectedAccount?.address === account.address
                     ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-md hover:shadow-lg'
                     : 'bg-white text-purple-600 border border-purple-200 hover:bg-purple-50'
@@ -158,7 +158,7 @@ const AccountSelector: React.FC<{
               <button
                 onClick={() => onSelectAccount(account)}
                 disabled={isLoading}
-                className="text-purple-600 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
+                className="cursor-pointer text-purple-600 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
               >
                 <ArrowLeft className="w-5 h-5 rotate-180" />
               </button>
@@ -188,7 +188,7 @@ const WalletSelector: React.FC<{
           key={wallet.id}
           onClick={() => onSelectWallet(wallet.id)}
           disabled={!wallet.installed || isLoading}
-          className="w-full flex items-center p-4 bg-gray-50 hover:bg-gradient-to-r hover:from-pink-50 hover:to-purple-50 rounded-xl border border-gray-200 hover:border-purple-200 transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed"
+          className="cursor-pointer w-full flex items-center p-4 bg-gray-50 hover:bg-gradient-to-r hover:from-pink-50 hover:to-purple-50 rounded-xl border border-gray-200 hover:border-purple-200 transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <img 
             src={wallet.logo} 
@@ -356,7 +356,7 @@ const ConnectedState: React.FC<{
             </code>
             <button
               onClick={onCopyAddress}
-              className="flex items-center space-x-1 text-gray-500 hover:text-gray-700 transition-colors"
+              className="cursor-pointer flex items-center space-x-1 text-gray-500 hover:text-gray-700 transition-colors"
             >
               <Copy className="w-4 h-4" />
             </button>
@@ -365,7 +365,7 @@ const ConnectedState: React.FC<{
 
         <button
           onClick={onLogout}
-          className="w-full flex items-center justify-center space-x-2 bg-red-50 text-red-700 px-4 py-3 rounded-lg hover:bg-red-100 transition-colors font-medium"
+          className="cursor-pointer w-full flex items-center justify-center space-x-2 bg-red-50 text-red-700 px-4 py-3 rounded-lg hover:bg-red-100 transition-colors font-medium"
         >
           <LogOut className="w-4 h-4" />
           <span>Disconnect Wallet</span>
@@ -620,7 +620,7 @@ export const WalletConnectModal: React.FC<WalletConnectModalProps> = ({ isOpen, 
                     {canGoBack && (
                       <button
                         onClick={handleBack}
-                        className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                        className="cursor-pointer p-2 hover:bg-gray-100 rounded-full transition-colors"
                         disabled={isSigning}
                       >
                         <ArrowLeft className="w-5 h-5 text-gray-600" />
@@ -634,7 +634,7 @@ export const WalletConnectModal: React.FC<WalletConnectModalProps> = ({ isOpen, 
                   <button
                     onClick={handleClose}
                     disabled={isSigning || currentStep === 'auth-success'}
-                    className={`p-2 rounded-full transition-colors ${
+                    className={`cursor-pointer p-2 rounded-full transition-colors ${
                       isSigning || currentStep === 'auth-success'
                         ? 'cursor-not-allowed opacity-50' 
                         : 'hover:bg-gray-100'
@@ -711,7 +711,7 @@ const PolkadotWalletConnect: React.FC = () => {
             
             <button
               onClick={() => setIsModalOpen(true)}
-              className="bg-gray-100 text-gray-700 px-6 py-3 rounded-full font-medium hover:bg-gray-200 transition-all duration-200"
+              className="cursor-pointer bg-gray-100 text-gray-700 px-6 py-3 rounded-full font-medium hover:bg-gray-200 transition-all duration-200"
             >
               Manage Wallet
             </button>
@@ -742,7 +742,7 @@ const PolkadotWalletConnect: React.FC = () => {
           
           <button
             onClick={() => setIsModalOpen(true)}
-            className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-8 py-4 rounded-full font-semibold text-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
+            className="cursor-pointer bg-gradient-to-r from-pink-500 to-purple-600 text-white px-8 py-4 rounded-full font-semibold text-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
           >
             Open Wallet Connect
           </button>

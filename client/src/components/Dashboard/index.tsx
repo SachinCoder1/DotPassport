@@ -62,6 +62,7 @@ import {
   UserBadge,
   BadgeDefinition,
 } from "@/types/api";
+import { toast } from "sonner";
 
 // Temporary formatAgo function (replace with import when available)
 const formatAgo = (date?: Date | string | number): string => {
@@ -83,33 +84,104 @@ const formatAgo = (date?: Date | string | number): string => {
 };
 
 // Category mapping
+// Category mapping
 const getCategoryInfo = (key: string) => {
   const categoryMap: Record<string, any> = {
-    longevity: { label: "Account Longevity", icon: Clock, color: "blue" },
-    txCount: { label: "Transaction Count", icon: Activity, color: "green" },
-    txVolume: { label: "Transaction Volume", icon: Wallet, color: "purple" },
-    governance: { label: "Governance", icon: Vote, color: "orange" },
-    stakingRewards: { label: "Staking Rewards", icon: Coins, color: "yellow" },
+    longevity: {
+      label: "Account Longevity",
+      icon: Clock,
+      iconColorClass: "text-blue-600",
+      iconBgClass: "bg-blue-100",
+      progressGradientClass: "bg-gradient-to-r from-blue-400 to-blue-500",
+    },
+    txCount: {
+      label: "Transaction Count",
+      icon: Activity,
+      iconColorClass: "text-green-600",
+      iconBgClass: "bg-green-100",
+      progressGradientClass: "bg-gradient-to-r from-green-400 to-green-500",
+    },
+    txVolume: {
+      label: "Transaction Volume",
+      icon: Wallet,
+      iconColorClass: "text-purple-600",
+      iconBgClass: "bg-purple-100",
+      progressGradientClass: "bg-gradient-to-r from-purple-400 to-purple-500",
+    },
+    governance: {
+      label: "Governance",
+      icon: Vote,
+      iconColorClass: "text-orange-600",
+      iconBgClass: "bg-orange-100",
+      progressGradientClass: "bg-gradient-to-r from-orange-400 to-orange-500",
+    },
+    stakingRewards: {
+      label: "Staking Rewards",
+      icon: Coins,
+      iconColorClass: "text-yellow-600",
+      iconBgClass: "bg-yellow-100",
+      progressGradientClass: "bg-gradient-to-r from-yellow-400 to-yellow-500",
+    },
     stakingNominators: {
       label: "Staking Nominators",
       icon: Users,
-      color: "cyan",
+      iconColorClass: "text-cyan-600",
+      iconBgClass: "bg-cyan-100",
+      progressGradientClass: "bg-gradient-to-r from-cyan-400 to-cyan-500",
     },
-    stakingSlash: { label: "Staking Slashes", icon: Shield, color: "red" },
-    nftHoldings: { label: "NFT Holdings", icon: Sparkles, color: "pink" },
-    tokenDiversity: { label: "Token Diversity", icon: Layers, color: "indigo" },
-    nftActivity: { label: "NFT Activity", icon: Star, color: "emerald" },
+    stakingSlash: {
+      label: "Staking Slashes",
+      icon: Shield,
+      iconColorClass: "text-red-600",
+      iconBgClass: "bg-red-100",
+      progressGradientClass: "bg-gradient-to-r from-red-400 to-red-500",
+    },
+    nftHoldings: {
+      label: "NFT Holdings",
+      icon: Sparkles,
+      iconColorClass: "text-pink-600",
+      iconBgClass: "bg-pink-100",
+      progressGradientClass: "bg-gradient-to-r from-pink-400 to-pink-500",
+    },
+    tokenDiversity: {
+      label: "Token Diversity",
+      icon: Layers,
+      iconColorClass: "text-indigo-600",
+      iconBgClass: "bg-indigo-100",
+      progressGradientClass: "bg-gradient-to-r from-indigo-400 to-indigo-500",
+    },
+    nftActivity: {
+      label: "NFT Activity",
+      icon: Star,
+      iconColorClass: "text-emerald-600",
+      iconBgClass: "bg-emerald-100",
+      progressGradientClass: "bg-gradient-to-r from-emerald-400 to-emerald-500",
+    },
     extrinsicDepth: {
       label: "Extrinsic Depth",
       icon: BarChart3,
-      color: "slate",
+      iconColorClass: "text-slate-600",
+      iconBgClass: "bg-slate-100",
+      progressGradientClass: "bg-gradient-to-r from-slate-400 to-slate-500",
     },
-    modules: { label: "Module Diversity", icon: Target, color: "violet" },
+    modules: {
+      label: "Module Diversity",
+      icon: Target,
+      iconColorClass: "text-violet-600",
+      iconBgClass: "bg-violet-100",
+      progressGradientClass: "bg-gradient-to-r from-violet-400 to-violet-500",
+    },
+    default: {
+      label: key,
+      icon: Award,
+      iconColorClass: "text-gray-600",
+      iconBgClass: "bg-gray-100",
+      progressGradientClass: "bg-gradient-to-r from-gray-400 to-gray-500",
+    },
   };
 
-  return categoryMap[key] || { label: key, icon: Award, color: "gray" };
+  return categoryMap[key] || categoryMap.default;
 };
-
 // Enhanced Components
 interface StatCardProps {
   title: string;
@@ -133,10 +205,7 @@ const StatCard: React.FC<StatCardProps> = ({
   onClick,
 }) => (
   <div
-    className={`relative bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 group overflow-hidden ${
-      onClick ? "cursor-pointer" : ""
-    }`}
-    onClick={onClick}
+    className={`cursor-default relative bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 group overflow-hidden`}
   >
     <div
       className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br opacity-10 rounded-full -translate-y-4 translate-x-4"
@@ -178,7 +247,10 @@ const StatCard: React.FC<StatCardProps> = ({
       </div>
 
       {onClick && (
-        <div className="flex items-center text-purple-600 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+        <div
+          onClick={onClick}
+          className="cursor-pointer flex items-center text-purple-600 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity"
+        >
           <span>View Details</span>
           <ChevronRight className="w-4 h-4 ml-1" />
         </div>
@@ -242,7 +314,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
                   ? "bg-gradient-to-br from-purple-500 to-indigo-600 shadow-lg scale-110"
                   : isHighPerformer
                   ? "bg-gradient-to-br from-green-400 to-emerald-500"
-                  : `bg-${categoryInfo.color}-100`
+                  : categoryInfo.iconBgClass // <-- UPDATED
               }`}
             >
               {isCompleted ? (
@@ -250,9 +322,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
               ) : (
                 <categoryInfo.icon
                   className={`w-6 h-6 ${
-                    isHighPerformer
-                      ? "text-white"
-                      : `text-${categoryInfo.color}-600`
+                    isHighPerformer ? "text-white" : categoryInfo.iconColorClass // <-- UPDATED
                   }`}
                 />
               )}
@@ -334,7 +404,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
                   className={`h-full rounded-full transition-all duration-500 ${
                     isHighPerformer
                       ? "bg-gradient-to-r from-green-400 to-emerald-500"
-                      : `bg-gradient-to-r from-${categoryInfo.color}-400 to-${categoryInfo.color}-500`
+                      : categoryInfo.progressGradientClass
                   }`}
                   style={{ width: `${percentage}%` }}
                 />
@@ -348,7 +418,6 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
     </div>
   );
 };
-
 interface RecentBadgeProps {
   badge: UserBadge;
   definition?: BadgeDefinition;
@@ -632,18 +701,63 @@ const Dashboard: React.FC = () => {
   // Refresh data
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    try {
-      await Promise.all([
-        refreshUserScore().catch(() => null),
-        refreshUserBadges().catch(() => null),
-      ]);
 
-      await loadDashboardData();
-    } catch (err) {
-      console.error("Failed to refresh data:", err);
-    } finally {
+    // Define the entire asynchronous process as a promise
+    const refreshProcess = new Promise(async (resolve, reject) => {
+      try {
+        // Store the timestamp before refreshing
+        const previousCalculatedAt = userScore?.calculatedAt;
+
+        // 1. Trigger the backend refresh processes
+        await Promise.all([
+          refreshUserScore().catch((e) =>
+            console.error("Score refresh trigger failed", e)
+          ),
+          refreshUserBadges().catch((e) =>
+            console.error("Badge refresh trigger failed", e)
+          ),
+        ]);
+
+        // 2. Fetch the new data
+        const [newScoreData, newBadgesData] = await Promise.all([
+          getUserScore().catch(() => null),
+          getUserBadges().catch(() => ({ badges: [] })),
+        ]);
+
+        // 3. Update the component's state with the new data
+        if (newScoreData) {
+          setUserScore(newScoreData);
+        }
+        if (newBadgesData) {
+          setUserBadges(newBadgesData.badges || []);
+        }
+
+        // 4. Check if the score actually changed and resolve the promise with a message
+        if (
+          newScoreData &&
+          newScoreData.calculatedAt !== previousCalculatedAt
+        ) {
+          resolve("Dashboard synced successfully!");
+        } else {
+          resolve("Your data is already up-to-date!");
+        }
+      } catch (error) {
+        console.error("Failed to refresh data:", error);
+        reject("Failed to sync data. Please try again.");
+      }
+    });
+
+    // Use sonner's toast.promise to handle the UI feedback
+    toast.promise(refreshProcess, {
+      loading: "Syncing your on-chain data...",
+      success: (message) => `${message}`, // Displays the success message from resolve()
+      error: (errorMessage) => `${errorMessage}`, // Displays the error message from reject()
+    });
+
+    // Ensure the button's "isRefreshing" state is reset after the process completes
+    refreshProcess.finally(() => {
       setIsRefreshing(false);
-    }
+    });
   };
 
   useEffect(() => {
@@ -653,7 +767,7 @@ const Dashboard: React.FC = () => {
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 pt-20 px-4">
+      <div className="min-h-screen bg-gray-50 px-4">
         <div className="max-w-7xl mx-auto py-8">
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-center">
@@ -676,7 +790,7 @@ const Dashboard: React.FC = () => {
   // Error state
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 pt-20 px-4">
+      <div className="min-h-screen bg-gray-50 px-4">
         <div className="max-w-7xl mx-auto py-8">
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-center">
@@ -687,7 +801,7 @@ const Dashboard: React.FC = () => {
               <p className="text-gray-500 mb-8">{error}</p>
               <button
                 onClick={loadDashboardData}
-                className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                className="cursor-pointer bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
               >
                 Try Again
               </button>
@@ -828,8 +942,31 @@ const Dashboard: React.FC = () => {
     })
     .slice(0, 8);
 
+  // loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 px-4">
+        <div className="max-w-7xl mx-auto py-8">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center">
+              <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6 animate-shimmer">
+                <Shield className="w-10 h-10 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-700 mb-3">
+                Loading Dashboard
+              </h2>
+              <p className="text-gray-500">
+                Preparing your personalized overview...
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 pt-20 px-4">
+    <div className="min-h-screen bg-gray-50 px-4">
       <style jsx>{`
         @keyframes shimmer {
           0% {
@@ -868,39 +1005,24 @@ const Dashboard: React.FC = () => {
       `}</style>
       <div className="max-w-7xl mx-auto py-8">
         {/* Welcome Header with Achievement Celebration */}
-        <div className="mb-10">
-          <div className="flex items-center justify-between mb-6">
+        <div className="mb-6 sm:mb-10">
+          <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 mb-6">
             <div className="relative">
-              {/* Celebration effects for high achievers */}
-              {/* {stats.fullyMasteredBadges > 0 && (
-                <div className="absolute -top-2 -right-2 flex items-center space-x-1">
-                  <div className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-2 py-1 rounded-full text-xs font-bold flex items-center space-x-1 animate-bounce">
-                    <Crown className="w-3 h-3" />
-                    <span>{stats.fullyMasteredBadges} MASTERED</span>
-                  </div>
-                </div>
-              )} */}
-
-              <h1 className="text-4xl font-bold text-gray-900 mb-3">
-                Welcome back, {user?.name || "Polkadot Pioneer"}!
-                {/* {stats.fullyMasteredBadges > 0 ? (
-                  <Crown className="inline w-8 h-8 ml-2 text-purple-600" />
-                ) : (
-                  " 👋"
-                )} */}
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3">
+                Welcome back, {user?.name || "Polkadot Pioneer"}!{" "}
               </h1>
-              <div className="flex items-center space-x-6 text-gray-600">
+              <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-6 text-gray-600">
                 <div className="flex items-center space-x-2">
-                  <User className="w-4 h-4" />
-                  <span>
+                  <User className="w-4 h-4 flex-shrink-0" />
+                  <span className="text-sm sm:text-base">
                     {user?.wallet
                       ? `${user.wallet.slice(0, 6)}...${user.wallet.slice(-4)}`
                       : "Connected"}
                   </span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Clock className="w-4 h-4" />
-                  <span>
+                  <Clock className="w-4 h-4 flex-shrink-0" />
+                  <span className="text-sm sm:text-base">
                     Score updated{" "}
                     {userScore?.calculatedAt
                       ? formatAgo(userScore.calculatedAt)
@@ -908,8 +1030,8 @@ const Dashboard: React.FC = () => {
                   </span>
                 </div>
                 {stats.totalScore > 0 && (
-                  <div className="flex items-center space-x-2 bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-semibold">
-                    <TrendingUp className="w-4 h-4" />
+                  <div className="flex items-center space-x-2 bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-semibold w-fit">
+                    <TrendingUp className="w-4 h-4 flex-shrink-0" />
                     <span>{stats.totalScore.toLocaleString()} pts</span>
                   </div>
                 )}
@@ -918,16 +1040,19 @@ const Dashboard: React.FC = () => {
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="flex items-center space-x-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-3 rounded-full font-semibold hover:shadow-lg hover:scale-105 transition-all duration-200 disabled:opacity-70"
+              className="cursor-pointer flex items-center justify-center space-x-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white px-4 sm:px-6 py-3 rounded-full font-semibold hover:shadow-lg hover:scale-105 transition-all duration-200 disabled:opacity-70 w-full sm:w-auto"
             >
               <RefreshCw
-                className={`w-5 h-5 ${isRefreshing ? "animate-spin" : ""}`}
+                className={`w-5 h-5 flex-shrink-0 ${
+                  isRefreshing ? "animate-spin" : ""
+                }`}
               />
-              <span>{isRefreshing ? "Syncing..." : "Sync Data"}</span>
+              <span className="text-sm sm:text-base">
+                {isRefreshing ? "Syncing..." : "Sync Data"}
+              </span>
             </button>
           </div>
         </div>
-
         {/* Hero Reputation Score Display */}
         <div className="mb-10">
           <div className="relative bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 rounded-3xl p-8 shadow-2xl overflow-hidden">
@@ -1000,7 +1125,7 @@ const Dashboard: React.FC = () => {
               {/* CTA */}
               <button
                 onClick={() => router.push("/app/reputation")}
-                className="mt-6 bg-white/20 hover:bg-white/30 text-white px-6 py-3 rounded-full font-semibold backdrop-blur-sm transition-all duration-200 hover:scale-105 hover:shadow-xl"
+                className="cursor-pointer mt-6 bg-white/20 hover:bg-white/30 text-white px-6 py-3 rounded-full font-semibold backdrop-blur-sm transition-all duration-200 hover:scale-105 hover:shadow-xl"
               >
                 View Detailed Breakdown
               </button>
@@ -1065,7 +1190,7 @@ const Dashboard: React.FC = () => {
                 </div>
                 <button
                   onClick={() => router.push("/app/reputation")}
-                  className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium"
+                  className="cursor-pointer flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium"
                 >
                   <span>View All</span>
                   <ExternalLink className="w-4 h-4" />
@@ -1094,7 +1219,7 @@ const Dashboard: React.FC = () => {
                   </p>
                   <button
                     onClick={handleRefresh}
-                    className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                    className="cursor-pointer bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
                   >
                     Calculate Score
                   </button>
@@ -1111,18 +1236,20 @@ const Dashboard: React.FC = () => {
                   <h3 className="text-xl font-bold text-gray-900">
                     Recent Achievements
                   </h3>
-                  <p className="text-gray-600">Latest badges earned</p>
-                </div>
-                {masteredBadges > 0 && (
-                  <div className="flex items-center space-x-1 bg-purple-100 text-purple-700 px-3 py-2 rounded-full text-sm font-bold">
-                    <Crown className="w-4 h-4" />
-                    <span>{masteredBadges} Mastered</span>
+                  <div className="text-gray-600 flex gap-x-2">
+                    Latest badges earned
+                    {masteredBadges > 0 && (
+                      <div className="flex items-center space-x-1 bg-purple-100 text-purple-700 px-1 py-0.5 text-xs rounded-full text-sm font-bold">
+                        <Crown className="w-4 h-4" />
+                        <span>{masteredBadges}</span>
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
               <button
                 onClick={() => router.push("/app/badges")}
-                className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium"
+                className="cursor-pointer flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium"
               >
                 <span>View All</span>
                 <ExternalLink className="w-4 h-4" />
@@ -1151,7 +1278,7 @@ const Dashboard: React.FC = () => {
                 </p>
                 <button
                   onClick={() => router.push("/app/badges")}
-                  className="text-blue-600 hover:text-blue-700 font-medium text-sm"
+                  className="cursor-pointer text-blue-600 hover:text-blue-700 font-medium text-sm"
                 >
                   Explore Available Badges
                 </button>
@@ -1172,7 +1299,7 @@ const Dashboard: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <button
               onClick={() => router.push("/app/reputation")}
-              className="flex items-center p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100 hover:border-blue-200 hover:shadow-md transition-all duration-200 group"
+              className="cursor-pointer flex items-center p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100 hover:border-blue-200 hover:shadow-md transition-all duration-200 group"
             >
               <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center mr-4">
                 <TrendingUp className="w-6 h-6 text-white" />
@@ -1190,7 +1317,7 @@ const Dashboard: React.FC = () => {
 
             <button
               onClick={() => router.push("/app/badges")}
-              className="flex items-center p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl border border-yellow-100 hover:border-yellow-200 hover:shadow-md transition-all duration-200 group"
+              className="cursor-pointer flex items-center p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl border border-yellow-100 hover:border-yellow-200 hover:shadow-md transition-all duration-200 group"
             >
               <div className="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-xl flex items-center justify-center mr-4">
                 <Award className="w-6 h-6 text-white" />
@@ -1206,7 +1333,7 @@ const Dashboard: React.FC = () => {
 
             <button
               onClick={() => router.push("/app/profile")}
-              className="flex items-center p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-100 hover:border-purple-200 hover:shadow-md transition-all duration-200 group"
+              className="cursor-pointer flex items-center p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-100 hover:border-purple-200 hover:shadow-md transition-all duration-200 group"
             >
               <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center mr-4">
                 <User className="w-6 h-6 text-white" />

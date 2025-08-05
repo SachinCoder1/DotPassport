@@ -45,6 +45,7 @@ import {
   BadgeLevelDefinition 
 } from '@/types/api';
 import { formatAgo } from '@/lib/formatAgo';
+import { toast } from 'sonner';
 
 
 
@@ -96,7 +97,7 @@ const BadgeCard: React.FC<{
       onClick={onClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className={`relative bg-white rounded-xl p-6 border cursor-pointer transition-all duration-200 hover:shadow-lg group ${
+      className={`cursor-pointer relative bg-white rounded-xl p-6 border transition-all duration-200 hover:shadow-lg group ${
         badge.isEarned 
           ? badge.isFullyCompleted
             ? 'border-purple-200 bg-gradient-to-br from-purple-50 to-indigo-50'
@@ -234,7 +235,7 @@ const BadgeDetailModal: React.FC<{
   
   return (
     <div 
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn"
+      className="cursor-pointer fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn"
       onClick={handleBackdropClick}
     >
       <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto transform transition-all duration-300 animate-slideIn">
@@ -264,7 +265,7 @@ const BadgeDetailModal: React.FC<{
             </div>
             <button 
               onClick={onClose}
-              className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
+              className="cursor-pointer w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
             >
               <X className="w-5 h-5 text-gray-600" />
             </button>
@@ -427,7 +428,7 @@ const RecentAchievement: React.FC<{
         </div>
         <button 
           onClick={(e) => { e.stopPropagation(); onDismiss(); }}
-          className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+          className="cursor-pointer p-1 hover:bg-gray-100 rounded-full transition-colors"
         >
           <X className="w-4 h-4 text-gray-400" />
         </button>
@@ -509,17 +510,86 @@ const Badges: React.FC = () => {
   };
   
   // Refresh badges
+// Refresh badges
   const handleRefresh = async (): Promise<void> => {
     setIsRefreshing(true);
-    try {
-      await refreshUserBadges();
-      await loadBadgesData();
-    } catch (err) {
-      console.error('Failed to refresh badges:', err);
-      setError('Failed to refresh badges. Please try again.');
-    } finally {
+
+    // Define the entire asynchronous process as a promise for sonner
+    const refreshProcess = new Promise(async (resolve, reject) => {
+      try {
+        // 1. Create a "snapshot" of the current badge state to detect changes.
+        // We create a simple, sorted string of keys and levels for reliable comparison.
+        const beforeSnapshot = JSON.stringify(
+          userBadges
+            .map(b => ({ key: b.badgeKey, level: b.achievedLevel }))
+            .sort((a, b) => a.key.localeCompare(b.key))
+        );
+
+        // 2. Trigger the backend refresh
+        await refreshUserBadges();
+
+        // 3. Re-fetch all badge data to get the latest state
+        const [newUserBadgesData, definitionsData] = await Promise.all([
+          getUserBadges().catch(() => ({ badges: [] })),
+          getBadgeDefinitions()
+        ]);
+
+        // 4. Create the "after" snapshot from the newly fetched data
+        const afterSnapshot = JSON.stringify(
+          newUserBadgesData.badges
+            .map(b => ({ key: b.badgeKey, level: b.achievedLevel }))
+            .sort((a, b) => a.key.localeCompare(b.key))
+        );
+        
+        // 5. Process the new data (this logic is the same as in `loadBadgesData`)
+        const enhanced: EnhancedBadge[] = definitionsData.badges.map(badge => {
+          const userBadge = newUserBadgesData.badges.find(ub => ub.badgeKey === badge.key);
+          const isEarned = !!userBadge;
+          const currentLevel = userBadge?.achievedLevel || 0;
+          const maxLevel = Math.max(...badge.levels.map(l => l.level));
+          const isFullyCompleted = isEarned && currentLevel >= maxLevel;
+          const progress = (currentLevel / maxLevel) * 100;
+          const nextLevel = badge.levels.find(l => l.level > currentLevel);
+          const category = getCategoryInfo(badge.metric);
+          
+          return {
+            ...badge, userBadge, isEarned, isFullyCompleted, currentLevel, maxLevel, progress, nextLevel, category
+          };
+        });
+
+        // 6. Update all relevant states
+        setUserBadges(newUserBadgesData.badges);
+        setBadgeDefinitions(definitionsData.badges);
+        setEnhancedBadges(enhanced.sort((a, b) => {
+          if (a.isFullyCompleted !== b.isFullyCompleted) return a.isFullyCompleted ? -1 : 1;
+          if (a.isEarned !== b.isEarned) return a.isEarned ? -1 : 1;
+          return a.order - b.order;
+        }));
+        
+        // 7. Compare snapshots and resolve the promise with the correct message
+        if (beforeSnapshot !== afterSnapshot) {
+          resolve('Badges updated successfully!');
+        } else {
+          resolve('Your badges are already up-to-date.');
+        }
+
+      } catch (err) {
+        console.error('Failed to refresh badges:', err);
+        reject('Failed to refresh badges. Please try again.');
+      }
+    });
+
+    // Use sonner's toast.promise to handle the UI feedback
+    toast.promise(refreshProcess, {
+      loading: 'Refreshing your achievements...',
+      success: (message) => `${message}`,
+      error: (errorMessage) => `${errorMessage}`,
+    });
+
+    // Ensure the button state is reset regardless of outcome
+    refreshProcess.finally(() => {
       setIsRefreshing(false);
-    }
+    });
   };
   
   useEffect(() => {
@@ -590,7 +660,7 @@ const Badges: React.FC = () => {
               <p className="text-gray-500 mb-6">{error}</p>
               <button 
                 onClick={loadBadgesData}
-                className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                className="cursor-pointer bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
               >
                 Try Again
               </button>
@@ -640,7 +710,7 @@ const Badges: React.FC = () => {
                         <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-                          className="flex items-center space-x-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-3 rounded-full font-semibold hover:shadow-lg hover:scale-105 transition-all duration-200 disabled:opacity-70"
+                          className="cursor-pointer flex items-center space-x-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-3 rounded-full font-semibold hover:shadow-lg hover:scale-105 transition-all duration-200 disabled:opacity-70"
                         >
                           <RefreshCw
                             className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`}
@@ -725,7 +795,7 @@ const Badges: React.FC = () => {
                 <button
                   key={category.key}
                   onClick={() => setSelectedCategory(category.key)}
-                  className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`cursor-pointer flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     selectedCategory === category.key
                       ? 'bg-blue-600 text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
