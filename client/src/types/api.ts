@@ -62,6 +62,9 @@ export interface BadgeLevelDefinition {
   value: number;
   title: string;
   shortDescription: string;
+  longDescription?: string;
+  constraints?: Array<{ description: string }>;
+  advice?: string[];
 }
 
 export interface BadgeDefinition {

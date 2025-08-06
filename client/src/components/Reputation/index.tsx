@@ -649,7 +649,7 @@ const Reputation: React.FC = () => {
   };
 
   // Refresh score
-// Refresh score
+  // Refresh score
   const handleRefresh = async (): Promise<void> => {
     setIsRefreshing(true);
 
@@ -672,9 +672,9 @@ const Reputation: React.FC = () => {
 
           // 4. Compare timestamps to see if the score was actually recalculated
           if (newScoreData.calculatedAt !== previousCalculatedAt) {
-            resolve('Reputation score updated successfully!');
+            resolve("Reputation score updated successfully!");
           } else {
-            resolve('Your score is already up-to-date.');
+            resolve("Your score is already up-to-date.");
           }
         } else {
           // This handles the case where getUserScore might fail after a successful refresh trigger
@@ -682,13 +682,13 @@ const Reputation: React.FC = () => {
         }
       } catch (err) {
         console.error("Failed to refresh score:", err);
-        reject('Failed to refresh your score. Please try again.');
+        reject("Failed to refresh your score. Please try again.");
       }
     });
 
     // Pass the promise to sonner to automatically handle UI feedback
     toast.promise(refreshProcess, {
-      loading: 'Refreshing your reputation score...',
+      loading: "Refreshing your reputation score...",
       success: (message) => `${message}`,
       error: (errorMessage) => `${errorMessage}`,
     });

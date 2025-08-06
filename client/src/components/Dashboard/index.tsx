@@ -812,6 +812,7 @@ const Dashboard: React.FC = () => {
     );
   }
 
+
   const topCategories = Object.entries(userScore?.categories || {})
     .map(([key, data]) => {
       const category = scoreCategories.find((cat) => cat.key === key);
@@ -841,11 +842,11 @@ const Dashboard: React.FC = () => {
         return a!.isHighPerformer ? -1 : 1;
       return b!.score - a!.score;
     })
-    .slice(0, 6) as NonNullable<ReturnType<(typeof Object.entries<any>)[0]>>[];
+    .slice(0, 6);
 
   // Calculate mastered counts
   const masteredCategories = topCategories.filter(
-    (item) => item.isCompleted
+    (item) => item?.isCompleted
   ).length;
   const stats = {
     totalScore: userScore?.totalScore || 0,
@@ -1199,14 +1200,17 @@ const Dashboard: React.FC = () => {
 
               {topCategories.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {topCategories.map((item) => (
-                    <CategoryCard
-                      key={item.key}
-                      category={item.category!}
-                      userScore={{ score: item.score, reason: item.reason }}
-                      onClick={() => router.push("/app/reputation")}
-                    />
-                  ))}
+                  {topCategories.map((item) => {
+                    if(!item) return null;
+                    return (
+                      <CategoryCard
+                        key={item.key}
+                        category={item.category!}
+                        userScore={{ score: item.score, reason: item.reason }}
+                        onClick={() => router.push("/app/reputation")}
+                      />
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="text-center py-12">
@@ -1239,7 +1243,7 @@ const Dashboard: React.FC = () => {
                   <div className="text-gray-600 flex gap-x-2">
                     Latest badges earned
                     {masteredBadges > 0 && (
-                      <div className="flex items-center space-x-1 bg-purple-100 text-purple-700 px-1 py-0.5 text-xs rounded-full text-sm font-bold">
+                      <div className="flex items-center space-x-1 bg-purple-100 text-purple-700 px-1 py-0.5 text-xs rounded-full font-bold">
                         <Crown className="w-4 h-4" />
                         <span>{masteredBadges}</span>
                       </div>

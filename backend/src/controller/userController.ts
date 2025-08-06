@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { HttpError } from "~/errors/HttpError";
+import { IProfile } from "~/models/Profile";
 import { Score } from "~/models/Score";
 import { User } from "~/models/User";
 import { UserBadge } from "~/models/UserBadge";
@@ -20,7 +21,7 @@ export async function getLoggedInUser(
     }
 
     return res.json({
-      name: user?.profile?.displayName || null,
+      name: (user?.profile as IProfile | null)?.displayName || "",
       wallet: user.addresses[0],
       profile: user.profile,
       reputationScore: user.reputationScore,
@@ -42,9 +43,11 @@ export async function getPublicProfileByAddress(
   const { address } = req.params;
 
   try {
-    const user = await User.findOne({ addresses: address }).populate('profile').lean();
+    const user = await User.findOne({ addresses: address })
+      .populate("profile")
+      .lean();
     if (!user) {
-      return next(new HttpError(404, 'User not found'));
+      return next(new HttpError(404, "User not found"));
     }
 
     // Fetch score and badges in parallel
@@ -57,16 +60,18 @@ export async function getPublicProfileByAddress(
       address: user.addresses[0],
       lastLogin: user.lastLogin,
       profile: user.profile, // Contains bio, display name etc.
-      score: score ? {
-        totalScore: score.totalScore,
-        calculatedAt: score.updatedAt,
-        categories: score.categories,
-        score_exists: true,
-      } : null,
+      score: score
+        ? {
+            totalScore: score.totalScore,
+            calculatedAt: score.updatedAt,
+            categories: score.categories,
+            score_exists: true,
+          }
+        : null,
       badges: badges,
     });
   } catch (err: any) {
-    logger.error('Error fetching public profile', { address, error: err });
-    return next(new HttpError(500, 'Could not retrieve public profile'));
+    logger.error("Error fetching public profile", { address, error: err });
+    return next(new HttpError(500, "Could not retrieve public profile"));
   }
 }
