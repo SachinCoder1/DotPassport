@@ -28,14 +28,13 @@ export function createApp() {
   app.use(helmet());
   app.use(cors({ origin: [CLIENT_URL] }));
 
-  // app.use(
-  //   "/api",
-  //   rateLimit({
-  //     windowMs: 15 * 60 * 1000, // 15 minutes
-  //     max: 100, // limit each IP to 100 requests per window
-      
-  //   })
-  // );
+  app.use(
+    "/api",
+    rateLimit({
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      max: 350, // limit each IP to 350 requests per window
+    })
+  );
 
   // --- Logging
   app.use(requestLogger);
