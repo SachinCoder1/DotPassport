@@ -1,3 +1,4 @@
+import { commonWallets } from "@/common/wallets";
 import {
   Star,
   Lock,
@@ -17,7 +18,7 @@ const AppLandingWrapper = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-purple-50 pt-20">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-purple-50">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div
           className={`text-center transform transition-all duration-1000 ${
@@ -26,12 +27,12 @@ const AppLandingWrapper = ({ children }: { children: React.ReactNode }) => {
         >
           {/* App Header */}
           <div className="mb-12">
-            <div className="inline-flex items-center space-x-2 bg-purple-100 text-purple-700 px-4 py-2 rounded-full mb-6">
+            {/* <div className="inline-flex items-center space-x-2 bg-purple-100 text-purple-700 px-4 py-2 rounded-full mb-6">
               <Lock className="w-4 h-4" />
               <span className="text-sm font-medium">
-                Secure • Decentralized • Polkadot Native
+                Identity • Score • Badges
               </span>
-            </div>
+            </div> */}
 
             <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
               Welcome to
@@ -62,22 +63,27 @@ const AppLandingWrapper = ({ children }: { children: React.ReactNode }) => {
               </p>
 
               {children}
-              <div className="grid grid-cols-2 gap-4 text-sm text-gray-500">
-                <div className="flex items-center space-x-2">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Polkadot.js</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>SubWallet</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Talisman</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Nova Wallet</span>
+              <div className="pt-8"></div>
+              <div className="border-t border-gray-200 pt-8">
+                <p className="text-sm text-gray-500 mb-6 uppercase tracking-wider font-medium">
+                  Supported Wallets
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {commonWallets.map((wallet) => (
+                    <div
+                      key={wallet.id}
+                      className="flex items-center justify-center space-x-3 transition-all duration-300 rounded-xl py-4 px-6 border border-gray-200 hover:border-gray-300 hover:shadow-md bg-gray-50 hover:bg-gray-100"
+                    >
+                      <img
+                        src={wallet.logo}
+                        alt={wallet.name}
+                        className="w-6 h-6"
+                      />
+                      <span className="text-sm font-medium text-gray-700">
+                        {wallet.name}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>

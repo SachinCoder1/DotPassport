@@ -28,7 +28,7 @@ export default function Layout({
   useEffect(() => {
     // This effect runs once when the component mounts on the client,
     // triggering our session check.
-    initialize("my-polkadot-dapp");
+    initialize("dotpassport");
   }, [initialize]); // The dependency array ensures it only runs once
 
   console.log( "Layout state:", { isClient, isInitializing, isAuthenticated } );

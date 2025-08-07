@@ -80,8 +80,9 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
           const userData = await getMe();
           set({ user: userData, isAuthenticated: true });
         } catch (error) {
-          console.error("Session check failed:", error);
-          set({ isAuthenticated: false, user: null });
+          console.error("Session check failed, logging out:", error);
+          // This will handle cases where the token is expired or invalid.
+          get().disconnectWallet();
         }
       }
       const lastConnectedSource =
@@ -138,7 +139,7 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
             isConnected: true,
             status: "connected",
             statusMessage: `Connected to ${capitalize(source)}.`,
-            isLoading: false, // ✅ THIS IS THE FIX
+            isLoading: false,
           });
           localStorage.setItem(LAST_CONNECTED_WALLET_KEY, source);
         } else {
@@ -222,7 +223,14 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
   },
 
   disconnectWallet: () => {
+    // stop listening to extension events
     get().unsubscribeAccounts?.();
+
+    // clear everything
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem(LAST_CONNECTED_WALLET_KEY);
+
     set({
       isAuthenticated: false,
       user: null,
@@ -235,7 +243,6 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
       unsubscribeAccounts: undefined,
       isLoading: false,
     });
-    localStorage.removeItem(LAST_CONNECTED_WALLET_KEY);
   },
 
   setSelectedAccount: (account) => set({ selectedAccount: account }),

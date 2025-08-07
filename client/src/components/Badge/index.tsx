@@ -235,7 +235,7 @@ const BadgeDetailModal: React.FC<{
   
   return (
     <div 
-      className="cursor-pointer fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn"
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn"
       onClick={handleBackdropClick}
     >
       <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto transform transition-all duration-300 animate-slideIn">
