@@ -108,7 +108,7 @@ const Navbar = () => {
                   DotPassport
                 </span>
                 <span className="text-xs text-gray-500 -mt-1">
-                  Identity Protocol
+                  Polkadot Identity
                 </span>
               </div>
             </div>
