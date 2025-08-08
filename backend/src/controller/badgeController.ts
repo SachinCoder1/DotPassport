@@ -53,7 +53,7 @@ export async function getUserBadges(
       message: "User badges retrieved successfully.",
       count: userBadges.length,
       success: true,
-      badge_exists: !!userBadges,
+      badge_exists: userBadges.length > 0, // Indicate if user has any badges
     });
   } catch (err: any) {
     logger.error("Error getting user badges", { userId, error: err });

@@ -66,22 +66,22 @@ const Navbar = () => {
       icon: TrendingUp,
       active: pathname.startsWith("/app/reputation"),
     },
-    {
-      name: "Profile",
-      href: "/app/profile",
-      icon: User,
-      active: pathname.startsWith("/app/profile"),
-    },
+    // {
+    //   name: "Profile",
+    //   href: "/app/profile",
+    //   icon: User,
+    //   active: pathname.startsWith("/app/profile"),
+    // },
     // { name: "Community", href: "/app/community", icon: Users, active: pathname.startsWith("/app/community") },
   ];
 
   // Navigation items for non-authenticated users
-  const publicNavItems = [
-    { name: "Features", href: "#features" },
-    { name: "Developers", href: "#developers" },
-    { name: "Ecosystem", href: "#ecosystem" },
-    { name: "Docs", href: "/docs" },
-  ];
+  // const publicNavItems = [
+  // { name: "Features", href: "#features" },
+  // { name: "Developers", href: "#developers" },
+  // { name: "Ecosystem", href: "#ecosystem" },
+  // { name: "Docs", href: "/docs" },
+  // ];
 
   if (!client) return null;
 
@@ -115,8 +115,8 @@ const Navbar = () => {
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-1">
-              {isAuthenticated
-                ? // Authenticated navigation
+              {
+                isAuthenticated && // Authenticated navigation
                   authenticatedNavItems.map((item) => (
                     <button
                       key={item.name}
@@ -131,16 +131,17 @@ const Navbar = () => {
                       <span>{item.name}</span>
                     </button>
                   ))
-                : // Public navigation
-                  publicNavItems.map((item) => (
-                    <a
-                      key={item.name}
-                      href={item.href}
-                      className="text-gray-600 hover:text-gray-900 transition-colors font-medium px-4 py-2 rounded-full hover:bg-gray-50"
-                    >
-                      {item.name}
-                    </a>
-                  ))}
+                // : // Public navigation
+                //   publicNavItems?.map((item) => (
+                //     <a
+                //       key={item.name}
+                //       href={item.href}
+                //       className="text-gray-600 hover:text-gray-900 transition-colors font-medium px-4 py-2 rounded-full hover:bg-gray-50"
+                //     >
+                //       {item.name}
+                //     </a>
+                //   ))}
+              }
             </div>
 
             {/* Right side buttons */}

@@ -1,12 +1,20 @@
 import api, { publicApi } from "@/lib/api"; // Authenticated instance
-import { UserBadge, BadgeDefinition, RefreshBadgesResponse } from "@/types/api";
+import { UserBadge, BadgeDefinition, RefreshBadgesResponse, UserBadgeResponse } from "@/types/api";
 
 /**
  * (Private) Gets all badges earned by the authenticated user.
  */
 export const getUserBadges = async (): Promise<{ badges: UserBadge[] }> => {
-  const response = await api.get<{ badges: UserBadge[] }>("/badge");
-  return response.data;
+  const response = await api.get<UserBadgeResponse>("/badge");
+  // refresh the user badges if no badges are found.. badge_exists will be false
+  if (response.data.badge_exists === false) {
+    await refreshUserBadges();
+  }
+
+  // refetch the badges again to ensure we have the latest
+  const updatedResponse = await api.get<UserBadgeResponse>("/badge");
+
+  return updatedResponse.data;
 };
 
 /**

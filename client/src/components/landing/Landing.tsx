@@ -22,7 +22,7 @@ const LandingPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-purple-50">
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
+      <section className="pt-8 pb-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div
             className={`text-center transform transition-all duration-1000 ${
@@ -32,13 +32,19 @@ const LandingPage = () => {
             }`}
           >
             {/* Badge */}
-            <div className="inline-flex items-center space-x-2 bg-purple-100 text-purple-700 px-4 py-2 rounded-full mb-6 hover:bg-purple-200 transition-colors cursor-pointer">
-              <Star className="w-4 h-4" />
-              <span className="text-sm font-medium">
-                Built on Polkadot • Powered by XCM
-              </span>
-              <ChevronRight className="w-4 h-4" />
-            </div>
+            <a
+              href="https://github.com/Polkadot-Fast-Grants/apply/blob/master/applications/DotPassport.md"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <div className="inline-flex items-center space-x-2 bg-purple-100 text-purple-700 px-4 py-2 rounded-full mb-6 hover:bg-purple-200 transition-colors cursor-pointer">
+                <Star className="w-4 h-4" />
+                <span className="text-sm font-medium">
+                  10k USD Grant Received • Polkadot Fast Grants
+                </span>
+                <ChevronRight className="w-4 h-4" />
+              </div>
+            </a>
 
             {/* Main Heading */}
             <h1 className="text-5xl md:text-7xl font-bold text-gray-900 mb-6 leading-tight">
@@ -66,17 +72,17 @@ const LandingPage = () => {
                 <span>Get Started</span>
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </button>
-              <button className="flex items-center space-x-2 bg-white text-gray-700 px-8 py-4 rounded-full font-semibold text-lg border-2 border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all duration-300">
+              {/* <button className="flex items-center space-x-2 bg-white text-gray-700 px-8 py-4 rounded-full font-semibold text-lg border-2 border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all duration-300">
                 <Globe className="w-5 h-5" />
                 <span>View Demo</span>
-              </button>
+              </button> */}
             </div>
 
             {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
               <div className="text-center group hover:scale-105 transition-transform duration-300">
-                <div className="text-3xl font-bold text-gray-900 mb-2">15+</div>
-                <div className="text-gray-600">Parachain Partners</div>
+                <div className="text-3xl font-bold text-gray-900 mb-2">12+</div>
+                <div className="text-gray-600">Badges to claim</div>
               </div>
               <div className="text-center group hover:scale-105 transition-transform duration-300">
                 <div className="text-3xl font-bold text-gray-900 mb-2">
@@ -85,7 +91,9 @@ const LandingPage = () => {
                 <div className="text-gray-600">Verified Profiles</div>
               </div>
               <div className="text-center group hover:scale-105 transition-transform duration-300">
-                <div className="text-3xl font-bold text-gray-900 mb-2">1M+</div>
+                <div className="text-3xl font-bold text-gray-900 mb-2">
+                  10k+
+                </div>
                 <div className="text-gray-600">Badges Issued</div>
               </div>
             </div>
@@ -129,11 +137,12 @@ const LandingPage = () => {
                 <Network className="w-6 h-6 text-white" />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-4">
-                Cross-Chain Native
+                Accurate Identity
               </h3>
               <p className="text-gray-600 leading-relaxed">
-                Built on Polkadot's XCM protocol to aggregate activity across
-                all parachains into a unified, portable identity profile.
+                On-chain identity verification ensures your profile is always
+                up-to-date, reflecting your true contributions and activities
+                across the ecosystem.
               </p>
             </div>
 
@@ -158,7 +167,7 @@ const LandingPage = () => {
       <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-gray-900 to-purple-900 text-white">
         <div className="max-w-7xl mx-auto text-center">
           <h2 className="text-4xl md:text-5xl font-bold mb-6">
-            Ready to Build with{" "}
+            Ready to Get your Score with{" "}
             <span className="text-purple-300">DotPassport</span>?
           </h2>
           <p className="text-xl text-purple-100 mb-10 max-w-3xl mx-auto">

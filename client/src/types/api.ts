@@ -89,6 +89,13 @@ export interface UserBadge {
   earnedAt: string;
 }
 
+export interface UserBadgeResponse {
+  badges: UserBadge[];
+  message: string;
+  count: number;
+  success: boolean;
+  badge_exists: boolean;
+}
 export interface RefreshBadgesResponse {
   message: string;
   created: number;

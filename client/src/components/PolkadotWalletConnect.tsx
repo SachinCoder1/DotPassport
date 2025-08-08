@@ -73,7 +73,7 @@ export const NavbarWalletButton: React.FC<NavbarWalletButtonProps> = ({
     <div className="relative">
       <button
         onClick={onOpenModal}
-        className="cursor-pointer flex items-center space-x-3 bg-white/80 backdrop-blur-sm border border-gray-200 text-gray-700 px-4 py-1 rounded-full font-medium hover:bg-white hover:shadow-md transition-all duration-200 group"
+        className="cursor-pointer flex items-center space-x-3 bg-white/80 backdrop-blur-sm border border-gray-200 text-gray-700 px-2 py-1 rounded-full font-medium hover:bg-white hover:shadow-md transition-all duration-200 group"
       >
         <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center">
           <User className="w-4 h-4 text-white" />
