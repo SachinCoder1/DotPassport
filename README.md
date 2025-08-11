@@ -6,7 +6,7 @@
     <h1 style="margin: 0; padding: 0; border: none;">DotPassport.io</h1>
   </div>
 
-  <p style="margin-top: 8px;"><strong>Your on-chain identity and reputation layer for the Polkadot ecosystem.</strong></p>
+  <p style="margin-top: 8px;"><strong>Your identity and reputation for the Polkadot ecosystem.</strong></p>
 
   <div style="margin: 0 15px">
     <a href="https://dotpassport.io">
@@ -23,7 +23,7 @@
 
 ## 🌟 Project Overview
 
-**DotPassport** is a Polkadot  identity and reputation platform that enables users to build a portable, verifiable profile of their on-chain activity and ecosystem contributions. Users earn badges and trust signals by participating in staking, governance, DAOs, NFTs, liquidity pools, and more. dApps and parachains can integrate DotPassport to personalize experiences, gate access, or deliver targeted rewards based on robust Sybil-resistant reputation scores.
+**DotPassport** is a Polkadot  identity and reputation platform that enables users to build their polkadot profile of their on-chain activity and ecosystem contributions. Users earn badges and trust signals by participating in staking, governance, DAOs, NFTs, liquidity pools, and more. dApps and parachains can integrate DotPassport soon to personalize experiences, gate access, or deliver targeted rewards based on robust Sybil-resistant reputation scores.
 
 - **Live Demo:** [https://dotpassport.io](https://dotpassport.io)  
 - **Grant Proposal:** [GitHub · dotpassport-grant](https://github.com/Polkadot-Fast-Grants/apply/blob/master/applications/DotPassport.md)  
@@ -124,15 +124,6 @@ Frontend
 ```
 NEXT_PUBLIC_API_URL=http://localhost:4000/api/v1
 ```
-
----
-
-## 💻 Usage
-
-- **User Dashboard:** View badges, trust score, activity timeline.  
-- **Export Credentials:** Download DID-compliant JSON or verifiable credential.  
-- **Developer SDK Example:**
-Coming Soon
 
 ---
 
