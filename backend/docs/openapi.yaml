@@ -1,121 +1,789 @@
 openapi: 3.0.0
 info:
   title: DotPassport API
+  description: A comprehensive API for managing user authentication, profiles, reputation scores, and badges for a Polkadot-based application.
   version: 1.0.0
-  description: REST API for DotPassport
 servers:
-  - url: http://localhost:4000
-    description: Local server
-
+  - url: https://api.dotpassport.com/v1
+    description: Production server
 tags:
-  - name: Auth
-    description: Authentication endpoints
+  - name: Authentication
+    description: User login, token management, and challenge generation.
+  - name: Users
+    description: User profile and information retrieval.
+  - name: Scores
+    description: Reputation score management and retrieval.
+  - name: Badges
+    description: User badges and achievement definitions.
 
 paths:
-  /api/v1/auth/challenge:
+  /auth/challenge:
     post:
       tags:
-        - Auth
-      summary: Get a one-time challenge to sign
+        - Authentication
+      summary: Request a new login challenge
+      description: Generates a new, time-limited message (challenge) that a user must sign with their Polkadot wallet to authenticate.
       requestBody:
+        description: User's Polkadot address to generate a challenge for.
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - address
-              properties:
-                address:
-                  type: string
-                  description: Polkadot SS58 address
+              $ref: '#/components/schemas/ChallengeRequest'
       responses:
         '200':
-          description: Challenge message
+          description: A new challenge message has been successfully generated.
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
+                $ref: '#/components/schemas/ChallengeResponse'
         '400':
-          description: Invalid address or bad request
+          description: Bad Request (e.g., invalid address format).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
-  /api/v1/auth/polkadot:
+  /auth/polkadot:
     post:
       tags:
-        - Auth
-      summary: Verify signed challenge and issue tokens
+        - Authentication
+      summary: Sign in with a Polkadot wallet
+      description: Verifies the user's signature against a previously requested challenge. If successful, it logs the user in, creates a new user if necessary, and issues an access token and a refresh token.
       requestBody:
+        description: Signed challenge message and signature.
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - address
-                - message
-                - signature
-              properties:
-                address:
-                  type: string
-                message:
-                  type: string
-                signature:
-                  type: string
+              $ref: '#/components/schemas/PolkadotLoginRequest'
       responses:
         '200':
-          description: Access & refresh tokens
+          description: Authentication successful. Returns new access and refresh tokens.
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  accessToken:
-                    type: string
-                  refreshToken:
-                    type: string
+                $ref: '#/components/schemas/AuthTokensResponse'
         '400':
-          description: Bad challenge / mismatch
-        '401':
-          description: Invalid signature
-
-  /api/v1/auth/refresh:
-    post:
-      tags:
-        - Auth
-      summary: Refresh your access token
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: New access token
+          description: Bad Request (e.g., challenge not found, expired, or message mismatch).
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  accessToken:
-                    type: string
+                $ref: '#/components/schemas/ErrorResponse'
         '401':
-          description: Invalid or expired refresh token
+          description: Unauthorized (e.g., invalid signature).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
-  /api/v1/auth/logout:
+  /auth/refresh:
     post:
       tags:
-        - Auth
-      summary: Log out (revoke session)
+        - Authentication
+      summary: Refresh an access token
+      description: Issues a new access token using a valid refresh token.
+      security:
+        - refreshAuth: []
+      responses:
+        '200':
+          description: New access token generated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefreshTokenResponse'
+        '401':
+          description: Unauthorized (e.g., missing or invalid refresh token, or token expired).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: Log out the user
+      description: Invalidates the current session. For a stateless JWT system, this simply confirms the action and expects the client to delete their tokens.
       security:
         - bearerAuth: []
       responses:
         '200':
-          description: Logged out successfully
+          description: Logout successful.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogoutResponse'
         '401':
-          description: No valid bearer token
+          description: Unauthorized (e.g., missing or invalid access token).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /users/me:
+    get:
+      tags:
+        - Users
+      summary: Get the logged-in user's profile
+      description: Retrieves the profile, reputation score, and key details for the currently authenticated user.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User data retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoggedInUserResponse'
+        '401':
+          description: Unauthorized (e.g., missing or invalid access token).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /users/public/{address}:
+    get:
+      tags:
+        - Users
+      summary: Get a user's public profile
+      description: Retrieves a user's public profile, score, and badges using their Polkadot address. This endpoint is publicly accessible.
+      parameters:
+        - name: address
+          in: path
+          required: true
+          description: The Polkadot address of the user.
+          schema:
+            type: string
+            example: '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY'
+      responses:
+        '200':
+          description: Public profile data retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicProfileResponse'
+        '404':
+          description: User not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /scores:
+    get:
+      tags:
+        - Scores
+      summary: Get the authenticated user's score
+      description: Retrieves the current reputation score and its detailed breakdown for the logged-in user. If no score exists, a new one is calculated and returned.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User score retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserScoreResponse'
+        '401':
+          description: Unauthorized (e.g., missing or invalid access token).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /scores/categories:
+    get:
+      tags:
+        - Scores
+      summary: Get all score category definitions
+      description: Retrieves a list of all active score categories and their descriptions. This is used by the frontend to build the UI for the score breakdown.
+      responses:
+        '200':
+          description: Score categories retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScoreCategoriesResponse'
+        '500':
+          description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /scores/refresh:
+    post:
+      tags:
+        - Scores
+      summary: Recalculate and update a user's score
+      description: Triggers a recalculation of the authenticated user's reputation score based on the latest on-chain and off-chain data.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Score refreshed successfully or is already up to date.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserScoreRefreshResponse'
+        '201':
+          description: Score created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserScoreRefreshResponse'
+        '401':
+          description: Unauthorized (e.g., missing or invalid access token).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /badges/definitions:
+    get:
+      tags:
+        - Badges
+      summary: Get all badge definitions
+      description: Retrieves a list of all active badge definitions, including their levels, descriptions, and images. This is publicly accessible and used to display all possible badges.
+      responses:
+        '200':
+          description: Badge definitions retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadgeDefinitionsResponse'
+        '500':
+          description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /badges:
+    get:
+      tags:
+        - Badges
+      summary: Get the authenticated user's earned badges
+      description: Retrieves a list of all badges currently earned by the authenticated user.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User badges retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserBadgesResponse'
+        '401':
+          description: Unauthorized (e.g., missing or invalid access token).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /badges/refresh:
+    post:
+      tags:
+        - Badges
+      summary: Refresh a user's earned badges
+      description: Checks for new achievements and updates the authenticated user's badges, including leveling them up if applicable.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Badges refreshed successfully. Returns the latest list of earned badges.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserBadgesRefreshResponse'
+        '401':
+          description: Unauthorized (e.g., missing or invalid access token).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User or user address not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
+      bearerFormat: JWT
+      description: Requires an access token in the `Authorization` header with the `Bearer` scheme.
+    refreshAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Requires a refresh token in the `Authorization` header with the `Refresh` scheme.
+
+  schemas:
+    # --- AUTHENTICATION SCHEMAS ---
+    ChallengeRequest:
+      type: object
+      required:
+        - address
+      properties:
+        address:
+          type: string
+          description: The Polkadot address requesting a login challenge.
+          example: '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY'
+    ChallengeResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: The challenge message to be signed by the user.
+          example: 'Login to DotPassport. \nNonce: f00977a412b1a13b631d5b369c0d38e2'
+    PolkadotLoginRequest:
+      type: object
+      required:
+        - address
+        - message
+        - signature
+      properties:
+        address:
+          type: string
+          description: The user's Polkadot address.
+          example: '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY'
+        message:
+          type: string
+          description: The challenge message from the `/auth/challenge` endpoint.
+        signature:
+          type: string
+          description: The hex-encoded signature of the challenge message.
+    AuthTokensResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          description: The JWT for accessing protected resources.
+        refreshToken:
+          type: string
+          description: The JWT for requesting a new access token.
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+              description: The user's unique ID.
+            address:
+              type: string
+              description: The Polkadot address used for login.
+            profile:
+              type: string
+              description: The user's profile ID.
+    RefreshTokenResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          description: A new JWT for accessing protected resources.
+    LogoutResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Logged out"
+
+    # --- USER SCHEMAS ---
+    LoggedInUserResponse:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The user's display name, if set in their profile.
+          example: 'Alice'
+        wallet:
+          type: string
+          description: The user's primary Polkadot address.
+          example: '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY'
+        profile:
+          $ref: '#/components/schemas/Profile'
+        reputationScore:
+          type: number
+          description: The user's total reputation score.
+          example: 120.5
+        lastLogin:
+          type: string
+          format: date-time
+          description: The date and time of the user's last login.
+        isActive:
+          type: boolean
+          description: Whether the user's account is active.
+        success:
+          type: boolean
+          example: true
+    PublicProfileResponse:
+      type: object
+      properties:
+        address:
+          type: string
+          description: The primary Polkadot address of the user.
+          example: '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY'
+        lastLogin:
+          type: string
+          format: date-time
+          description: The date and time of the user's last login.
+        profile:
+          $ref: '#/components/schemas/Profile'
+        score:
+          oneOf:
+            - $ref: '#/components/schemas/PublicScore'
+            - type: 'null'
+        badges:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserBadge'
+    Profile:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: The unique ID of the profile.
+        user:
+          type: string
+          description: The ID of the associated user.
+        displayName:
+          type: string
+          description: The user's chosen display name.
+          example: 'Alice'
+        bio:
+          type: string
+          description: A short biography provided by the user.
+        socialLinks:
+          type: object
+          additionalProperties:
+            type: string
+        polkadotIdentities:
+          type: array
+          items:
+            $ref: '#/components/schemas/PolkadotIdentity'
+    PolkadotIdentity:
+      type: object
+      properties:
+        address:
+          type: string
+        display:
+          type: string
+        legal:
+          type: string
+        email:
+          type: string
+        web:
+          type: string
+        twitter:
+          type: string
+        github:
+          type: string
+        matrix:
+          type: string
+        discord:
+          type: string
+        judgements:
+          type: array
+          items:
+            type: string
+        role:
+          type: string
+        nonce:
+          type: string
+
+    # --- SCORE SCHEMAS ---
+    UserScoreResponse:
+      type: object
+      properties:
+        totalScore:
+          type: number
+          description: The user's total reputation score.
+        calculatedAt:
+          type: string
+          format: date-time
+          description: The date and time the score was last calculated.
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScoreCategory'
+        score_exists:
+          type: boolean
+          description: Always true on successful response.
+          example: true
+    PublicScore:
+      type: object
+      properties:
+        totalScore:
+          type: number
+        calculatedAt:
+          type: string
+          format: date-time
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScoreCategory'
+        score_exists:
+          type: boolean
+          description: True if a score exists for the user.
+    ScoreCategory:
+      type: object
+      properties:
+        key:
+          type: string
+          description: The unique key for the category.
+        score:
+          type: number
+          description: The score for this category.
+        reasons:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScoreReason'
+    ScoreReason:
+      type: object
+      properties:
+        key:
+          type: string
+        score:
+          type: number
+    ScoreCategoriesResponse:
+      type: object
+      properties:
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/CategoryDefinition'
+        success:
+          type: boolean
+        message:
+          type: string
+    CategoryDefinition:
+      type: object
+      properties:
+        _id:
+          type: string
+        key:
+          type: string
+        displayName:
+          type: string
+        description:
+          type: string
+        active:
+          type: boolean
+        order:
+          type: number
+        reasons:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReasonDefinition'
+    ReasonDefinition:
+      type: object
+      properties:
+        key:
+          type: string
+        displayName:
+          type: string
+        description:
+          type: string
+        score:
+          type: number
+    UserScoreRefreshResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - Updated
+            - Created
+            - NoChange
+        message:
+          type: string
+        score:
+          $ref: '#/components/schemas/ScoreDocument'
+    ScoreDocument:
+      type: object
+      properties:
+        _id:
+          type: string
+        user:
+          type: string
+        totalScore:
+          type: number
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScoreCategory'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    # --- BADGE SCHEMAS ---
+    BadgeDefinitionsResponse:
+      type: object
+      properties:
+        badges:
+          type: array
+          items:
+            $ref: '#/components/schemas/BadgeDefinition'
+        message:
+          type: string
+        success:
+          type: boolean
+    BadgeDefinition:
+      type: object
+      properties:
+        _id:
+          type: string
+        key:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        order:
+          type: number
+        active:
+          type: boolean
+        levels:
+          type: array
+          items:
+            $ref: '#/components/schemas/BadgeLevel'
+    BadgeLevel:
+      type: object
+      properties:
+        level:
+          type: number
+        key:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        iconUrl:
+          type: string
+    UserBadgesResponse:
+      type: object
+      properties:
+        badges:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserBadge'
+        message:
+          type: string
+        count:
+          type: integer
+        success:
+          type: boolean
+        badge_exists:
+          type: boolean
+    UserBadge:
+      type: object
+      properties:
+        _id:
+          type: string
+        user:
+          type: string
+        badgeKey:
+          type: string
+        achievedLevel:
+          type: number
+        achievedLevelKey:
+          type: string
+        achievedLevelTitle:
+          type: string
+        achievedAt:
+          type: string
+          format: date-time
+    UserBadgesRefreshResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        created:
+          type: number
+        updated:
+          type: number
+        badges:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserBadge'
+
+    # --- COMMON SCHEMAS ---
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: A user-friendly error message.
+          example: 'Unauthorized'
+        code:
+          type: string
+          description: An optional, machine-readable error code.
+          example: 'TOKEN_EXPIRED'
