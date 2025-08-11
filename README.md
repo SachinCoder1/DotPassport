@@ -30,6 +30,12 @@
 
 ---
 
+## 🖼️ Platform Preview
+| ![DotPassport platform preview](https://i.postimg.cc/5NrDhGCg/Screenshot-2025-08-11-200514.png) |
+|:--:|
+| *DotPassport platform preview* |
+
+
 ## 🔍 Why DotPassport?
 
 Many ecosystems (e.g. Ethereum) rely on Gitcoin Passport, Sismo, or Proof of Humanity for reputation and identity signals. Polkadot lacks a unified, user-facing layer that aggregates on-chain activity across parachains. DotPassport fills this gap by:
