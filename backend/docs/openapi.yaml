@@ -10,6 +10,12 @@ servers:
 tags:
   - name: Auth
     description: Authentication endpoints
+  - name: Users
+    description: User profile endpoints
+  - name: Badges
+    description: Badge endpoints
+  - name: Scores
+    description: Score endpoints
 
 paths:
   /api/v1/auth/challenge:
@@ -114,8 +120,445 @@ paths:
         '401':
           description: No valid bearer token
 
+  /api/v1/users/me:
+    get:
+      tags:
+        - Users
+      summary: Get the logged-in user's profile, score, and badges
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Logged in user profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfileResponse'
+        '401':
+          description: Unauthorized
+
+  /api/v1/users/public/{address}:
+    get:
+      tags:
+        - Users
+      summary: Get a user's public profile, score, and badges by address
+      parameters:
+        - in: path
+          name: address
+          required: true
+          schema:
+            type: string
+          description: Polkadot SS58 address
+      responses:
+        '200':
+          description: Public profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicProfileResponse'
+        '404':
+          description: User not found
+
+  /api/v1/badges/definitions:
+    get:
+      tags:
+        - Badges
+      summary: Get all available badge definitions
+      responses:
+        '200':
+          description: List of badge definitions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadgeDefinitionsResponse'
+
+  /api/v1/badges:
+    get:
+      tags:
+        - Badges
+      summary: Get the authenticated user's currently earned badges
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of user badges
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserBadgesResponse'
+        '401':
+          description: Unauthorized
+
+  /api/v1/badges/refresh:
+    post:
+      tags:
+        - Badges
+      summary: Check for new achievements and update the user's earned badges
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Badges refreshed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefreshBadgesResponse'
+        '401':
+          description: Unauthorized
+
+  /api/v1/scores:
+    get:
+      tags:
+        - Scores
+      summary: Get the authenticated user's current score with detailed breakdown
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current score
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScoreResponse'
+        '401':
+          description: Unauthorized
+
+  /api/v1/scores/categories:
+    get:
+      tags:
+        - Scores
+      summary: Get all score category definitions for building UI
+      responses:
+        '200':
+          description: Score categories
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScoreCategoriesResponse'
+
+  /api/v1/scores/refresh:
+    post:
+      tags:
+        - Scores
+      summary: Calculate and update the user's score
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Score refreshed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefreshScoreResponse'
+        '401':
+          description: Unauthorized
+
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
+  schemas:
+    PolkadotIdentity:
+      type: object
+      properties:
+        address:
+          type: string
+        display:
+          type: string
+          nullable: true
+        legal:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        web:
+          type: string
+          nullable: true
+        twitter:
+          type: string
+          nullable: true
+        github:
+          type: string
+          nullable: true
+        matrix:
+          type: string
+          nullable: true
+        discord:
+          type: string
+          nullable: true
+        judgements:
+          type: array
+          items:
+            type: object
+            properties:
+              index:
+                type: integer
+              judgement:
+                type: string
+        role:
+          type: string
+          nullable: true
+        nonce:
+          type: integer
+          nullable: true
+    Profile:
+      type: object
+      properties:
+        displayName:
+          type: string
+          nullable: true
+        avatarUrl:
+          type: string
+          nullable: true
+        bio:
+          type: string
+          nullable: true
+        socialLinks:
+          type: object
+          additionalProperties:
+            type: string
+        polkadotIdentities:
+          type: array
+          items:
+            $ref: '#/components/schemas/PolkadotIdentity'
+    CategoryScore:
+      type: object
+      properties:
+        score:
+          type: number
+        reason:
+          type: string
+        title:
+          type: string
+    Score:
+      type: object
+      properties:
+        totalScore:
+          type: number
+        calculatedAt:
+          type: string
+          format: date-time
+        categories:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/CategoryScore'
+        score_exists:
+          type: boolean
+    ThresholdDetail:
+      type: object
+      properties:
+        label:
+          type: string
+        description:
+          type: string
+    ReasonDetail:
+      type: object
+      properties:
+        key:
+          type: string
+        points:
+          type: number
+        title:
+          type: string
+        description:
+          type: string
+        thresholds:
+          type: array
+          items:
+            $ref: '#/components/schemas/ThresholdDetail'
+        advices:
+          type: array
+          items:
+            type: string
+    CategoryDefinition:
+      type: object
+      properties:
+        key:
+          type: string
+        displayName:
+          type: string
+        short_description:
+          type: string
+        long_description:
+          type: string
+        order:
+          type: number
+        active:
+          type: boolean
+        reasons:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReasonDetail'
+    ConstraintDetail:
+      type: object
+      properties:
+        label:
+          type: string
+        description:
+          type: string
+    BadgeLevelDefinition:
+      type: object
+      properties:
+        level:
+          type: integer
+        key:
+          type: string
+        value:
+          type: number
+        title:
+          type: string
+        constraints:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConstraintDetail'
+        advice:
+          type: array
+          items:
+            type: string
+        shortDescription:
+          type: string
+        longDescription:
+          type: string
+    BadgeDefinition:
+      type: object
+      properties:
+        key:
+          type: string
+        title:
+          type: string
+        shortDescription:
+          type: string
+        longDescription:
+          type: string
+        metric:
+          type: string
+        order:
+          type: number
+        active:
+          type: boolean
+        levels:
+          type: array
+          items:
+            $ref: '#/components/schemas/BadgeLevelDefinition'
+        imageUrl:
+          type: string
+          nullable: true
+        metadata:
+          type: object
+          additionalProperties: true
+    UserBadge:
+      type: object
+      properties:
+        user:
+          type: string
+        badgeKey:
+          type: string
+        achievedLevel:
+          type: integer
+        achievedLevelKey:
+          type: string
+        achievedLevelTitle:
+          type: string
+        earnedAt:
+          type: string
+          format: date-time
+    UserProfileResponse:
+      type: object
+      properties:
+        name:
+          type: string
+        wallet:
+          type: string
+        profile:
+          $ref: '#/components/schemas/Profile'
+        reputationScore:
+          type: number
+        lastLogin:
+          type: string
+          format: date-time
+        isActive:
+          type: boolean
+        success:
+          type: boolean
+    PublicProfileResponse:
+      type: object
+      properties:
+        address:
+          type: string
+        lastLogin:
+          type: string
+          format: date-time
+        profile:
+          $ref: '#/components/schemas/Profile'
+        score:
+          oneOf:
+            - $ref: '#/components/schemas/Score'
+            - type: 'null'
+        badges:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserBadge'
+    BadgeDefinitionsResponse:
+      type: object
+      properties:
+        badges:
+          type: array
+          items:
+            $ref: '#/components/schemas/BadgeDefinition'
+        message:
+          type: string
+        success:
+          type: boolean
+    UserBadgesResponse:
+      type: object
+      properties:
+        badges:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserBadge'
+        message:
+          type: string
+        count:
+          type: integer
+        success:
+          type: boolean
+        badge_exists:
+          type: boolean
+    RefreshBadgesResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        created:
+          type: integer
+        updated:
+          type: integer
+        badges:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserBadge'
+    ScoreResponse:
+      $ref: '#/components/schemas/Score'
+    ScoreCategoriesResponse:
+      type: object
+      properties:
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/CategoryDefinition'
+        success:
+          type: boolean
+        message:
+          type: string
+    RefreshScoreResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        message:
+          type: string
+        score:
+          $ref: '#/components/schemas/Score'
+
