@@ -79,8 +79,11 @@ api.interceptors.response.use(
 
       const refreshToken = localStorage.getItem('refreshToken');
       if (!refreshToken) {
-        console.error("No refresh token, redirecting to login.");
-        window.location.href = '/login'; // Redirect to login
+        console.error("No refresh token, redirecting to app.");
+        window.location.href = '/app'; // Redirect to app
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        window.location.reload();
         return Promise.reject(error);
       }
 
@@ -107,7 +110,8 @@ api.interceptors.response.use(
         console.error("Token refresh failed, logging out.", refreshError);
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
-        window.location.href = '/login'; // Redirect on final failure
+        window.location.href = '/app'; // Redirect on final failure
+        window.location.reload();
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
