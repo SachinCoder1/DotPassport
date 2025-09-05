@@ -2,7 +2,5 @@
 /dist
 /logs
 .gitkeep
-.env.local
-.env.test
-.env
 notes.txt
+.env*
