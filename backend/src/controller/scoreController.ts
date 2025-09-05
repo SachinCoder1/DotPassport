@@ -37,7 +37,6 @@ export async function refreshScore(
       score,
     });
   } catch (err: any) {
-    console.error("Error refreshing score", { userId, error: err });
     logger.error("Error in refreshScore handler", { userId, error: err });
     return next(
       err instanceof HttpError

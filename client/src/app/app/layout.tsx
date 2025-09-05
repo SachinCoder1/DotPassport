@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useEffect } from "react"; // ✅ 1. Add useEffect import
+import { useEffect } from "react";
 import AppLanding from "@/components/landing/AppLanding";
 import { useWalletStore } from "@/store/walletStore";
 import { useIsClient } from "usehooks-ts";
@@ -20,18 +20,16 @@ export default function Layout({
   children: React.ReactNode;
 }>) {
   const isClient = useIsClient();
-  
-  // ✅ 2. Get the 'initialize' action along with the state
+
   const { isInitializing, isAuthenticated, initialize } = useWalletStore();
 
-  // ✅ 3. Call initialize from here, the top-level layout component
   useEffect(() => {
     // This effect runs once when the component mounts on the client,
     // triggering our session check.
     initialize("dotpassport");
   }, [initialize]); // The dependency array ensures it only runs once
 
-  console.log( "Layout state:", { isClient, isInitializing, isAuthenticated } );
+  console.log("Layout state:", { isClient, isInitializing, isAuthenticated });
 
   if (!isClient || isInitializing) {
     return <InitialLoader />;

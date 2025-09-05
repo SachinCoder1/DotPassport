@@ -10,6 +10,7 @@ import {
   requestChallenge,
   loginWithPolkadot,
   logoutUser,
+  loginForTest,
 } from "@/service/authService";
 import type { LoggedInUser } from "@/types/api";
 import { getMe } from "@/service/profileService";
@@ -45,12 +46,15 @@ interface WalletActions {
   logout: () => Promise<void>;
   disconnectWallet: () => void;
   setSelectedAccount: (account: InjectedAccountWithMeta | null) => void;
+  loginAsTester: (testAddress: string) => Promise<boolean>;
 }
 
 type WalletStore = WalletState & WalletActions;
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 const LAST_CONNECTED_WALLET_KEY = "last_connected_polkadot_wallet_source";
+// Key for storing tester status in localStorage
+const IS_TESTER_KEY = "is_tester_mode";
 
 export const useWalletStore = create<WalletStore>((set, get) => ({
   // Initial State
@@ -70,33 +74,57 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
   // --- ACTIONS ---
 
   initialize: async (dAppAppName) => {
+    // Updated initialize logic
     try {
       const accessToken =
         typeof window !== "undefined"
           ? localStorage.getItem("accessToken")
           : null;
+
       if (accessToken) {
         try {
           const userData = await getMe();
-          set({ user: userData, isAuthenticated: true });
+          const isTesterSession =
+            localStorage.getItem(IS_TESTER_KEY) === "true";
+
+          if (isTesterSession) {
+            // If it's a tester session, reconstruct the mock account
+            const mockAccount: InjectedAccountWithMeta = {
+              address: userData.wallet, // Use address from the fetched user
+              meta: {
+                name: "Tester Account",
+                source: "test-mode",
+                genesisHash: null,
+              },
+            };
+            set({
+              user: userData,
+              isAuthenticated: true,
+              isConnected: true, // A tester is considered connected
+              selectedAccount: mockAccount,
+            });
+          } else {
+            // It's a regular user session, check for last connected wallet
+            set({ user: userData, isAuthenticated: true });
+            const lastConnectedSource =
+              typeof window !== "undefined"
+                ? localStorage.getItem(LAST_CONNECTED_WALLET_KEY)
+                : null;
+            if (lastConnectedSource) {
+              await get().connectWallet(lastConnectedSource, dAppAppName);
+            }
+          }
         } catch (error) {
           console.error("Session check failed, logging out:", error);
-          // This will handle cases where the token is expired or invalid.
           get().disconnectWallet();
         }
-      }
-      const lastConnectedSource =
-        typeof window !== "undefined"
-          ? localStorage.getItem(LAST_CONNECTED_WALLET_KEY)
-          : null;
-      if (lastConnectedSource) {
-        await get().connectWallet(lastConnectedSource, dAppAppName);
       }
     } catch (error) {
       console.error("Initialization error:", error);
     } finally {
       set({ isInitializing: false });
     }
+    // END: MODIFIED
   },
 
   connectWallet: async (source, dAppAppName) => {
@@ -212,6 +240,53 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
     }
   },
 
+  loginAsTester: async (testAddress: string) => {
+    set({
+      isLoading: true,
+      status: "info",
+      statusMessage: "Attempting test login...",
+    });
+    try {
+      const { user, accessToken } = await loginForTest(testAddress);
+      if (!user || !accessToken) {
+        throw new Error("Test login failed: No user data returned.");
+      }
+      const mockAccount: InjectedAccountWithMeta = {
+        address: user.address,
+        meta: {
+          name: "Tester Account",
+          source: "test-mode",
+          genesisHash: null,
+        },
+      };
+
+      set({
+        isAuthenticated: true,
+        isConnected: true,
+        user: user as any,
+        selectedAccount: mockAccount,
+        status: "success",
+        statusMessage: "Test login successful!",
+        isLoading: false,
+      });
+
+      // Save the tester status to localStorage
+      localStorage.setItem(IS_TESTER_KEY, "true");
+
+      return true;
+    } catch (err: any) {
+      const message = isAxiosError(err)
+        ? err.response?.data?.message
+        : err.message;
+      set({
+        status: "error",
+        statusMessage: `Test login failed: ${message}`,
+        isLoading: false,
+      });
+      return false;
+    }
+  },
+
   logout: async () => {
     try {
       await logoutUser();
@@ -223,13 +298,13 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
   },
 
   disconnectWallet: () => {
-    // stop listening to extension events
     get().unsubscribeAccounts?.();
 
-    // clear everything
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
     localStorage.removeItem(LAST_CONNECTED_WALLET_KEY);
+    // Clear the tester status on logout
+    localStorage.removeItem(IS_TESTER_KEY);
 
     set({
       isAuthenticated: false,

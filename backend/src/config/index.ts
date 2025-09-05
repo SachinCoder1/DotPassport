@@ -5,7 +5,7 @@ import dotenv from "dotenv";
 dotenv.config();
 const { DEVELOPMENT, TESTING, PRODUCTION } = ENV_TYPE;
 
-export const ENV = process.env.NODE_ENV as ENV_TYPE;
+export const ENV = (process.env.NODE_ENV as ENV_TYPE) || ENV_TYPE.DEVELOPMENT;
 export const PORT = process.env.PORT;
 export const MONGO_URI =
   ENV === DEVELOPMENT
@@ -35,3 +35,5 @@ export const CLIENT_URL = envConfig.CLIENT_URL;
 export const API_VERSION = "v1";
 
 export const DEFAULT_API_URL = `/api/${API_VERSION}`;
+
+export const TEST_POLKADOT_ADDRESS = process.env.TEST_POLKADOT_ADDRESS!;

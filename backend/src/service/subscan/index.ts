@@ -434,12 +434,6 @@ async function _fetchAccountAgeDays(address: string): Promise<number> {
   }
 }
 
-
-
-
-
-
-
 async function _fetchAccountDetailsByAddress(address: string): Promise<any> {
   try {
     // api link: /api/v2/scan/search and pass key as address

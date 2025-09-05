@@ -140,7 +140,7 @@ export async function calculateScore(address: string): Promise<ReturnType> {
       categoryDetails.map((c) => [c.key, { title: c.displayName }])
     );
 
-    console.log("Category map", categoryMap);
+    // console.log("Category map", categoryMap);
 
     // 1) Fetch and process all data into a clean metrics object
     const metrics = await fetchAndProcessOnChainData(address);
@@ -188,7 +188,7 @@ export async function calculateScore(address: string): Promise<ReturnType> {
       // Use 'as unknown as' for a safe and explicit type assertion
     ) as unknown as ScoreBreakdown;
 
-    console.log("Calculated scores", categories); 
+    // console.log("Calculated scores", categories); 
 
     // 3) Aggregate total score from the categories
     const total = Object.values(categories).reduce(

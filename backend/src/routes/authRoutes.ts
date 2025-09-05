@@ -5,6 +5,7 @@ import {
   polkadotLogin,
   refreshToken,
   logout,
+  polkadotLoginTest,
 } from "~/controller/authController";
 import { validateRequest } from "~/middleware/validateResource";
 
@@ -22,6 +23,11 @@ router.post(
   "/polkadot",
   validateRequest({ body: polkadotLoginSchema }),
   polkadotLogin
+);
+
+router.post(
+  "/polkadot/test",
+  polkadotLoginTest
 );
 
 // 3. Refresh & logout

@@ -28,6 +28,7 @@ export async function getLoggedInUser(
       lastLogin: user.lastLogin,
       isActive: user.isActive,
       success: true,
+      isTester: user.isTester || false,
     });
   } catch (err: any) {
     logger.error("Error in getLoggedInUser", { error: err });

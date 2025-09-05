@@ -205,7 +205,7 @@ const WalletSelector: React.FC<{
         Connect with one of our available wallet providers
       </p>
     </div>
-    {wallets.map((wallet) => (
+    {wallets?.map((wallet) => (
       <button
         key={wallet.id}
         onClick={() => onSelectWallet(wallet.id)}
@@ -239,10 +239,16 @@ const WalletSelector: React.FC<{
         </div>
       </button>
     ))}
+
+    {!wallets || wallets.length === 0 ? (
+      <div className="text-center text-gray-500">
+        No wallets available. Please install subwallet or talisman wallet to
+        continue.
+      </div>
+    ) : null}
   </div>
 );
 
-// Other Components (LoadingState, AuthSuccessState, ConnectedState) remain unchanged...
 const LoadingState: React.FC<{
   title: string;
   description: string;

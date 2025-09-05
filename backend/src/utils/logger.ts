@@ -1,4 +1,5 @@
 import { createLogger, format, transports } from "winston";
+import { ENV_TYPE } from "~/types/enum";
 
 const { combine, timestamp, printf, errors, colorize, splat, metadata } =
   format;
@@ -93,6 +94,7 @@ const fileFormat = combine(
 export const logger = createLogger({
   level: process.env.LOG_LEVEL || "info",
   format: fileFormat,
+  silent: process.env.NODE_ENV === ENV_TYPE.TESTING,
   transports: [
     new transports.Console({ format: consoleFormat }),
     new transports.File({ filename: "logs/error.log", level: "error" }),

@@ -12,6 +12,8 @@ import {
   BookOpen,
   Users,
   Settings,
+  TestTube2,
+  LogOut,
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useIsClient } from "usehooks-ts";
@@ -27,7 +29,7 @@ const Navbar = () => {
   const client = useIsClient();
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
 
-  const { isConnected, isAuthenticated } = useWalletStore();
+  const { isAuthenticated, selectedAccount, logout } = useWalletStore();
 
   const onNavigate = (page: string) => {
     if (page === "home") {
@@ -85,6 +87,10 @@ const Navbar = () => {
 
   if (!client) return null;
 
+
+    const isTester = isAuthenticated && selectedAccount?.meta.source === 'test-mode';
+
+    console.log("Is Tester:", isTester);
   return (
     <>
       <nav className="fixed top-0 w-full bg-white/80 backdrop-blur-xl border-b border-gray-200/50 z-50 transition-all duration-300">
@@ -147,11 +153,34 @@ const Navbar = () => {
             {/* Right side buttons */}
             <div className="flex items-center space-x-4">
               {/* Wallet button for app pages */}
+              {/*  Conditional rendering for tester vs real user */}
               {(currentPage === "app" || isAuthenticated) && (
-                <NavbarWalletButton
-                  onOpenModal={() => setIsWalletModalOpen(true)}
-                />
+                isTester ? (
+                  // If user is a tester, show this special button
+                  <div className="flex items-center space-x-2 bg-yellow-50 border border-yellow-300 text-yellow-800 px-3 py-1.5 rounded-full">
+                     <TestTube2 className="w-4 h-4" />
+                     <div className="flex flex-col text-left">
+                        <span className="text-xs font-bold leading-tight">Tester Mode</span>
+                        <span className="text-xs font-mono leading-tight">
+                            {selectedAccount?.address.slice(0, 6)}...{selectedAccount?.address.slice(-4)}
+                        </span>
+                     </div>
+                     <button
+                        onClick={logout}
+                        title="End Test Session"
+                        className="p-1.5 rounded-full hover:bg-yellow-200 transition-colors"
+                     >
+                        <LogOut className="w-4 h-4"/>
+                     </button>
+                  </div>
+                ) : (
+                  // Otherwise, show the normal wallet button
+                  <NavbarWalletButton
+                    onOpenModal={() => setIsWalletModalOpen(true)}
+                  />
+                )
               )}
+              {/* END: MODIFIED */}
 
               {/* Launch App button for home page when not authenticated */}
               {currentPage === "home" && !isAuthenticated && (
@@ -163,17 +192,6 @@ const Navbar = () => {
                   <ArrowRight className="w-4 h-4" />
                 </button>
               )}
-
-              {/* Settings/Profile dropdown for authenticated users */}
-              {/* {isAuthenticated && (
-                <button
-                  onClick={() => router.push("/app/settings")}
-                  className="cursor-pointer p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-all duration-200"
-                  title="Settings"
-                >
-                  <Settings className="w-5 h-5" />
-                </button>
-              )} */}
             </div>
           </div>
         </div>

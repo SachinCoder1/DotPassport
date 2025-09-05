@@ -9,6 +9,7 @@ export interface IUser extends Document {
   reputationScore: number;
   sybilScore: number;
   badges: Types.ObjectId[];
+  isTester: boolean;
   loginHistory: Types.ObjectId[];
   lastLogin?: Date;
   refreshTokens?: {
@@ -49,6 +50,8 @@ const UserSchema = new Schema<IUser>(
     loginHistory: [{ type: Schema.Types.ObjectId, ref: 'LoginHistory' }],
 
     lastLogin: { type: Date, default: null },
+
+    isTester: { type: Boolean, default: false },
 
     refreshTokens: [
       {
