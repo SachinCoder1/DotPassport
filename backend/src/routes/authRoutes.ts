@@ -9,7 +9,7 @@ import {
 } from "~/controller/authController";
 import { validateRequest } from "~/middleware/validateResource";
 
-const router = Router();
+const router = Router(); 
 
 // 1. Get a fresh challenge
 router.post(
