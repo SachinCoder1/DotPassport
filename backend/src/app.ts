@@ -15,6 +15,8 @@ import userRoutes from "~/routes/userRoutes";
 import authRoutes from "~/routes/authRoutes";
 import scoreRoutes from "~/routes/scoreRoutes";
 import badgeRoutes from "~/routes/badgeRoutes";
+import adminApiKeyRoutes from "~/developer/routes/adminRoutes";
+import developerRoutes from "~/developer/routes/developerRoutes";
 import { OpenAPIV3 } from "openapi-types";
 
 export function createApp() {
@@ -28,8 +30,9 @@ export function createApp() {
   app.use(helmet());
   app.use(cors({ origin: [CLIENT_URL] }));
 
+  // --- Rate limiting for v1 API only (v2 has its own per-key limits)
   app.use(
-    "/api",
+    "/api/v1",
     rateLimit({
       windowMs: 15 * 60 * 1000, // 15 minutes
       max: 350, // limit each IP to 350 requests per window
@@ -51,11 +54,17 @@ export function createApp() {
     swaggerUI.setup(swaggerDocument, { explorer: true })
   );
 
-  // --- API routes
+  // --- v1 API routes (existing)
   app.use(`${DEFAULT_API_URL}/auth`, authRoutes);
   app.use(`${DEFAULT_API_URL}/user`, userRoutes);
   app.use(`${DEFAULT_API_URL}/score`, scoreRoutes);
   app.use(`${DEFAULT_API_URL}/badge`, badgeRoutes);
+
+  // --- Admin routes for API key management (JWT-protected)
+  app.use(`${DEFAULT_API_URL}/admin/api-keys`, adminApiKeyRoutes);
+
+  // --- v2 Developer API routes (API key-protected)
+  app.use("/api/v2", developerRoutes);
 
   // --- Health & root
   app.get("/", (_req, res) => res.send("Hello World!"));
