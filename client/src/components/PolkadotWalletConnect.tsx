@@ -596,11 +596,7 @@ export const WalletConnectModal: React.FC<WalletConnectModalProps> = ({
     }
   };
 
-  const handleClose = (e?: React.MouseEvent) => {
-    if (e) {
-      e.stopPropagation();
-      e.preventDefault();
-    }
+  const handleClose = () => {
     if (isSigning || currentStep === "auth-success") {
       // ...show a warning toast instead of closing the modal.
       toast.warning("Signing is required to continue", {
@@ -731,7 +727,7 @@ export const WalletConnectModal: React.FC<WalletConnectModalProps> = ({
                     </span>
                   </div>
                   <button
-                    onClick={(e) => handleClose(e)}
+                    onClick={handleClose}
                     disabled={isSigning || currentStep === "auth-success"}
                     className={`cursor-pointer p-2 rounded-full transition-colors relative z-10 ${
                       isSigning || currentStep === "auth-success"
