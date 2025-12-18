@@ -96,6 +96,37 @@ export enum ScoreRefreshStatus {
   NoChange = "NoChange",
 }
 
+/**
+ * Enum for different types of data fetch errors
+ */
+export enum DataFetchErrorType {
+  NetworkError = "NETWORK_ERROR",
+  ApiError = "API_ERROR",
+  AccountNotFound = "ACCOUNT_NOT_FOUND",
+  RateLimited = "RATE_LIMITED",
+  Unknown = "UNKNOWN",
+}
+
+/**
+ * Metadata about errors that occurred during score calculation
+ */
+export interface ScoreErrorMetadata {
+  category: string;
+  errorType: DataFetchErrorType;
+  message: string;
+  usedFallback: boolean;
+}
+
+/**
+ * Extended return type with error information
+ */
+export interface ScoreResult {
+  total: number;
+  categories: ScoreBreakdown;
+  errors?: ScoreErrorMetadata[];
+  isPartial: boolean;
+}
+
 
 
 

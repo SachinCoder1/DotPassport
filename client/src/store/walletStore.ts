@@ -37,6 +37,7 @@ interface WalletState {
   isInitializing: boolean;
   user: LoggedInUser | null;
   unsubscribeAccounts: (() => void) | undefined;
+  isWalletModalOpen: boolean;
 }
 
 interface WalletActions {
@@ -47,6 +48,8 @@ interface WalletActions {
   disconnectWallet: () => void;
   setSelectedAccount: (account: InjectedAccountWithMeta | null) => void;
   loginAsTester: (testAddress: string) => Promise<boolean>;
+  openWalletModal: () => void;
+  closeWalletModal: () => void;
 }
 
 type WalletStore = WalletState & WalletActions;
@@ -70,6 +73,7 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
   isInitializing: true,
   user: null,
   unsubscribeAccounts: undefined,
+  isWalletModalOpen: false,
 
   // --- ACTIONS ---
 
@@ -321,4 +325,8 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
   },
 
   setSelectedAccount: (account) => set({ selectedAccount: account }),
+
+  openWalletModal: () => set({ isWalletModalOpen: true }),
+
+  closeWalletModal: () => set({ isWalletModalOpen: false }),
 }));

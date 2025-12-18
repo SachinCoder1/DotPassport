@@ -1,0 +1,330 @@
+import { Request, Response, NextFunction } from 'express';
+import { HttpError } from '~/errors/HttpError';
+import { logger } from '~/utils/logger';
+import { User } from '~/models/User';
+import { Profile } from '~/models/Profile';
+import { Score } from '~/models/Score';
+import { UserBadge } from '~/models/UserBadge';
+import { Badge } from '~/models/Badge';
+import { Category } from '~/models/Category';
+
+/**
+ * Get user profile by address
+ * GET /api/v2/profiles/:address
+ */
+export async function getProfileByAddress(
+  req: Request<{ address: string }>,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const address = req.params.address;
+
+    // Find user by address
+    const user = await User.findOne({ addresses: address }).populate('profile');
+    if (!user || !user.profile) {
+      return next(new HttpError(404, 'Profile not found'));
+    }
+
+    const profile = await Profile.findById(user.profile);
+    if (!profile) {
+      return next(new HttpError(404, 'Profile not found'));
+    }
+
+    // Return only public fields
+    res.status(200).json({
+      success: true,
+      data: {
+        address,
+        displayName: profile.displayName,
+        avatarUrl: profile.avatarUrl,
+        bio: profile.bio,
+        socialLinks: Object.fromEntries(profile.socialLinks || new Map()),
+        polkadotIdentities: profile.polkadotIdentities.map((id) => ({
+          address: id.address,
+          display: id.display,
+          web: id.web,
+          twitter: id.twitter,
+          github: id.github,
+          judgements: id.judgements,
+        })),
+      },
+    });
+  } catch (err: any) {
+    logger.error('Error in getProfileByAddress', { error: err });
+    return next(
+      err instanceof HttpError ? err : new HttpError(500, 'Failed to get profile')
+    );
+  }
+}
+
+/**
+ * Get user scores by address
+ * GET /api/v2/scores/:address
+ */
+export async function getScoresByAddress(
+  req: Request<{ address: string }>,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const address = req.params.address;
+
+    // Find user by address
+    const user = await User.findOne({ addresses: address });
+    if (!user) {
+      return next(new HttpError(404, 'User not found'));
+    }
+
+    // Find score
+    const score = await Score.findOne({ user: user._id });
+    if (!score) {
+      return next(new HttpError(404, 'Score not found'));
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        address,
+        totalScore: score.totalScore,
+        calculatedAt: score.updatedAt,
+        categories: Object.fromEntries(score.categories),
+      },
+    });
+  } catch (err: any) {
+    logger.error('Error in getScoresByAddress', { error: err });
+    return next(
+      err instanceof HttpError ? err : new HttpError(500, 'Failed to get scores')
+    );
+  }
+}
+
+/**
+ * Get a specific category score for a user by address and category key
+ * GET /api/v2/scores/:address/:categoryKey
+ */
+export async function getSpecificCategoryScore(
+  req: Request<{ address: string; categoryKey: string }>,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const { address, categoryKey } = req.params;
+
+    // Find user by address
+    const user = await User.findOne({ addresses: address });
+    if (!user) {
+      return next(new HttpError(404, 'User not found'));
+    }
+
+    // Find score
+    const score = await Score.findOne({ user: user._id });
+    if (!score) {
+      return next(new HttpError(404, 'Score not found'));
+    }
+
+    // Get the specific category score
+    const categoryScore = score.categories.get(categoryKey as any);
+    if (categoryScore === undefined) {
+      return next(new HttpError(404, 'Category score not found for this user'));
+    }
+
+    // Get category definition for additional context
+    const categoryDefinition = await Category.findOne({
+      key: categoryKey,
+      active: true
+    }).lean();
+
+    res.status(200).json({
+      success: true,
+      data: {
+        address,
+        category: {
+          key: categoryKey,
+          score: categoryScore,
+        },
+        definition: categoryDefinition ? {
+          displayName: categoryDefinition.displayName,
+          short_description: categoryDefinition.short_description,
+          long_description: categoryDefinition.long_description,
+          order: categoryDefinition.order,
+          reasons: categoryDefinition.reasons,
+        } : null,
+        calculatedAt: score.updatedAt,
+      },
+    });
+  } catch (err: any) {
+    logger.error('Error in getSpecificCategoryScore', { error: err });
+    return next(
+      err instanceof HttpError ? err : new HttpError(500, 'Failed to get category score')
+    );
+  }
+}
+
+/**
+ * Get user badges by address
+ * GET /api/v2/badges/:address
+ */
+export async function getBadgesByAddress(
+  req: Request<{ address: string }>,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const address = req.params.address;
+
+    // Find user by address
+    const user = await User.findOne({ addresses: address });
+    if (!user) {
+      return next(new HttpError(404, 'User not found'));
+    }
+
+    // Find user badges
+    const badges = await UserBadge.find({ user: user._id }).lean();
+
+    res.status(200).json({
+      success: true,
+      data: {
+        address,
+        badges: badges.map((badge) => ({
+          badgeKey: badge.badgeKey,
+          achievedLevel: badge.achievedLevel,
+          achievedLevelKey: badge.achievedLevelKey,
+          achievedLevelTitle: badge.achievedLevelTitle,
+          earnedAt: badge.earnedAt,
+        })),
+        count: badges.length,
+      },
+    });
+  } catch (err: any) {
+    logger.error('Error in getBadgesByAddress', { error: err });
+    return next(
+      err instanceof HttpError ? err : new HttpError(500, 'Failed to get badges')
+    );
+  }
+}
+
+/**
+ * Get a specific badge for a user by address and badge key
+ * GET /api/v2/badges/:address/:badgeKey
+ */
+export async function getSpecificBadgeByAddress(
+  req: Request<{ address: string; badgeKey: string }>,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const { address, badgeKey } = req.params;
+
+    // Find user by address
+    const user = await User.findOne({ addresses: address });
+    if (!user) {
+      return next(new HttpError(404, 'User not found'));
+    }
+
+    // Find specific badge for the user
+    const userBadge = await UserBadge.findOne({
+      user: user._id,
+      badgeKey
+    }).lean();
+
+    if (!userBadge) {
+      return next(new HttpError(404, 'Badge not found for this user'));
+    }
+
+    // Get badge definition for additional context
+    const badgeDefinition = await Badge.findOne({ key: badgeKey, active: true }).lean();
+
+    res.status(200).json({
+      success: true,
+      data: {
+        address,
+        badge: {
+          badgeKey: userBadge.badgeKey,
+          achievedLevel: userBadge.achievedLevel,
+          achievedLevelKey: userBadge.achievedLevelKey,
+          achievedLevelTitle: userBadge.achievedLevelTitle,
+          earnedAt: userBadge.earnedAt,
+        },
+        definition: badgeDefinition ? {
+          title: badgeDefinition.title,
+          shortDescription: badgeDefinition.shortDescription,
+          longDescription: badgeDefinition.longDescription,
+          metric: badgeDefinition.metric,
+          imageUrl: badgeDefinition.imageUrl,
+          levels: badgeDefinition.levels,
+        } : null,
+      },
+    });
+  } catch (err: any) {
+    logger.error('Error in getSpecificBadgeByAddress', { error: err });
+    return next(
+      err instanceof HttpError ? err : new HttpError(500, 'Failed to get badge')
+    );
+  }
+}
+
+/**
+ * Get badge definitions (metadata)
+ * GET /api/v2/metadata/badges
+ */
+export async function getBadgeDefinitions(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const badges = await Badge.find({ active: true }).sort({ order: 1 }).lean();
+
+    res.status(200).json({
+      success: true,
+      data: {
+        badges: badges.map((badge) => ({
+          key: badge.key,
+          title: badge.title,
+          shortDescription: badge.shortDescription,
+          longDescription: badge.longDescription,
+          metric: badge.metric,
+          imageUrl: badge.imageUrl,
+          levels: badge.levels,
+        })),
+      },
+    });
+  } catch (err: any) {
+    logger.error('Error in getBadgeDefinitions', { error: err });
+    return next(new HttpError(500, 'Failed to get badge definitions'));
+  }
+}
+
+/**
+ * Get category definitions (metadata)
+ * GET /api/v2/metadata/categories
+ */
+export async function getCategoryDefinitions(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const categories = await Category.find({ active: true })
+      .sort({ order: 1 })
+      .lean();
+
+    res.status(200).json({
+      success: true,
+      data: {
+        categories: categories.map((category) => ({
+          key: category.key,
+          displayName: category.displayName,
+          short_description: category.short_description,
+          long_description: category.long_description,
+          order: category.order,
+          reasons: category.reasons,
+        })),
+      },
+    });
+  } catch (err: any) {
+    logger.error('Error in getCategoryDefinitions', { error: err });
+    return next(new HttpError(500, 'Failed to get category definitions'));
+  }
+}

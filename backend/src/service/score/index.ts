@@ -17,6 +17,7 @@ import {
   fetchStakingRewardSum,
   fetchAccountTokenList,
 } from "../subscan";
+import type { Transfer, ExtrinsicRecord } from "../subscan/types";
 import {
   calculateExtrinsicDepthScore,
   calculateGovernanceScore,
@@ -31,7 +32,7 @@ import {
   calculateTxCountScore,
   calculateTxVolumeScore,
 } from "./calculateScore";
-import { OnChainMetrics, ScoreBreakdown, ScoreRefreshStatus } from "./types";
+import { OnChainMetrics, ScoreBreakdown, ScoreRefreshStatus, DataFetchErrorType, ScoreErrorMetadata, ScoreResult } from "./types";
 import { Category, CategoryDoc } from "~/models/Category";
 
 type ReturnType = {
@@ -40,86 +41,137 @@ type ReturnType = {
 };
 
 /**
+ * Classifies an error into a specific type for better error reporting
+ */
+function classifyError(error: any): DataFetchErrorType {
+  if (error.statusCode === 404 || error.message?.includes('not found')) {
+    return DataFetchErrorType.AccountNotFound;
+  }
+  if (error.statusCode === 429 || error.message?.includes('rate limit')) {
+    return DataFetchErrorType.RateLimited;
+  }
+  if (error.message?.includes('network') || error.code === 'ECONNREFUSED') {
+    return DataFetchErrorType.NetworkError;
+  }
+  if (error.statusCode >= 500) {
+    return DataFetchErrorType.ApiError;
+  }
+  return DataFetchErrorType.Unknown;
+}
+
+/**
  * Fetches all necessary data from various sources and processes it into raw metrics.
  * @param address The user's wallet address.
- * @returns An object containing all the raw metrics for scoring.
+ * @returns An object containing all the raw metrics for scoring and any errors encountered.
  */
 async function fetchAndProcessOnChainData(
   address: string
-): Promise<OnChainMetrics> {
-  // 1) Parallel data fetch
+): Promise<{ metrics: OnChainMetrics; errors: ScoreErrorMetadata[] }> {
+  const errors: ScoreErrorMetadata[] = [];
+
+  // Helper to handle errors consistently
+  const handleError = (
+    category: string,
+    error: any,
+    fallbackValue: any
+  ) => {
+    const errorType = classifyError(error);
+    logger.warn(`Data fetch failed for ${category}`, {
+      address,
+      errorType,
+      message: error.message,
+    });
+
+    errors.push({
+      category,
+      errorType,
+      message: error.message || 'Unknown error',
+      usedFallback: true,
+    });
+
+    return fallbackValue;
+  };
+
+  // 1) Parallel data fetch with individual error handling
   const [
-    ageDays = 0,
-    transfersRes = { count: 0, transfers: [] },
-    extrinsicsRes = { count: 0, extrinsics: [] },
-    referendaRes = { count: 0, list: [] },
-    slashRes = { count: 0, list: [] },
-    votedValidators = [],
-    stakingRew = 0,
-    tokenList = [],
+    ageDays,
+    transfersRes,
+    extrinsicsRes,
+    referendaRes,
+    slashRes,
+    votedValidators,
+    stakingRew,
+    tokenList,
   ] = await Promise.all([
-    fetchAccountAgeDays(address).catch(() => 0),
-    fetchTransfersList({ address }).catch(() => ({
-      count: 0,
-      transfers: [],
-    })),
-    fetchExtrinsicsList({ address }).catch(() => ({
-      count: 0,
-      extrinsics: [],
-    })),
-    fetchReferendaVotes({ account: address }).catch(() => ({
-      count: 0,
-      list: [],
-    })),
-    fetchAccountRewardSlashList({ address, category: "Slash" }).catch(() => ({
-      count: 0,
-      list: [],
-    })),
-    fetchVotedValidatorsList(address).catch(() => []),
+    fetchAccountAgeDays(address).catch((err) =>
+      handleError('accountAge', err, 0)
+    ),
+    fetchTransfersList({ address }).catch((err) =>
+      handleError('transfers', err, { count: 0, transfers: [] })
+    ),
+    fetchExtrinsicsList({ address }).catch((err) =>
+      handleError('extrinsics', err, { count: 0, extrinsics: [] })
+    ),
+    fetchReferendaVotes({ account: address }).catch((err) =>
+      handleError('governance', err, { count: 0, list: [] })
+    ),
+    fetchAccountRewardSlashList({ address, category: "Slash" }).catch((err) =>
+      handleError('slashes', err, { count: 0, list: [] })
+    ),
+    fetchVotedValidatorsList(address).catch((err) =>
+      handleError('validators', err, [])
+    ),
     fetchStakingRewardSum({
       address,
       start: "2024-01-01",
       end: new Date().toISOString().slice(0, 10),
-    }).catch(() => 0),
-    fetchAccountTokenList(address).catch(() => []),
+    }).catch((err) =>
+      handleError('stakingRewards', err, 0)
+    ),
+    fetchAccountTokenList(address).catch((err) =>
+      handleError('tokens', err, [])
+    ),
   ]);
 
-  // 2) NFT fetch
+  // 2) NFT fetch (non-critical, always use fallback on error)
   let nftRes: { data: NftItem[]; totalCount: number } = {
     data: [],
     totalCount: 0,
   };
   try {
     nftRes = await getOwnedNfts(address);
-  } catch {
-    // ignore NFT fetch errors as it's non-critical
+  } catch (err: any) {
+    handleError('nfts', err, { data: [], totalCount: 0 });
   }
 
-  // 3) Process raw metrics
+  // 3) Process raw metrics with type safety
   const txVolumeDOT = (transfersRes.transfers ?? [])
-    .map((t) => parseUnits(t.amount_v2 ?? "0", 10))
-    .reduce((s, v) => s + v, 0);
-  const nftEvents = nftRes.data
-    .map((i) => i.events.length)
-    .reduce((s, v) => s + v, 0);
+    .map((t: Transfer) => parseUnits(t.amount_v2 ?? "0", 10))
+    .reduce((s: number, v: number) => s + v, 0);
+  const nftEvents = (nftRes.data ?? [])
+    .map((i: NftItem) => i.events?.length ?? 0)
+    .reduce((s: number, v: number) => s + v, 0);
   const distinctMods = new Set(
-    extrinsicsRes.extrinsics.map((x) => x.call_module)
+    (extrinsicsRes.extrinsics ?? []).map((x: ExtrinsicRecord) => x.call_module)
   ).size;
 
   return {
-    ageDays,
-    txCount: transfersRes.count ?? 0,
-    txVolumeDOT,
-    distinctMods,
-    govAvailable: referendaRes.count ?? 0,
-    govCast: referendaRes.list?.length ?? 0,
-    slashCount: slashRes.count ?? 0,
-    numValidators: votedValidators?.length ?? 0,
-    stakingRew,
-    tokenCount: tokenList?.length ?? 0,
-    nftHeld: nftRes.totalCount ?? 0,
-    nftEvents,
-    extrCount: extrinsicsRes.count ?? 0,
+    metrics: {
+      ageDays,
+      txCount: transfersRes.count ?? 0,
+      txVolumeDOT,
+      distinctMods,
+      govAvailable: referendaRes.count ?? 0,
+      govCast: referendaRes.list?.length ?? 0,
+      slashCount: slashRes.count ?? 0,
+      numValidators: votedValidators?.length ?? 0,
+      stakingRew,
+      tokenCount: tokenList?.length ?? 0,
+      nftHeld: nftRes.totalCount ?? 0,
+      nftEvents,
+      extrCount: extrinsicsRes.count ?? 0,
+    },
+    errors,
   };
 }
 
@@ -127,7 +179,7 @@ async function fetchAndProcessOnChainData(
  * Calculate a friendly, tier‑based reputation score for an address.
  * This function orchestrates fetching data and calculating scores.
  */
-export async function calculateScore(address: string): Promise<ReturnType> {
+export async function calculateScore(address: string): Promise<ScoreResult> {
   try {
     logger.info("Starting score calculation", { address });
 
@@ -142,8 +194,8 @@ export async function calculateScore(address: string): Promise<ReturnType> {
 
     // console.log("Category map", categoryMap);
 
-    // 1) Fetch and process all data into a clean metrics object
-    const metrics = await fetchAndProcessOnChainData(address);
+    // 1) Fetch and process all data into a clean metrics object (now returns errors too)
+    const { metrics, errors } = await fetchAndProcessOnChainData(address);
 
     const calculatedScores = {
       [CategoryKey.Longevity]: calculateLongevityScore(metrics.ageDays),
@@ -188,7 +240,7 @@ export async function calculateScore(address: string): Promise<ReturnType> {
       // Use 'as unknown as' for a safe and explicit type assertion
     ) as unknown as ScoreBreakdown;
 
-    // console.log("Calculated scores", categories); 
+    // console.log("Calculated scores", categories);
 
     // 3) Aggregate total score from the categories
     const total = Object.values(categories).reduce(
@@ -196,11 +248,13 @@ export async function calculateScore(address: string): Promise<ReturnType> {
       0
     );
 
-    logger.info("Final score breakdown", categories);
+    logger.info("Final score breakdown", { categories, errors });
 
     return {
       total,
       categories,
+      errors: errors.length > 0 ? errors : undefined,
+      isPartial: errors.length > 0,
     };
   } catch (err) {
     console.log("Error calculating score", err);
@@ -251,12 +305,17 @@ export async function updateUserScore(userId: string) {
     categoryDetails.map((c) => [c.key, { title: c.displayName }])
   );
 
-  const { total: newTotalScore, categories: newCategories } =
+  const { total: newTotalScore, categories: newCategories, errors, isPartial } =
     await calculateScore(address);
   const newCategoriesMap = new Map(Object.entries(newCategories)) as Map<
     CategoryKey,
     ICategoryScore
   >;
+
+  // Log if there were any errors during score calculation
+  if (isPartial && errors) {
+    logger.warn("Score calculation completed with errors", { userId, errors });
+  }
 
   const existingScore = await Score.findOne({ user: userId });
 

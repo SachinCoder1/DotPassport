@@ -6,14 +6,19 @@ export function calculateLongevityScore(
   ageDays: number
 ): CategoryScore<LongevityReason> {
   if (ageDays >= 365) return { score: 10, reason: LongevityReason.OverYear };
-  if (ageDays >= 90) return { score: 6, reason: LongevityReason.ThreeMonths };
+  if (ageDays >= 270) return { score: 9, reason: LongevityReason.ThreeMonths };   // 9-12 months
+  if (ageDays >= 180) return { score: 8, reason: LongevityReason.ThreeMonths };   // 6-9 months
+  if (ageDays >= 90) return { score: 6, reason: LongevityReason.ThreeMonths };    // 3-6 months
   if (ageDays >= 30) return { score: 3, reason: LongevityReason.OneMonth };
   if (ageDays >= 7) return { score: 1, reason: LongevityReason.OneWeek };
   return { score: 0, reason: LongevityReason.New };
 }
 
 export function calculateTxCountScore(txCount: number): CategoryScore<TxCountReason> {
+  if (txCount >= 100) return { score: 12, reason: TxCountReason.FiftyPlus };
+  if (txCount >= 75) return { score: 11, reason: TxCountReason.FiftyPlus };
   if (txCount >= 50) return { score: 10, reason: TxCountReason.FiftyPlus };
+  if (txCount >= 25) return { score: 7, reason: TxCountReason.TenPlus };
   if (txCount >= 10) return { score: 5, reason: TxCountReason.TenPlus };
   if (txCount >= 1) return { score: 2, reason: TxCountReason.First };
   return { score: 0, reason: TxCountReason.None };
@@ -43,6 +48,12 @@ export function calculateGovernanceScore(
   govAvailable: number
 ): CategoryScore<GovernanceReason> {
   if (govCast === 0) return { score: 0, reason: GovernanceReason.None };
+
+  // Guard: Prevent division by zero when no referenda available
+  if (govAvailable === 0) {
+    return { score: 2, reason: GovernanceReason.Partial };
+  }
+
   if (govCast === govAvailable)
     return { score: 20, reason: GovernanceReason.Full };
   if (govCast >= 0.5 * govAvailable)
@@ -102,7 +113,7 @@ export function calculateNftHoldingsScore(
 ): CategoryScore<NftHoldingsReason> {
   if (nftHeld >= 10) return { score: 5, reason: NftHoldingsReason.TenPlus };
   if (nftHeld >= 5) return { score: 3, reason: NftHoldingsReason.FivePlus };
-  if (nftHeld >= 1) return { score: 1, reason: NftHoldingsReason.OnePlus };
+  if (nftHeld >= 1) return { score:  1, reason: NftHoldingsReason.OnePlus };
   return { score: 0, reason: NftHoldingsReason.None };
 }
 
@@ -117,8 +128,14 @@ export function calculateNftActivityScore(
 export function calculateExtrinsicDepthScore(
   extrCount: number
 ): CategoryScore<ExtrinsicDepthReason> {
+  if (extrCount >= 200)
+    return { score: 12, reason: ExtrinsicDepthReason.HundredPlus };
+  if (extrCount >= 150)
+    return { score: 11, reason: ExtrinsicDepthReason.HundredPlus };
   if (extrCount >= 100)
     return { score: 10, reason: ExtrinsicDepthReason.HundredPlus };
+  if (extrCount >= 75)
+    return { score: 7, reason: ExtrinsicDepthReason.FiftyPlus };
   if (extrCount >= 50)
     return { score: 5, reason: ExtrinsicDepthReason.FiftyPlus };
   if (extrCount >= 1)

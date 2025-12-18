@@ -21,15 +21,13 @@ import {
   NavbarWalletButton,
   WalletConnectModal,
 } from "@/components/PolkadotWalletConnect";
-import { useState } from "react";
 
 const Navbar = () => {
   const router = useRouter();
   const pathname = usePathname();
   const client = useIsClient();
-  const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
 
-  const { isAuthenticated, selectedAccount, logout } = useWalletStore();
+  const { isAuthenticated, selectedAccount, logout, isWalletModalOpen, openWalletModal, closeWalletModal } = useWalletStore();
 
   const onNavigate = (page: string) => {
     if (page === "home") {
@@ -176,7 +174,7 @@ const Navbar = () => {
                 ) : (
                   // Otherwise, show the normal wallet button
                   <NavbarWalletButton
-                    onOpenModal={() => setIsWalletModalOpen(true)}
+                    onOpenModal={openWalletModal}
                   />
                 )
               )}
@@ -224,7 +222,7 @@ const Navbar = () => {
       {/* Wallet Connect Modal */}
       <WalletConnectModal
         isOpen={isWalletModalOpen}
-        onClose={() => setIsWalletModalOpen(false)}
+        onClose={closeWalletModal}
       />
     </>
   );
