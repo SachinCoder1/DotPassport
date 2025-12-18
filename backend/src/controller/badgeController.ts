@@ -83,28 +83,22 @@ export async function refreshUserBadges(
     const address = user.addresses[0];
 
     // 1. Fetch all necessary data in parallel
-    const [checkedBadges, currentBadges, allBadgeDefinitions] =
-      await Promise.all([
-        checkUserBadges(address),
-        UserBadge.find({ user: userId }),
-        Badge.find({ active: true }).lean(),
-      ]);
+    const [checkedBadges, allBadgeDefinitions] = await Promise.all([
+      checkUserBadges(address),
+      Badge.find({ active: true }).lean(),
+    ]);
 
     // 2. Create lookup maps for efficient access
     const checkedBadgeKeys = Object.keys(checkedBadges) as BadgeKey[];
-    const currentBadgesMap = new Map(currentBadges.map((b) => [b.badgeKey, b]));
     const definitionsMap = new Map(
       allBadgeDefinitions.map((def) => [def.key, def])
     );
 
     const operations: Promise<any>[] = [];
-    let badgesCreated = 0;
-    let badgesUpdated = 0;
 
-    // 3. Compare checked badges with current badges and prepare DB operations
+    // 3. Prepare atomic upsert operations for each badge
     for (const key of checkedBadgeKeys) {
       const achievedLevel = checkedBadges[key];
-      const existingBadge = currentBadgesMap.get(key);
       const definition = definitionsMap.get(key);
 
       const levelInfo = definition?.levels.find(
@@ -120,33 +114,38 @@ export async function refreshUserBadges(
       // Destructure both the key and title from the level definition
       const { key: achievedLevelKey, title: achievedLevelTitle } = levelInfo;
 
-      if (existingBadge) {
-        // If badge exists and the new level is higher, update it
-        if (existingBadge.achievedLevel < achievedLevel) {
-          existingBadge.achievedLevel = achievedLevel;
-          existingBadge.achievedLevelKey = achievedLevelKey; // Update key
-          existingBadge.achievedLevelTitle = achievedLevelTitle; // Update title
-          operations.push(existingBadge.save());
-          badgesUpdated++;
-        }
-      } else {
-        // If badge doesn't exist, create a new one
-        operations.push(
-          UserBadge.create({
-            user: userId,
-            badgeKey: key,
-            achievedLevel: achievedLevel,
-            achievedLevelKey: achievedLevelKey, // Add key
-            achievedLevelTitle: achievedLevelTitle, // Add title
-          })
-        );
-        badgesCreated++;
-      }
+      // Use updateOne with upsert for atomic operation
+      operations.push(
+        UserBadge.updateOne(
+          { user: userId, badgeKey: key },
+          {
+            $max: { achievedLevel: achievedLevel }, // Only update if new level is higher
+            $set: {
+              achievedLevelKey: achievedLevelKey,
+              achievedLevelTitle: achievedLevelTitle,
+            },
+          },
+          { upsert: true }
+        )
+      );
     }
 
     // 4. Execute all database operations in parallel
+    let badgesCreated = 0;
+    let badgesUpdated = 0;
+
     if (operations.length > 0) {
-      await Promise.all(operations);
+      const results = await Promise.all(operations);
+
+      // Count upsert results
+      results.forEach((result: any) => {
+        if (result.upsertedCount > 0) {
+          badgesCreated++;
+        } else if (result.modifiedCount > 0) {
+          badgesUpdated++;
+        }
+      });
+
       logger.info("User badges refreshed", {
         userId,
         created: badgesCreated,

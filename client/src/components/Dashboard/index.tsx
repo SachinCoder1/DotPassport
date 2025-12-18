@@ -205,7 +205,7 @@ const StatCard: React.FC<StatCardProps> = ({
   onClick,
 }) => (
   <div
-    className={`cursor-default relative bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 group overflow-hidden`}
+    className={`cursor-default relative bg-white rounded-2xl p-4 sm:p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 group overflow-hidden`}
   >
     <div
       className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br opacity-10 rounded-full -translate-y-4 translate-x-4"
@@ -217,15 +217,15 @@ const StatCard: React.FC<StatCardProps> = ({
     ></div>
 
     <div className="relative z-10">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3 sm:mb-4">
         <div
-          className={`w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br ${gradient} group-hover:scale-110 transition-transform duration-200`}
+          className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center bg-gradient-to-br ${gradient} group-hover:scale-110 transition-transform duration-200`}
         >
-          <Icon className="w-6 h-6 text-white" />
+          <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
         </div>
         {change && (
           <div
-            className={`flex items-center space-x-1 text-sm font-medium px-2 py-1 rounded-full ${
+            className={`flex items-center space-x-1 text-xs sm:text-sm font-medium px-2 py-1 rounded-full ${
               trend === "up"
                 ? "text-green-700 bg-green-100"
                 : trend === "down"
@@ -241,15 +241,15 @@ const StatCard: React.FC<StatCardProps> = ({
       </div>
 
       <div className="mb-2">
-        <h3 className="text-3xl font-bold text-gray-900 mb-1">{value}</h3>
-        <p className="text-gray-600 text-sm font-medium">{title}</p>
+        <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">{value}</h3>
+        <p className="text-gray-600 text-xs sm:text-sm font-medium">{title}</p>
         {subtitle && <p className="text-gray-500 text-xs mt-1">{subtitle}</p>}
       </div>
 
       {onClick && (
         <div
           onClick={onClick}
-          className="cursor-pointer flex items-center text-purple-600 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity"
+          className="cursor-pointer flex items-center text-purple-600 text-xs sm:text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity"
         >
           <span>View Details</span>
           <ChevronRight className="w-4 h-4 ml-1" />
@@ -1074,19 +1074,19 @@ const Dashboard: React.FC = () => {
             </div>
 
             <div className="relative z-10 text-center">
-              <div className="flex items-center justify-center space-x-3 mb-4">
-                <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
-                  <TrendingUp className="w-8 h-8 text-white" />
+              <div className="flex flex-col sm:flex-row items-center justify-center sm:space-x-3 mb-4">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm mb-3 sm:mb-0">
+                  <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-white/80 text-lg font-medium">
+                  <h2 className="text-white/80 text-sm sm:text-lg font-medium">
                     Your Reputation Score
                   </h2>
-                  <div className="flex items-baseline space-x-2">
-                    <span className="text-6xl font-bold text-white">
+                  <div className="flex items-baseline space-x-2 justify-center">
+                    <span className="text-4xl sm:text-5xl md:text-6xl font-bold text-white">
                       {stats.totalScore.toLocaleString()}
                     </span>
-                    <span className="text-white/70 text-xl font-medium">
+                    <span className="text-white/70 text-base sm:text-xl font-medium">
                       points
                     </span>
                   </div>
@@ -1094,30 +1094,30 @@ const Dashboard: React.FC = () => {
               </div>
 
               {/* Score breakdown */}
-              <div className="flex items-center justify-center space-x-6 mt-6">
+              <div className="flex flex-col sm:flex-row items-center justify-center space-y-3 sm:space-y-0 sm:space-x-4 md:space-x-6 mt-6">
                 <div className="text-center">
-                  <div className="text-white/90 text-sm font-medium">
+                  <div className="text-white/90 text-xs sm:text-sm font-medium">
                     Categories Active
                   </div>
-                  <div className="text-white text-lg font-bold">
+                  <div className="text-white text-base sm:text-lg font-bold">
                     {stats.categoriesActive}/{stats.totalCategories}
                   </div>
                 </div>
-                <div className="w-px h-8 bg-white/30"></div>
+                <div className="hidden sm:block w-px h-8 bg-white/30"></div>
                 <div className="text-center">
-                  <div className="text-white/90 text-sm font-medium">
+                  <div className="text-white/90 text-xs sm:text-sm font-medium">
                     Badges Earned
                   </div>
-                  <div className="text-white text-lg font-bold">
+                  <div className="text-white text-base sm:text-lg font-bold">
                     {stats.badgesEarned}
                   </div>
                 </div>
-                <div className="w-px h-8 bg-white/30"></div>
+                <div className="hidden sm:block w-px h-8 bg-white/30"></div>
                 <div className="text-center">
-                  <div className="text-white/90 text-sm font-medium">
+                  <div className="text-white/90 text-xs sm:text-sm font-medium">
                     Completion Rate
                   </div>
-                  <div className="text-white text-lg font-bold">
+                  <div className="text-white text-base sm:text-lg font-bold">
                     {stats.completionRate}%
                   </div>
                 </div>

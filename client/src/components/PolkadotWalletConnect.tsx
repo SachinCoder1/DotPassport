@@ -44,18 +44,26 @@ interface NavbarWalletButtonProps {
   onOpenModal: () => void;
 }
 
-// Navbar Wallet Button Component (No changes needed)
+// Navbar Wallet Button Component
 export const NavbarWalletButton: React.FC<NavbarWalletButtonProps> = ({
   onOpenModal,
 }) => {
   const { isConnected, isAuthenticated, selectedAccount, isInitializing } =
     useWalletStore();
 
+  const [hasAutoOpened, setHasAutoOpened] = useState(false);
+
   useEffect(() => {
-    if (!isInitializing && isConnected && !isAuthenticated) {
+    // Only auto-open once when first connected but not authenticated
+    if (!isInitializing && isConnected && !isAuthenticated && !hasAutoOpened) {
       onOpenModal();
+      setHasAutoOpened(true);
     }
-  }, [isInitializing, isConnected, isAuthenticated, onOpenModal]);
+    // Reset flag when authenticated or disconnected
+    if (!isConnected || isAuthenticated) {
+      setHasAutoOpened(false);
+    }
+  }, [isInitializing, isConnected, isAuthenticated, onOpenModal, hasAutoOpened]);
 
   if (!isConnected) {
     return (
@@ -133,7 +141,10 @@ const AccountSelector: React.FC<{
       {accounts.map((account) => (
         <div
           key={account.address}
+          onClick={!showSignButtons && !isLoading ? () => onSelectAccount(account) : undefined}
           className={`w-full flex items-center p-4 rounded-xl border transition-all duration-200 ${
+            !showSignButtons ? 'cursor-pointer' : ''
+          } ${
             selectedAccount?.address === account.address
               ? "bg-gradient-to-r from-pink-50 to-purple-50 border-purple-300 ring-2 ring-purple-200"
               : "bg-gray-50 hover:bg-gradient-to-r hover:from-pink-50 hover:to-purple-50 border-gray-200 hover:border-purple-200"
@@ -177,13 +188,9 @@ const AccountSelector: React.FC<{
                 )}
               </button>
             ) : (
-              <button
-                onClick={() => onSelectAccount(account)}
-                disabled={isLoading}
-                className="cursor-pointer text-purple-600 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
-              >
+              <div className="text-purple-600">
                 <ArrowLeft className="w-5 h-5 rotate-180" />
-              </button>
+              </div>
             )}
           </div>
         </div>
@@ -584,12 +591,16 @@ export const WalletConnectModal: React.FC<WalletConnectModalProps> = ({
       logout(); // Disconnect if going back from account selection
       setCurrentStep("select-wallet");
     } else if (currentStep === "auth-account-select") {
-      // Going back from the auth screen should just show the main connected view
-      setCurrentStep("success");
+      // Going back from auth screen - clear selection to show account picker
+      setSelectedAccount(null);
     }
   };
 
-  const handleClose = () => {
+  const handleClose = (e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
     if (isSigning || currentStep === "auth-success") {
       // ...show a warning toast instead of closing the modal.
       toast.warning("Signing is required to continue", {
@@ -701,12 +712,12 @@ export const WalletConnectModal: React.FC<WalletConnectModalProps> = ({
             >
               <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-3xl bg-white/95 backdrop-blur-xl p-6 text-left align-middle shadow-2xl transition-all border border-white/20">
                 {/* Header */}
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center justify-between mb-6 relative z-10">
                   <div className="flex items-center space-x-3">
                     {canGoBack && (
                       <button
                         onClick={handleBack}
-                        className="cursor-pointer p-2 hover:bg-gray-100 rounded-full transition-colors"
+                        className="cursor-pointer p-2 hover:bg-gray-100 rounded-full transition-colors relative z-10"
                         disabled={isSigning}
                       >
                         <ArrowLeft className="w-5 h-5 text-gray-600" />
@@ -720,13 +731,14 @@ export const WalletConnectModal: React.FC<WalletConnectModalProps> = ({
                     </span>
                   </div>
                   <button
-                    onClick={handleClose}
+                    onClick={(e) => handleClose(e)}
                     disabled={isSigning || currentStep === "auth-success"}
-                    className={`cursor-pointer p-2 rounded-full transition-colors ${
+                    className={`cursor-pointer p-2 rounded-full transition-colors relative z-10 ${
                       isSigning || currentStep === "auth-success"
                         ? "cursor-not-allowed opacity-50"
                         : "hover:bg-gray-100"
                     }`}
+                    type="button"
                   >
                     <X
                       className={`w-5 h-5 ${

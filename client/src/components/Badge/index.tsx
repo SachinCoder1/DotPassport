@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { 
+import React, { useState, useEffect, Fragment } from 'react';
+import { Dialog, Transition } from '@headlessui/react';
+import {
   Award,
   Trophy,
   Star,
@@ -210,36 +211,36 @@ const BadgeDetailModal: React.FC<{
   badge: EnhancedBadge | null;
   onClose: () => void;
 }> = ({ badge, onClose }) => {
-  // Handle scroll lock
-  useEffect(() => {
-    if (badge) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-    
-    // Cleanup on unmount
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [badge]);
-  
-  // Handle click outside to close
-  const handleBackdropClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  };
-  
   if (!badge) return null;
-  
+
   return (
-    <div 
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn"
-      onClick={handleBackdropClick}
-    >
-      <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto transform transition-all duration-300 animate-slideIn">
-        <div className="p-8">
+    <Transition appear show={badge !== null} as={Fragment}>
+      <Dialog as="div" className="relative z-50" onClose={onClose}>
+        <Transition.Child
+          as={Fragment}
+          enter="ease-out duration-300"
+          enterFrom="opacity-0"
+          enterTo="opacity-100"
+          leave="ease-in duration-200"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
+        >
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
+        </Transition.Child>
+
+        <div className="fixed inset-0 overflow-y-auto">
+          <div className="flex min-h-full items-center justify-center p-4">
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0 scale-95 translate-y-4"
+              enterTo="opacity-100 scale-100 translate-y-0"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100 scale-100 translate-y-0"
+              leaveTo="opacity-0 scale-95 translate-y-4"
+            >
+              <Dialog.Panel className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto transform transition-all">
+                <div className="p-8">
           {/* Header */}
           <div className="flex items-start justify-between mb-6">
             <div className="flex items-center space-x-4">
@@ -396,9 +397,13 @@ const BadgeDetailModal: React.FC<{
               })}
             </div>
           </div>
+                </div>
+              </Dialog.Panel>
+            </Transition.Child>
+          </div>
         </div>
-      </div>
-    </div>
+      </Dialog>
+    </Transition>
   );
 };
 
@@ -701,92 +706,92 @@ const Badges: React.FC = () => {
       <div className="max-w-7xl mx-auto py-8">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 space-y-4 sm:space-y-0">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Badges</h1>
-              <p className="text-gray-600">Track your achievements and unlock new badges</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Badges</h1>
+              <p className="text-sm sm:text-base text-gray-600">Track your achievements and unlock new badges</p>
             </div>
 
-                        <button
+            <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-                          className="cursor-pointer flex items-center space-x-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-3 rounded-full font-semibold hover:shadow-lg hover:scale-105 transition-all duration-200 disabled:opacity-70"
-                        >
-                          <RefreshCw
-                            className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`}
-                          />
-                          <span>{isRefreshing ? "Refreshing..." : "Refresh Score"}</span>
-                        </button>
-            
+              className="cursor-pointer flex items-center justify-center space-x-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-full font-semibold hover:shadow-lg hover:scale-105 transition-all duration-200 disabled:opacity-70 w-full sm:w-auto"
+            >
+              <RefreshCw
+                className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`}
+              />
+              <span className="text-sm sm:text-base">{isRefreshing ? "Refreshing..." : "Refresh Score"}</span>
+            </button>
+
           </div>
         </div>
         
         
         {/* Statistics */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
-          <div className="relative bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 group overflow-hidden">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 mb-8">
+          <div className="relative bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-4 sm:p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 group overflow-hidden">
             <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-4 translate-x-4"></div>
             <div className="relative z-10">
-              <div className="flex items-center justify-between mb-3">
-                <CheckCircle className="w-8 h-8 text-blue-100" />
-                <div className="text-3xl font-bold">{stats.earned}</div>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 sm:mb-3">
+                <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 text-blue-100 mb-2 sm:mb-0" />
+                <div className="text-2xl sm:text-3xl font-bold">{stats.earned}</div>
               </div>
-              <div className="text-blue-100 font-medium mb-1">Badges Earned</div>
-              <div className="text-blue-200 text-sm">of {stats.total} available</div>
+              <div className="text-blue-100 font-medium text-sm mb-1">Badges Earned</div>
+              <div className="text-blue-200 text-xs">of {stats.total} available</div>
             </div>
           </div>
-          
-          <div className="relative bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 group overflow-hidden">
+
+          <div className="relative bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-4 sm:p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 group overflow-hidden">
             <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-4 translate-x-4"></div>
             <div className="relative z-10">
-              <div className="flex items-center justify-between mb-3">
-                <Crown className="w-8 h-8 text-purple-100" />
-                <div className="text-3xl font-bold">{stats.completed}</div>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 sm:mb-3">
+                <Crown className="w-6 h-6 sm:w-8 sm:h-8 text-purple-100 mb-2 sm:mb-0" />
+                <div className="text-2xl sm:text-3xl font-bold">{stats.completed}</div>
               </div>
-              <div className="text-purple-100 font-medium mb-1">Mastered</div>
-              <div className="text-purple-200 text-sm">fully completed</div>
+              <div className="text-purple-100 font-medium text-sm mb-1">Mastered</div>
+              <div className="text-purple-200 text-xs">fully completed</div>
             </div>
           </div>
-          
-          <div className="relative bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 group overflow-hidden">
+
+          <div className="relative bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-4 sm:p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 group overflow-hidden">
             <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-4 translate-x-4"></div>
             <div className="relative z-10">
-              <div className="flex items-center justify-between mb-3">
-                <Target className="w-8 h-8 text-emerald-100" />
-                <div className="text-3xl font-bold">{Math.round((stats.earned / stats.total) * 100)}%</div>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 sm:mb-3">
+                <Target className="w-6 h-6 sm:w-8 sm:h-8 text-emerald-100 mb-2 sm:mb-0" />
+                <div className="text-2xl sm:text-3xl font-bold">{Math.round((stats.earned / stats.total) * 100)}%</div>
               </div>
-              <div className="text-emerald-100 font-medium mb-1">Completion</div>
-              <div className="text-emerald-200 text-sm">overall progress</div>
+              <div className="text-emerald-100 font-medium text-sm mb-1">Completion</div>
+              <div className="text-emerald-200 text-xs">overall progress</div>
             </div>
           </div>
-          
-          <div className="relative bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 group overflow-hidden">
+
+          <div className="relative bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl p-4 sm:p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 group overflow-hidden">
             <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-4 translate-x-4"></div>
             <div className="relative z-10">
-              <div className="flex items-center justify-between mb-3">
-                <Bell className="w-8 h-8 text-orange-100" />
-                <div className="text-3xl font-bold">{stats.recentlyEarned}</div>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 sm:mb-3">
+                <Bell className="w-6 h-6 sm:w-8 sm:h-8 text-orange-100 mb-2 sm:mb-0" />
+                <div className="text-2xl sm:text-3xl font-bold">{stats.recentlyEarned}</div>
               </div>
-              <div className="text-orange-100 font-medium mb-1">This Week</div>
-              <div className="text-orange-200 text-sm">newly earned</div>
+              <div className="text-orange-100 font-medium text-sm mb-1">This Week</div>
+              <div className="text-orange-200 text-xs">newly earned</div>
             </div>
           </div>
         </div>
         
         {/* Search and Filters */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
+        <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 mb-8">
           {/* Search Bar */}
-          <div className="relative mb-6">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <div className="relative mb-4 sm:mb-6">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
             <input
               type="text"
               placeholder="Search badges..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
+              className="w-full pl-9 sm:pl-10 pr-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
             />
           </div>
-          
+
           {/* Category Filters */}
           <div className="flex flex-wrap gap-2">
             {categories.map((category) => {
@@ -795,13 +800,13 @@ const Badges: React.FC = () => {
                 <button
                   key={category.key}
                   onClick={() => setSelectedCategory(category.key)}
-                  className={`cursor-pointer flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`cursor-pointer flex items-center space-x-1.5 sm:space-x-2 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
                     selectedCategory === category.key
                       ? 'bg-blue-600 text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
-                  <IconComponent className="w-4 h-4" />
+                  <IconComponent className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   <span>{category.label}</span>
                 </button>
               );
