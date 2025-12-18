@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, Fragment } from 'react';
-import { Dialog, Transition } from '@headlessui/react';
+import React, { useState, useEffect, Fragment } from "react";
+import { Dialog, Transition } from "@headlessui/react";
 import {
   Award,
   Trophy,
@@ -31,47 +31,58 @@ import {
   Globe,
   User,
   Layers,
-  ChevronRight
-} from 'lucide-react';
+  ChevronRight,
+} from "lucide-react";
 
 // Import API functions
-import { getUserBadges, refreshUserBadges, getBadgeDefinitions } from '@/service/badgeService';
-
+import {
+  getUserBadges,
+  refreshUserBadges,
+  getBadgeDefinitions,
+} from "@/service/badgeService";
 
 // Import types
-import { 
-  UserBadge, 
-  BadgeDefinition, 
+import {
+  UserBadge,
+  BadgeDefinition,
   RefreshBadgesResponse,
-  BadgeLevelDefinition 
-} from '@/types/api';
-import { formatAgo } from '@/lib/formatAgo';
-import { toast } from 'sonner';
-
-
+  BadgeLevelDefinition,
+} from "@/types/api";
+import { formatAgo } from "@/lib/formatAgo";
+import { toast } from "sonner";
 
 // Simplified category detection
-const getCategoryInfo = (metric: string): {
+const getCategoryInfo = (
+  metric: string
+): {
   key: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
 } => {
   const categoryMap: Record<string, any> = {
-    extrinsiccount: { key: 'activity', label: 'Activity', icon: Activity },
-    accountagedays: { key: 'longevity', label: 'Longevity', icon: Clock },
-    parachaininteractioncount: { key: 'parachain', label: 'Cross-Chain', icon: Globe },
-    referendavotecount: { key: 'governance', label: 'Governance', icon: Vote },
-    treasuryvotecount: { key: 'treasury', label: 'Treasury', icon: Coins },
-    nominatoractivemonths: { key: 'staking', label: 'Staking', icon: Shield },
-    nominatoractivemonthswithoutslashes: { key: 'staking', label: 'Staking', icon: Shield },
-    nftcount: { key: 'nft', label: 'NFTs', icon: Star },
-    parachainassetcount: { key: 'assets', label: 'Assets', icon: Wallet },
-    identitystatus: { key: 'identity', label: 'Identity', icon: User },
-    batchtxcount: { key: 'utility', label: 'Utility', icon: Layers },
+    extrinsiccount: { key: "activity", label: "Activity", icon: Activity },
+    accountagedays: { key: "longevity", label: "Longevity", icon: Clock },
+    parachaininteractioncount: {
+      key: "parachain",
+      label: "Cross-Chain",
+      icon: Globe,
+    },
+    referendavotecount: { key: "governance", label: "Governance", icon: Vote },
+    treasuryvotecount: { key: "treasury", label: "Treasury", icon: Coins },
+    nominatoractivemonths: { key: "staking", label: "Staking", icon: Shield },
+    nominatoractivemonthswithoutslashes: {
+      key: "staking",
+      label: "Staking",
+      icon: Shield,
+    },
+    nftcount: { key: "nft", label: "NFTs", icon: Star },
+    parachainassetcount: { key: "assets", label: "Assets", icon: Wallet },
+    identitystatus: { key: "identity", label: "Identity", icon: User },
+    batchtxcount: { key: "utility", label: "Utility", icon: Layers },
   };
-  
-  const key = metric.toLowerCase().replace(/[^a-z]/g, '');
-  return categoryMap[key] || { key: 'other', label: 'Other', icon: Award };
+
+  const key = metric.toLowerCase().replace(/[^a-z]/g, "");
+  return categoryMap[key] || { key: "other", label: "Other", icon: Award };
 };
 
 // Interface for enhanced badge data
@@ -92,38 +103,42 @@ const BadgeCard: React.FC<{
   onClick: () => void;
 }> = ({ badge, onClick }) => {
   const [isHovered, setIsHovered] = useState(false);
-  
+
   return (
-    <div 
+    <div
       onClick={onClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       className={`cursor-pointer relative bg-white rounded-xl p-6 border transition-all duration-200 hover:shadow-lg group ${
-        badge.isEarned 
+        badge.isEarned
           ? badge.isFullyCompleted
-            ? 'border-purple-200 bg-gradient-to-br from-purple-50 to-indigo-50'
-            : 'border-green-200 bg-green-50/30'
-          : 'border-gray-200 hover:border-gray-300'
+            ? "border-purple-200 bg-gradient-to-br from-purple-50 to-indigo-50"
+            : "border-green-200 bg-green-50/30"
+          : "border-gray-200 hover:border-gray-300"
       }`}
     >
       {/* Status indicator */}
       <div className="flex items-center justify-between mb-4">
-        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-          badge.isEarned 
-            ? badge.isFullyCompleted
-              ? 'bg-purple-100 text-purple-600'
-              : 'bg-green-100 text-green-600'
-            : 'bg-gray-100 text-gray-400'
-        }`}>
+        <div
+          className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+            badge.isEarned
+              ? badge.isFullyCompleted
+                ? "bg-purple-100 text-purple-600"
+                : "bg-green-100 text-green-600"
+              : "bg-gray-100 text-gray-400"
+          }`}
+        >
           <badge.category.icon className="w-6 h-6" />
         </div>
-        
+
         {badge.isEarned ? (
-          <div className={`flex items-center space-x-1 text-xs font-medium px-2 py-1 rounded-full ${
-            badge.isFullyCompleted
-              ? 'bg-purple-100 text-purple-700'
-              : 'bg-green-100 text-green-700'
-          }`}>
+          <div
+            className={`flex items-center space-x-1 text-xs font-medium px-2 py-1 rounded-full ${
+              badge.isFullyCompleted
+                ? "bg-purple-100 text-purple-700"
+                : "bg-green-100 text-green-700"
+            }`}
+          >
             {badge.isFullyCompleted ? (
               <>
                 <Crown className="w-3 h-3" />
@@ -143,63 +158,81 @@ const BadgeCard: React.FC<{
           </div>
         )}
       </div>
-      
+
       {/* Badge info */}
       <div className="mb-4">
-        <h3 className="font-semibold text-gray-900 mb-2 overflow-hidden" style={{ 
-          display: '-webkit-box',
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: 'vertical'
-        }}>
+        <h3
+          className="font-semibold text-gray-900 mb-2 overflow-hidden"
+          style={{
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+          }}
+        >
           {badge.title}
         </h3>
-        <p className="text-sm text-gray-600 overflow-hidden" style={{ 
-          display: '-webkit-box',
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: 'vertical'
-        }}>
+        <p
+          className="text-sm text-gray-600 overflow-hidden"
+          style={{
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+          }}
+        >
           {badge.shortDescription}
         </p>
       </div>
-      
+
       {/* Progress */}
       <div className="mb-4">
         <div className="flex justify-between text-xs text-gray-500 mb-2">
           <span>{badge.category.label}</span>
-          <span>{badge.currentLevel}/{badge.maxLevel}</span>
+          <span>
+            {badge.currentLevel}/{badge.maxLevel}
+          </span>
         </div>
         <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-          <div 
+          <div
             className={`h-full rounded-full transition-all duration-300 ${
-              badge.isEarned 
+              badge.isEarned
                 ? badge.isFullyCompleted
-                  ? 'bg-gradient-to-r from-purple-500 to-indigo-600'
-                  : 'bg-green-400'
-                : 'bg-gray-300'
+                  ? "bg-gradient-to-r from-purple-500 to-indigo-600"
+                  : "bg-green-400"
+                : "bg-gray-300"
             }`}
             style={{ width: `${badge.progress}%` }}
           />
         </div>
       </div>
-      
+
       {/* Bottom info */}
       <div className="flex items-center justify-between text-xs text-gray-500">
         {badge.isEarned && badge.userBadge ? (
           <span>{formatAgo(badge.userBadge.earnedAt)}</span>
         ) : (
-          <span>{badge.levels.length} level{badge.levels.length > 1 ? 's' : ''}</span>
+          <span>
+            {badge.levels.length} level{badge.levels.length > 1 ? "s" : ""}
+          </span>
         )}
-        
-        <ChevronRight className={`w-4 h-4 transition-transform duration-200 ${isHovered ? 'translate-x-1' : ''}`} />
+
+        <ChevronRight
+          className={`w-4 h-4 transition-transform duration-200 ${
+            isHovered ? "translate-x-1" : ""
+          }`}
+        />
       </div>
-      
+
       {/* Hover overlay for locked badges */}
       {!badge.isEarned && (
-        <div className={`absolute inset-0 bg-white/90 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center transition-opacity duration-200 ${
-          isHovered ? 'opacity-100' : 'opacity-0'
-        }`}>
+        <div
+          className={`absolute inset-0 bg-white/90 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center transition-opacity duration-200 ${
+            isHovered ? "opacity-100" : "opacity-0"
+          }`}
+        >
           <Eye className="w-8 h-8 text-gray-400 mb-2" />
-          <span className="text-sm font-medium text-gray-600">View Details</span>
+          <span className="text-sm font-medium text-gray-600">
+            View Details
+          </span>
         </div>
       )}
     </div>
@@ -240,163 +273,226 @@ const BadgeDetailModal: React.FC<{
               leaveTo="opacity-0 scale-95 translate-y-4"
             >
               <Dialog.Panel className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto transform transition-all">
-                <div className="p-8">
-          {/* Header */}
-          <div className="flex items-start justify-between mb-6">
-            <div className="flex items-center space-x-4">
-              <div className={`w-16 h-16 rounded-xl flex items-center justify-center ${
-                badge.isEarned 
-                  ? badge.isFullyCompleted
-                    ? 'bg-purple-100 text-purple-600'
-                    : 'bg-green-100 text-green-600'
-                  : 'bg-gray-100 text-gray-400'
-              }`}>
-                <badge.category.icon className="w-8 h-8" />
-              </div>
-              <div>
-                <div className="flex items-center space-x-2 mb-1">
-                  <h2 className="text-2xl font-bold text-gray-900">{badge.title}</h2>
-                  {badge.isFullyCompleted && (
-                    <Crown className="w-5 h-5 text-purple-500" />
-                  )}
-                </div>
-                <p className="text-gray-600">{badge.shortDescription}</p>
-                <p className="text-sm text-gray-500 mt-1">{badge.category.label} • {badge.levels.length} levels</p>
-              </div>
-            </div>
-            <button 
-              onClick={onClose}
-              className="cursor-pointer w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
-            >
-              <X className="w-5 h-5 text-gray-600" />
-            </button>
-          </div>
-          
-          {/* Description */}
-          <div className="mb-8">
-            <p className="text-gray-700 leading-relaxed">{badge.longDescription}</p>
-          </div>
-          
-          {/* Current status */}
-          {badge.isEarned && badge.userBadge && (
-            <div className={`rounded-xl p-4 mb-8 border ${
-              badge.isFullyCompleted
-                ? 'bg-purple-50 border-purple-200'
-                : 'bg-green-50 border-green-200'
-            }`}>
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="flex items-center space-x-2 mb-1">
-                    {badge.isFullyCompleted ? (
-                      <Crown className="w-5 h-5 text-purple-600" />
-                    ) : (
-                      <CheckCircle className="w-5 h-5 text-green-600" />
-                    )}
-                    <span className={`font-semibold ${
-                      badge.isFullyCompleted ? 'text-purple-800' : 'text-green-800'
-                    }`}>
-                      {badge.isFullyCompleted ? 'Badge Mastered!' : 'Badge Earned!'}
-                    </span>
-                  </div>
-                  <p className={`text-sm ${
-                    badge.isFullyCompleted ? 'text-purple-700' : 'text-green-700'
-                  }`}>
-                    Current Level: {badge.userBadge.achievedLevelTitle}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm text-gray-600">Earned {formatAgo(badge.userBadge.earnedAt)}</p>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {/* Badge levels */}
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Badge Levels</h3>
-            <div className="space-y-3">
-              {badge.levels.sort((a, b) => a.level - b.level).map((level) => {
-                const isAchieved = badge.currentLevel >= level.level;
-                const isCurrent = badge.currentLevel === level.level;
-                const isCompleted = badge.isFullyCompleted && level.level === badge.maxLevel;
-                
-                return (
-                  <div key={level.key} className={`p-4 rounded-xl border ${
-                    isCompleted
-                      ? 'bg-purple-50 border-purple-200'
-                      : isCurrent 
-                        ? 'bg-blue-50 border-blue-200' 
-                        : isAchieved 
-                          ? 'bg-green-50 border-green-200' 
-                          : 'bg-gray-50 border-gray-200'
-                  }`}>
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center space-x-3">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
-                          isCompleted
-                            ? 'bg-purple-500 text-white'
-                            : isCurrent 
-                              ? 'bg-blue-500 text-white' 
-                              : isAchieved 
-                                ? 'bg-green-500 text-white' 
-                                : 'bg-gray-300 text-gray-600'
-                        }`}>
-                          {isCompleted ? (
-                            <Crown className="w-4 h-4" />
-                          ) : isAchieved ? (
-                            <CheckCircle className="w-4 h-4" />
-                          ) : (
-                            level.level
+                <div className="p-4 sm:p-6 md:p-8">
+                  {/* Header */}
+                  <div className="flex items-start justify-between mb-4 sm:mb-6">
+                    <div className="flex items-center space-x-3 sm:space-x-4 min-w-0 flex-1 mr-2">
+                      <div
+                        className={`w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                          badge.isEarned
+                            ? badge.isFullyCompleted
+                              ? "bg-purple-100 text-purple-600"
+                              : "bg-green-100 text-green-600"
+                            : "bg-gray-100 text-gray-400"
+                        }`}
+                      >
+                        <badge.category.icon className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center space-x-1.5 sm:space-x-2 mb-1">
+                          <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 truncate">
+                            {badge.title}
+                          </h2>
+                          {badge.isFullyCompleted && (
+                            <Crown className="w-4 h-4 sm:w-5 sm:h-5 text-purple-500 flex-shrink-0" />
                           )}
                         </div>
-                        <div>
-                          <h4 className={`font-semibold ${
-                            isCompleted ? 'text-purple-800' :
-                            isCurrent ? 'text-blue-900' : 
-                            isAchieved ? 'text-green-900' : 'text-gray-700'
-                          }`}>
-                            {level.title}
-                          </h4>
-                          <p className="text-sm text-gray-600">{level.shortDescription}</p>
-                        </div>
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {level.value.toLocaleString()}
+                        <p className="text-sm sm:text-base text-gray-600 line-clamp-2">
+                          {badge.shortDescription}
+                        </p>
+                        <p className="text-xs sm:text-sm text-gray-500 mt-1">
+                          {badge.category.label} • {badge.levels.length} levels
+                        </p>
                       </div>
                     </div>
-                    
-                    <p className="text-sm text-gray-600">{level.longDescription}</p>
-                    
-                    {/* Constraints */}
-                    {level.constraints && level.constraints.length > 0 && (
-                      <div className="mt-3 p-3 bg-white rounded-lg border border-gray-100">
-                        <p className="text-xs font-medium text-gray-700 mb-2">Requirements:</p>
-                        {level.constraints.map((constraint, index) => (
-                          <p key={index} className="text-xs text-gray-600">
-                            • {constraint.description}
-                          </p>
-                        ))}
-                      </div>
-                    )}
-                    
-                    {/* Advice */}
-                    {level.advice && level.advice.length > 0 && (isCurrent || (!isAchieved && level.level === badge.currentLevel + 1)) && (
-                      <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
-                        <p className="text-xs font-medium text-blue-700 mb-2">
-                          {isCurrent ? 'Keep going!' : 'How to unlock:'}
-                        </p>
-                        {level.advice.map((tip, index) => (
-                          <p key={index} className="text-xs text-blue-600">
-                            • {tip}
-                          </p>
-                        ))}
-                      </div>
-                    )}
+                    <button
+                      onClick={onClose}
+                      className="cursor-pointer w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors flex-shrink-0"
+                    >
+                      <X className="w-5 h-5 text-gray-600" />
+                    </button>
                   </div>
-                );
-              })}
-            </div>
-          </div>
+
+                  {/* Description */}
+                  <div className="mb-8">
+                    <p className="text-gray-700 leading-relaxed">
+                      {badge.longDescription}
+                    </p>
+                  </div>
+
+                  {/* Current status */}
+                  {badge.isEarned && badge.userBadge && (
+                    <div
+                      className={`rounded-xl p-4 mb-8 border ${
+                        badge.isFullyCompleted
+                          ? "bg-purple-50 border-purple-200"
+                          : "bg-green-50 border-green-200"
+                      }`}
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
+                        <div>
+                          <div className="flex items-center space-x-1.5 sm:space-x-2 mb-1">
+                            {badge.isFullyCompleted ? (
+                              <Crown className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
+                            ) : (
+                              <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
+                            )}
+                            <span
+                              className={`font-semibold text-sm sm:text-base ${
+                                badge.isFullyCompleted
+                                  ? "text-purple-800"
+                                  : "text-green-800"
+                              }`}
+                            >
+                              {badge.isFullyCompleted
+                                ? "Badge Mastered!"
+                                : "Badge Earned!"}
+                            </span>
+                          </div>
+                          <p
+                            className={`text-xs sm:text-sm ${
+                              badge.isFullyCompleted
+                                ? "text-purple-700"
+                                : "text-green-700"
+                            }`}
+                          >
+                            Current Level: {badge.userBadge.achievedLevelTitle}
+                          </p>
+                        </div>
+                        <div className="text-left sm:text-right">
+                          <p className="text-xs sm:text-sm text-gray-600">
+                            Earned {formatAgo(badge.userBadge.earnedAt)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Badge levels */}
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                      Badge Levels
+                    </h3>
+                    <div className="space-y-3">
+                      {badge.levels
+                        .sort((a, b) => a.level - b.level)
+                        .map((level) => {
+                          const isAchieved = badge.currentLevel >= level.level;
+                          const isCurrent = badge.currentLevel === level.level;
+                          const isCompleted =
+                            badge.isFullyCompleted &&
+                            level.level === badge.maxLevel;
+
+                          return (
+                            <div
+                              key={level.key}
+                              className={`p-3 sm:p-4 rounded-xl border ${
+                                isCompleted
+                                  ? "bg-purple-50 border-purple-200"
+                                  : isCurrent
+                                  ? "bg-blue-50 border-blue-200"
+                                  : isAchieved
+                                  ? "bg-green-50 border-green-200"
+                                  : "bg-gray-50 border-gray-200"
+                              }`}
+                            >
+                              <div className="flex items-start justify-between mb-2 gap-2">
+                                <div className="flex items-start space-x-2 sm:space-x-3 min-w-0 flex-1">
+                                  <div
+                                    className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-semibold flex-shrink-0 ${
+                                      isCompleted
+                                        ? "bg-purple-500 text-white"
+                                        : isCurrent
+                                        ? "bg-blue-500 text-white"
+                                        : isAchieved
+                                        ? "bg-green-500 text-white"
+                                        : "bg-gray-300 text-gray-600"
+                                    }`}
+                                  >
+                                    {isCompleted ? (
+                                      <Crown className="w-3 h-3 sm:w-4 sm:h-4" />
+                                    ) : isAchieved ? (
+                                      <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+                                    ) : (
+                                      level.level
+                                    )}
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <h4
+                                      className={`font-semibold text-sm sm:text-base truncate ${
+                                        isCompleted
+                                          ? "text-purple-800"
+                                          : isCurrent
+                                          ? "text-blue-900"
+                                          : isAchieved
+                                          ? "text-green-900"
+                                          : "text-gray-700"
+                                      }`}
+                                    >
+                                      {level.title}
+                                    </h4>
+                                    <p className="text-xs sm:text-sm text-gray-600 line-clamp-2">
+                                      {level.shortDescription}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="text-xs sm:text-sm text-gray-500 font-medium flex-shrink-0">
+                                  {level.value.toLocaleString()}
+                                </div>
+                              </div>
+
+                              <p className="text-xs sm:text-sm text-gray-600">
+                                {level.longDescription}
+                              </p>
+
+                              {/* Constraints */}
+                              {level.constraints &&
+                                level.constraints.length > 0 && (
+                                  <div className="mt-3 p-2 sm:p-3 bg-white rounded-lg border border-gray-100">
+                                    <p className="text-xs font-medium text-gray-700 mb-2">
+                                      Requirements:
+                                    </p>
+                                    {level.constraints.map(
+                                      (constraint, index) => (
+                                        <p
+                                          key={index}
+                                          className="text-xs text-gray-600"
+                                        >
+                                          • {constraint.description}
+                                        </p>
+                                      )
+                                    )}
+                                  </div>
+                                )}
+
+                              {/* Advice */}
+                              {level.advice &&
+                                level.advice.length > 0 &&
+                                (isCurrent ||
+                                  (!isAchieved &&
+                                    level.level ===
+                                      badge.currentLevel + 1)) && (
+                                  <div className="mt-3 p-2 sm:p-3 bg-blue-50 rounded-lg border border-blue-100">
+                                    <p className="text-xs font-medium text-blue-700 mb-2">
+                                      {isCurrent
+                                        ? "Keep going!"
+                                        : "How to unlock:"}
+                                    </p>
+                                    {level.advice.map((tip, index) => (
+                                      <p
+                                        key={index}
+                                        className="text-xs text-blue-600"
+                                      >
+                                        • {tip}
+                                      </p>
+                                    ))}
+                                  </div>
+                                )}
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </div>
                 </div>
               </Dialog.Panel>
             </Transition.Child>
@@ -416,23 +512,32 @@ const RecentAchievement: React.FC<{
   return (
     <div className="bg-white border border-green-200 rounded-xl p-4 shadow-sm">
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3 flex-1 cursor-pointer" onClick={onClick}>
+        <div
+          className="flex items-center space-x-3 flex-1 cursor-pointer"
+          onClick={onClick}
+        >
           <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
             <badge.category.icon className="w-5 h-5 text-green-600" />
           </div>
           <div className="flex-1">
             <div className="flex items-center space-x-2 mb-1">
               <Trophy className="w-4 h-4 text-green-600" />
-              <span className="text-sm font-medium text-green-800">New Achievement!</span>
+              <span className="text-sm font-medium text-green-800">
+                New Achievement!
+              </span>
             </div>
             <h4 className="font-semibold text-gray-900">{badge.title}</h4>
             <p className="text-sm text-gray-600">
-              {badge.userBadge?.achievedLevelTitle} • {formatAgo(badge.userBadge?.earnedAt)}
+              {badge.userBadge?.achievedLevelTitle} •{" "}
+              {formatAgo(badge.userBadge?.earnedAt)}
             </p>
           </div>
         </div>
-        <button 
-          onClick={(e) => { e.stopPropagation(); onDismiss(); }}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onDismiss();
+          }}
           className="cursor-pointer p-1 hover:bg-gray-100 rounded-full transition-colors"
         >
           <X className="w-4 h-4 text-gray-400" />
@@ -447,39 +552,47 @@ const Badges: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [selectedBadge, setSelectedBadge] = useState<EnhancedBadge | null>(null);
-  const [recentNotifications, setRecentNotifications] = useState<EnhancedBadge[]>([]);
-  
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedBadge, setSelectedBadge] = useState<EnhancedBadge | null>(
+    null
+  );
+  const [recentNotifications, setRecentNotifications] = useState<
+    EnhancedBadge[]
+  >([]);
+
   const [userBadges, setUserBadges] = useState<UserBadge[]>([]);
-  const [badgeDefinitions, setBadgeDefinitions] = useState<BadgeDefinition[]>([]);
+  const [badgeDefinitions, setBadgeDefinitions] = useState<BadgeDefinition[]>(
+    []
+  );
   const [enhancedBadges, setEnhancedBadges] = useState<EnhancedBadge[]>([]);
-  
+
   // Load data
   const loadBadgesData = async (): Promise<void> => {
     try {
       setError(null);
-      
+
       const [userBadgesData, definitionsData] = await Promise.all([
         getUserBadges().catch(() => ({ badges: [] })),
-        getBadgeDefinitions()
+        getBadgeDefinitions(),
       ]);
-      
+
       setUserBadges(userBadgesData.badges);
       setBadgeDefinitions(definitionsData.badges);
-      
+
       // Enhance badges with user data
-      const enhanced: EnhancedBadge[] = definitionsData.badges.map(badge => {
-        const userBadge = userBadgesData.badges.find(ub => ub.badgeKey === badge.key);
+      const enhanced: EnhancedBadge[] = definitionsData.badges.map((badge) => {
+        const userBadge = userBadgesData.badges.find(
+          (ub) => ub.badgeKey === badge.key
+        );
         const isEarned = !!userBadge;
         const currentLevel = userBadge?.achievedLevel || 0;
-        const maxLevel = Math.max(...badge.levels.map(l => l.level));
+        const maxLevel = Math.max(...badge.levels.map((l) => l.level));
         const isFullyCompleted = isEarned && currentLevel >= maxLevel;
         const progress = (currentLevel / maxLevel) * 100;
-        const nextLevel = badge.levels.find(l => l.level > currentLevel);
+        const nextLevel = badge.levels.find((l) => l.level > currentLevel);
         const category = getCategoryInfo(badge.metric);
-        
+
         return {
           ...badge,
           userBadge,
@@ -489,33 +602,38 @@ const Badges: React.FC = () => {
           maxLevel,
           progress,
           nextLevel,
-          category
+          category,
         };
       });
-      
-      setEnhancedBadges(enhanced.sort((a, b) => {
-        if (a.isFullyCompleted !== b.isFullyCompleted) return a.isFullyCompleted ? -1 : 1;
-        if (a.isEarned !== b.isEarned) return a.isEarned ? -1 : 1;
-        return a.order - b.order;
-      }));
-      
+
+      setEnhancedBadges(
+        enhanced.sort((a, b) => {
+          if (a.isFullyCompleted !== b.isFullyCompleted)
+            return a.isFullyCompleted ? -1 : 1;
+          if (a.isEarned !== b.isEarned) return a.isEarned ? -1 : 1;
+          return a.order - b.order;
+        })
+      );
+
       // Set recent notifications
-      const recentBadges = enhanced.filter(badge => 
-        badge.isEarned && badge.userBadge && 
-        new Date(badge.userBadge.earnedAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+      const recentBadges = enhanced.filter(
+        (badge) =>
+          badge.isEarned &&
+          badge.userBadge &&
+          new Date(badge.userBadge.earnedAt) >
+            new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
       );
       setRecentNotifications(recentBadges);
-      
     } catch (err) {
-      console.error('Failed to load badges data:', err);
-      setError('Failed to load badges. Please try again.');
+      console.error("Failed to load badges data:", err);
+      setError("Failed to load badges. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
-  
+
   // Refresh badges
-// Refresh badges
+  // Refresh badges
   const handleRefresh = async (): Promise<void> => {
     setIsRefreshing(true);
 
@@ -526,7 +644,7 @@ const Badges: React.FC = () => {
         // We create a simple, sorted string of keys and levels for reliable comparison.
         const beforeSnapshot = JSON.stringify(
           userBadges
-            .map(b => ({ key: b.badgeKey, level: b.achievedLevel }))
+            .map((b) => ({ key: b.badgeKey, level: b.achievedLevel }))
             .sort((a, b) => a.key.localeCompare(b.key))
         );
 
@@ -536,57 +654,71 @@ const Badges: React.FC = () => {
         // 3. Re-fetch all badge data to get the latest state
         const [newUserBadgesData, definitionsData] = await Promise.all([
           getUserBadges().catch(() => ({ badges: [] })),
-          getBadgeDefinitions()
+          getBadgeDefinitions(),
         ]);
 
         // 4. Create the "after" snapshot from the newly fetched data
         const afterSnapshot = JSON.stringify(
           newUserBadgesData.badges
-            .map(b => ({ key: b.badgeKey, level: b.achievedLevel }))
+            .map((b) => ({ key: b.badgeKey, level: b.achievedLevel }))
             .sort((a, b) => a.key.localeCompare(b.key))
         );
-        
+
         // 5. Process the new data (this logic is the same as in `loadBadgesData`)
-        const enhanced: EnhancedBadge[] = definitionsData.badges.map(badge => {
-          const userBadge = newUserBadgesData.badges.find(ub => ub.badgeKey === badge.key);
-          const isEarned = !!userBadge;
-          const currentLevel = userBadge?.achievedLevel || 0;
-          const maxLevel = Math.max(...badge.levels.map(l => l.level));
-          const isFullyCompleted = isEarned && currentLevel >= maxLevel;
-          const progress = (currentLevel / maxLevel) * 100;
-          const nextLevel = badge.levels.find(l => l.level > currentLevel);
-          const category = getCategoryInfo(badge.metric);
-          
-          return {
-            ...badge, userBadge, isEarned, isFullyCompleted, currentLevel, maxLevel, progress, nextLevel, category
-          };
-        });
+        const enhanced: EnhancedBadge[] = definitionsData.badges.map(
+          (badge) => {
+            const userBadge = newUserBadgesData.badges.find(
+              (ub) => ub.badgeKey === badge.key
+            );
+            const isEarned = !!userBadge;
+            const currentLevel = userBadge?.achievedLevel || 0;
+            const maxLevel = Math.max(...badge.levels.map((l) => l.level));
+            const isFullyCompleted = isEarned && currentLevel >= maxLevel;
+            const progress = (currentLevel / maxLevel) * 100;
+            const nextLevel = badge.levels.find((l) => l.level > currentLevel);
+            const category = getCategoryInfo(badge.metric);
+
+            return {
+              ...badge,
+              userBadge,
+              isEarned,
+              isFullyCompleted,
+              currentLevel,
+              maxLevel,
+              progress,
+              nextLevel,
+              category,
+            };
+          }
+        );
 
         // 6. Update all relevant states
         setUserBadges(newUserBadgesData.badges);
         setBadgeDefinitions(definitionsData.badges);
-        setEnhancedBadges(enhanced.sort((a, b) => {
-          if (a.isFullyCompleted !== b.isFullyCompleted) return a.isFullyCompleted ? -1 : 1;
-          if (a.isEarned !== b.isEarned) return a.isEarned ? -1 : 1;
-          return a.order - b.order;
-        }));
-        
+        setEnhancedBadges(
+          enhanced.sort((a, b) => {
+            if (a.isFullyCompleted !== b.isFullyCompleted)
+              return a.isFullyCompleted ? -1 : 1;
+            if (a.isEarned !== b.isEarned) return a.isEarned ? -1 : 1;
+            return a.order - b.order;
+          })
+        );
+
         // 7. Compare snapshots and resolve the promise with the correct message
         if (beforeSnapshot !== afterSnapshot) {
-          resolve('Badges updated successfully!');
+          resolve("Badges updated successfully!");
         } else {
-          resolve('Your badges are already up-to-date.');
+          resolve("Your badges are already up-to-date.");
         }
-
       } catch (err) {
-        console.error('Failed to refresh badges:', err);
-        reject('Failed to refresh badges. Please try again.');
+        console.error("Failed to refresh badges:", err);
+        reject("Failed to refresh badges. Please try again.");
       }
     });
 
     // Use sonner's toast.promise to handle the UI feedback
     toast.promise(refreshProcess, {
-      loading: 'Refreshing your achievements...',
+      loading: "Refreshing your achievements...",
       success: (message) => `${message}`,
       error: (errorMessage) => `${errorMessage}`,
     });
@@ -596,44 +728,46 @@ const Badges: React.FC = () => {
       setIsRefreshing(false);
     });
   };
-  
+
   useEffect(() => {
     loadBadgesData();
   }, []);
-  
+
   // Filter badges
-  const filteredBadges = enhancedBadges.filter(badge => {
-    const matchesSearch = badge.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         badge.shortDescription.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || 
-                           selectedCategory === 'earned' && badge.isEarned ||
-                           selectedCategory === 'unearned' && !badge.isEarned ||
-                           selectedCategory === 'completed' && badge.isFullyCompleted ||
-                           badge.category.key === selectedCategory;
-    
+  const filteredBadges = enhancedBadges.filter((badge) => {
+    const matchesSearch =
+      badge.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      badge.shortDescription.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory =
+      selectedCategory === "all" ||
+      (selectedCategory === "earned" && badge.isEarned) ||
+      (selectedCategory === "unearned" && !badge.isEarned) ||
+      (selectedCategory === "completed" && badge.isFullyCompleted) ||
+      badge.category.key === selectedCategory;
+
     return matchesSearch && matchesCategory;
   });
-  
+
   // Statistics
   const stats = {
     total: enhancedBadges.length,
-    earned: enhancedBadges.filter(b => b.isEarned).length,
-    completed: enhancedBadges.filter(b => b.isFullyCompleted).length,
-    recentlyEarned: recentNotifications.length
+    earned: enhancedBadges.filter((b) => b.isEarned).length,
+    completed: enhancedBadges.filter((b) => b.isFullyCompleted).length,
+    recentlyEarned: recentNotifications.length,
   };
-  
+
   // Categories for filter
   const categories = [
-    { key: 'all', label: 'All', icon: Award },
-    { key: 'earned', label: 'Earned', icon: CheckCircle },
-    { key: 'completed', label: 'Mastered', icon: Crown },
-    { key: 'unearned', label: 'Available', icon: Target },
-    { key: 'activity', label: 'Activity', icon: Activity },
-    { key: 'staking', label: 'Staking', icon: Shield },
-    { key: 'governance', label: 'Governance', icon: Vote },
-    { key: 'parachain', label: 'Cross-Chain', icon: Globe },
+    { key: "all", label: "All", icon: Award },
+    { key: "earned", label: "Earned", icon: CheckCircle },
+    { key: "completed", label: "Mastered", icon: Crown },
+    { key: "unearned", label: "Available", icon: Target },
+    { key: "activity", label: "Activity", icon: Activity },
+    { key: "staking", label: "Staking", icon: Shield },
+    { key: "governance", label: "Governance", icon: Vote },
+    { key: "parachain", label: "Cross-Chain", icon: Globe },
   ];
-  
+
   // Loading state
   if (isLoading) {
     return (
@@ -644,7 +778,9 @@ const Badges: React.FC = () => {
               <div className="w-16 h-16 bg-blue-600 rounded-xl flex items-center justify-center mx-auto mb-4">
                 <Trophy className="w-8 h-8 text-white animate-pulse" />
               </div>
-              <h2 className="text-xl font-semibold text-gray-700 mb-2">Loading Badges</h2>
+              <h2 className="text-xl font-semibold text-gray-700 mb-2">
+                Loading Badges
+              </h2>
               <p className="text-gray-500">Fetching your achievements...</p>
             </div>
           </div>
@@ -652,7 +788,7 @@ const Badges: React.FC = () => {
       </div>
     );
   }
-  
+
   // Error state
   if (error) {
     return (
@@ -661,9 +797,11 @@ const Badges: React.FC = () => {
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-center">
               <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-              <h2 className="text-xl font-semibold text-gray-700 mb-2">Something went wrong</h2>
+              <h2 className="text-xl font-semibold text-gray-700 mb-2">
+                Something went wrong
+              </h2>
               <p className="text-gray-500 mb-6">{error}</p>
-              <button 
+              <button
                 onClick={loadBadgesData}
                 className="cursor-pointer bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
               >
@@ -675,30 +813,34 @@ const Badges: React.FC = () => {
       </div>
     );
   }
-  
+
   return (
-    <div className="min-h-screen bg-gray-50 px-4">
+    <div className="min-h-screen bg-gray-50 pt-14 px-4">
       <style jsx>{`
         @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
         }
-        
+
         @keyframes slideIn {
-          from { 
+          from {
             opacity: 0;
             transform: scale(0.95) translateY(20px);
           }
-          to { 
+          to {
             opacity: 1;
             transform: scale(1) translateY(0);
           }
         }
-        
+
         .animate-fadeIn {
           animation: fadeIn 0.2s ease-out;
         }
-        
+
         .animate-slideIn {
           animation: slideIn 0.3s ease-out;
         }
@@ -708,8 +850,12 @@ const Badges: React.FC = () => {
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 space-y-4 sm:space-y-0">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Badges</h1>
-              <p className="text-sm sm:text-base text-gray-600">Track your achievements and unlock new badges</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+                Badges
+              </h1>
+              <p className="text-sm sm:text-base text-gray-600">
+                Track your achievements and unlock new badges
+              </p>
             </div>
 
             <button
@@ -720,13 +866,13 @@ const Badges: React.FC = () => {
               <RefreshCw
                 className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`}
               />
-              <span className="text-sm sm:text-base">{isRefreshing ? "Refreshing..." : "Refresh Score"}</span>
+              <span className="text-sm sm:text-base">
+                {isRefreshing ? "Refreshing..." : "Refresh Score"}
+              </span>
             </button>
-
           </div>
         </div>
-        
-        
+
         {/* Statistics */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 mb-8">
           <div className="relative bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-4 sm:p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 group overflow-hidden">
@@ -734,10 +880,16 @@ const Badges: React.FC = () => {
             <div className="relative z-10">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 sm:mb-3">
                 <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 text-blue-100 mb-2 sm:mb-0" />
-                <div className="text-2xl sm:text-3xl font-bold">{stats.earned}</div>
+                <div className="text-2xl sm:text-3xl font-bold">
+                  {stats.earned}
+                </div>
               </div>
-              <div className="text-blue-100 font-medium text-sm mb-1">Badges Earned</div>
-              <div className="text-blue-200 text-xs">of {stats.total} available</div>
+              <div className="text-blue-100 font-medium text-sm mb-1">
+                Badges Earned
+              </div>
+              <div className="text-blue-200 text-xs">
+                of {stats.total} available
+              </div>
             </div>
           </div>
 
@@ -746,9 +898,13 @@ const Badges: React.FC = () => {
             <div className="relative z-10">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 sm:mb-3">
                 <Crown className="w-6 h-6 sm:w-8 sm:h-8 text-purple-100 mb-2 sm:mb-0" />
-                <div className="text-2xl sm:text-3xl font-bold">{stats.completed}</div>
+                <div className="text-2xl sm:text-3xl font-bold">
+                  {stats.completed}
+                </div>
               </div>
-              <div className="text-purple-100 font-medium text-sm mb-1">Mastered</div>
+              <div className="text-purple-100 font-medium text-sm mb-1">
+                Mastered
+              </div>
               <div className="text-purple-200 text-xs">fully completed</div>
             </div>
           </div>
@@ -758,9 +914,13 @@ const Badges: React.FC = () => {
             <div className="relative z-10">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 sm:mb-3">
                 <Target className="w-6 h-6 sm:w-8 sm:h-8 text-emerald-100 mb-2 sm:mb-0" />
-                <div className="text-2xl sm:text-3xl font-bold">{Math.round((stats.earned / stats.total) * 100)}%</div>
+                <div className="text-2xl sm:text-3xl font-bold">
+                  {Math.round((stats.earned / stats.total) * 100)}%
+                </div>
               </div>
-              <div className="text-emerald-100 font-medium text-sm mb-1">Completion</div>
+              <div className="text-emerald-100 font-medium text-sm mb-1">
+                Completion
+              </div>
               <div className="text-emerald-200 text-xs">overall progress</div>
             </div>
           </div>
@@ -770,14 +930,18 @@ const Badges: React.FC = () => {
             <div className="relative z-10">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 sm:mb-3">
                 <Bell className="w-6 h-6 sm:w-8 sm:h-8 text-orange-100 mb-2 sm:mb-0" />
-                <div className="text-2xl sm:text-3xl font-bold">{stats.recentlyEarned}</div>
+                <div className="text-2xl sm:text-3xl font-bold">
+                  {stats.recentlyEarned}
+                </div>
               </div>
-              <div className="text-orange-100 font-medium text-sm mb-1">This Week</div>
+              <div className="text-orange-100 font-medium text-sm mb-1">
+                This Week
+              </div>
               <div className="text-orange-200 text-xs">newly earned</div>
             </div>
           </div>
         </div>
-        
+
         {/* Search and Filters */}
         <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 mb-8">
           {/* Search Bar */}
@@ -802,8 +966,8 @@ const Badges: React.FC = () => {
                   onClick={() => setSelectedCategory(category.key)}
                   className={`cursor-pointer flex items-center space-x-1.5 sm:space-x-2 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
                     selectedCategory === category.key
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                   }`}
                 >
                   <IconComponent className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -813,41 +977,50 @@ const Badges: React.FC = () => {
             })}
           </div>
         </div>
-        
+
         {/* Badges Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredBadges.map((badge) => (
-            <BadgeCard 
-              key={badge.key} 
-              badge={badge} 
+            <BadgeCard
+              key={badge.key}
+              badge={badge}
               onClick={() => setSelectedBadge(badge)}
             />
           ))}
         </div>
-        
+
         {/* Empty state */}
         {filteredBadges.length === 0 && (
           <div className="text-center py-12">
             <Award className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-600 mb-2">No badges found</h3>
-            <p className="text-gray-500">Try adjusting your search or filter criteria</p>
+            <h3 className="text-lg font-semibold text-gray-600 mb-2">
+              No badges found
+            </h3>
+            <p className="text-gray-500">
+              Try adjusting your search or filter criteria
+            </p>
           </div>
         )}
 
-
-                {/* Recent Achievements */}
+        {/* Recent Achievements */}
         {recentNotifications.length > 0 && (
           <div className="mt-8">
             <div className="flex items-center space-x-2 mb-4">
               <Bell className="w-5 h-5 text-green-600" />
-              <h2 className="text-lg font-semibold text-gray-900">Recent Achievements</h2>
+              <h2 className="text-lg font-semibold text-gray-900">
+                Recent Achievements
+              </h2>
             </div>
             <div className="space-y-3">
               {recentNotifications.map((badge) => (
                 <RecentAchievement
                   key={badge.key}
                   badge={badge}
-                  onDismiss={() => setRecentNotifications(prev => prev.filter(b => b.key !== badge.key))}
+                  onDismiss={() =>
+                    setRecentNotifications((prev) =>
+                      prev.filter((b) => b.key !== badge.key)
+                    )
+                  }
                   onClick={() => setSelectedBadge(badge)}
                 />
               ))}
@@ -855,11 +1028,10 @@ const Badges: React.FC = () => {
           </div>
         )}
 
-        
         {/* Badge Detail Modal */}
-        <BadgeDetailModal 
-          badge={selectedBadge} 
-          onClose={() => setSelectedBadge(null)} 
+        <BadgeDetailModal
+          badge={selectedBadge}
+          onClose={() => setSelectedBadge(null)}
         />
       </div>
     </div>

@@ -69,9 +69,9 @@ export const NavbarWalletButton: React.FC<NavbarWalletButtonProps> = ({
     return (
       <button
         onClick={onOpenModal}
-        className="cursor-pointer flex items-center space-x-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-2.5 rounded-full font-semibold hover:shadow-lg hover:scale-105 transition-all duration-200"
+        className="cursor-pointer flex items-center space-x-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white px-3 py-2 sm:px-6 sm:py-2.5 rounded-full font-medium sm:font-semibold hover:shadow-lg hover:scale-105 transition-all duration-200 text-sm sm:text-base"
       >
-        <Wallet className="w-4 h-4" />
+        <Wallet className="w-4 h-4 hidden sm:inline-block" />
         <span>Connect Wallet</span>
       </button>
     );
@@ -126,15 +126,13 @@ const AccountSelector: React.FC<{
   return (
     <div className="space-y-3">
       <div className="text-center mb-6">
-        <h3 className="text-xl font-bold text-gray-900 mb-2">
-          {showSignButtons
-            ? "Select Account to Authenticate"
-            : "Select Account"}
+        <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2">
+          Select Account
         </h3>
-        <p className="text-gray-600">
+        <p className="text-xs sm:text-sm text-gray-600">
           {showSignButtons
-            ? "Choose which account you want to authenticate and sign in with"
-            : "Choose which account to connect with DotPassport"}
+            ? "Choose your account to sign in with"
+            : "Choose account to connect with DotPassport"}
         </p>
       </div>
 
@@ -163,8 +161,9 @@ const AccountSelector: React.FC<{
             >
               {account.meta.name || "Unnamed Account"}
             </div>
-            <div className="text-sm text-gray-500 font-mono">
-              {account.address.slice(0, 8)}...{account.address.slice(-8)}
+            <div className="text-xs sm:text-sm text-gray-500 font-mono truncate">
+              <span className="inline sm:hidden">{account.address.slice(0, 6)}...{account.address.slice(-6)}</span>
+              <span className="hidden sm:inline">{account.address.slice(0, 8)}...{account.address.slice(-8)}</span>
             </div>
           </div>
           <div className="flex items-center space-x-2">
@@ -172,16 +171,16 @@ const AccountSelector: React.FC<{
               <button
                 onClick={() => onSelectAccount(account)}
                 disabled={isLoading}
-                className={`cursor-pointer px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                className={`cursor-pointer px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg font-medium transition-all duration-200 text-sm sm:text-base ${
                   selectedAccount?.address === account.address
                     ? "bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-md hover:shadow-lg"
                     : "bg-white text-purple-600 border border-purple-200 hover:bg-purple-50"
                 } disabled:opacity-50 disabled:cursor-not-allowed`}
               >
                 {isLoading && selectedAccount?.address === account.address ? (
-                  <div className="flex items-center space-x-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
-                    <span>Signing...</span>
+                  <div className="flex items-center space-x-1.5 sm:space-x-2">
+                    <div className="animate-spin rounded-full h-3.5 w-3.5 sm:h-4 sm:w-4 border-b-2 border-current"></div>
+                    <span className="text-xs sm:text-sm">Signing...</span>
                   </div>
                 ) : (
                   "Sign In"
@@ -395,7 +394,7 @@ const ConnectedState: React.FC<{
     </div>{" "}
     <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 border border-green-200">
       {" "}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 mb-4">
         {" "}
         <div className="flex items-center space-x-3">
           {" "}
@@ -403,34 +402,43 @@ const ConnectedState: React.FC<{
             {" "}
             <User className="w-5 h-5 text-white" />{" "}
           </div>{" "}
-          <div>
+          <div className="min-w-0 flex-1">
             {" "}
-            <div className="font-semibold text-gray-900">
+            <div className="font-semibold text-gray-900 truncate">
               {account.meta.name || "Account"}
             </div>{" "}
-            <div className="text-sm text-gray-600">Connected & Verified</div>{" "}
+            <div className="text-xs sm:text-sm text-gray-600">Connected & Verified</div>{" "}
           </div>{" "}
         </div>{" "}
-        <div className="flex items-center space-x-2 bg-green-100 text-green-700 px-3 py-1 rounded-full">
+        <div className="flex items-center space-x-1.5 sm:space-x-2 bg-green-100 text-green-700 px-2.5 py-1 sm:px-3 rounded-full">
           {" "}
-          <Shield className="w-4 h-4" />{" "}
-          <span className="text-sm font-medium">Authenticated</span>{" "}
+          <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4" />{" "}
+          <span className="text-xs sm:text-sm font-medium">
+            <span className="hidden sm:inline">Authenticated</span>
+            <span className="inline sm:hidden">Auth</span>
+          </span>{" "}
         </div>{" "}
       </div>{" "}
-      <div className="bg-white rounded-lg p-3 mb-4 border border-green-200">
+      <div className="bg-white rounded-lg p-2.5 sm:p-3 mb-4 border border-green-200">
         {" "}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2">
           {" "}
-          <code className="text-sm text-gray-600 font-mono">
+          <code className="text-xs sm:text-sm text-gray-600 font-mono truncate break-all">
             {" "}
-            {account.address.slice(0, 12)}...{account.address.slice(-12)}{" "}
+            <span className="inline sm:hidden">
+              {account.address.slice(0, 8)}...{account.address.slice(-8)}
+            </span>
+            <span className="hidden sm:inline">
+              {account.address.slice(0, 12)}...{account.address.slice(-12)}
+            </span>
+            {" "}
           </code>{" "}
           <button
             onClick={onCopyAddress}
-            className="cursor-pointer flex items-center space-x-1 text-gray-500 hover:text-gray-700 transition-colors"
+            className="cursor-pointer flex items-center flex-shrink-0 text-gray-500 hover:text-gray-700 transition-colors"
           >
             {" "}
-            <Copy className="w-4 h-4" />{" "}
+            <Copy className="w-3.5 h-3.5 sm:w-4 sm:h-4" />{" "}
           </button>{" "}
         </div>{" "}
       </div>{" "}

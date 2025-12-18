@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Fragment } from "react";
+import { Dialog, Transition } from "@headlessui/react";
 import {
   TrendingUp,
   RefreshCw,
@@ -32,6 +33,7 @@ import {
   Layers,
   Code,
   History,
+  X,
 } from "lucide-react";
 
 // Import your actual API services
@@ -243,68 +245,76 @@ const CategoryDetail: React.FC<CategoryDetailProps> = ({
   return (
     <div
       onClick={onClick}
-      className={`bg-white rounded-2xl p-6 shadow-lg border transition-all duration-300 cursor-pointer group ${
+      className={`bg-white rounded-2xl p-6 transition-all duration-300 cursor-pointer group ${
         isSelected
-          ? "border-purple-300 ring-2 ring-purple-200 shadow-xl"
-          : "border-gray-100 hover:border-purple-200 hover:shadow-xl"
+          ? "shadow-md border border-purple-200 ring-1 ring-purple-100"
+          : "shadow-sm border border-gray-200 hover:shadow-md hover:border-purple-200"
       }`}
     >
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center space-x-4">
-          <div
-            className={`w-14 h-14 rounded-xl flex items-center justify-center bg-gradient-to-br ${gradient} group-hover:scale-110 transition-transform duration-200`}
-          >
-            <Icon className="w-7 h-7 text-white" />
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-gray-900 group-hover:text-purple-700 transition-colors">
-              {category.displayName}
-            </h3>
-            <p className="text-sm text-gray-600">
-              {category.short_description}
-            </p>
-          </div>
+      <div className="flex items-start space-x-3 sm:space-x-4 mb-4">
+        {/* Left column: Icon */}
+        <div
+          className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center flex-shrink-0 bg-gradient-to-br ${gradient} group-hover:scale-110 transition-transform duration-200`}
+        >
+          <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
         </div>
-        <div className="text-right">
-          <div className="text-2xl font-bold text-gray-900">
-            {userScore.score}
-          </div>
-          <div className="text-sm text-gray-500">of {maxScore}</div>
-        </div>
-      </div>
 
-      {/* Progress Bar */}
-      <div className="mb-4">
-        <div className="flex justify-between text-sm mb-2">
-          <span className="font-medium text-gray-700">Progress</span>
-          <span className="text-gray-500">
-            {percentage >= 100 ? "100" : percentage.toFixed(1)}%
-          </span>
-        </div>
-        <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-          <div
-            className={`h-full bg-gradient-to-r ${gradient} rounded-full transition-all duration-1000 ease-out`}
-            style={{ width: `${percentage}%` }}
-          />
-        </div>
-      </div>
+        {/* Right column: Title, description, score */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between mb-2 gap-3">
+            <div className="">
+              <h3 className="text-base sm:text-lg font-bold text-gray-900 group-hover:text-purple-700 transition-colors">
+                {category.displayName}
+              </h3>
+              <p className="text-xs sm:text-sm text-gray-600">
+                {category.short_description}
+              </p>
+            </div>
+            <div className="text-right flex-shrink-0">
+              <div className="text-xl sm:text-2xl font-bold text-gray-900">
+                {userScore.score}
+              </div>
+              <div className="text-xs sm:text-sm text-gray-500">
+                of {maxScore}
+              </div>
+            </div>
+          </div>
 
-      <div className="flex items-center justify-between">
-        <div className="flex-1">
-          <p className="text-sm font-medium text-gray-900">
-            {currentReason?.title || "No Achievement"}
-          </p>
-          <p className="text-xs text-gray-600 mt-1">
-            {currentReason?.description || userScore.reason}
-          </p>
+          {/* Progress Bar - moved here */}
+          <div className="mb-3">
+            <div className="flex justify-between text-xs sm:text-sm mb-2">
+              <span className="font-medium text-gray-700">Progress</span>
+              <span className="text-gray-500">
+                {percentage >= 100 ? "100" : percentage.toFixed(1)}%
+              </span>
+            </div>
+            <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
+              <div
+                className={`h-full bg-gradient-to-r ${gradient} rounded-full transition-all duration-1000 ease-out`}
+                style={{ width: `${percentage}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Current achievement */}
+          <div className="flex items-center justify-between">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">
+                {currentReason?.title || "No Achievement"}
+              </p>
+              <p className="text-xs text-gray-600 mt-0.5 truncate">
+                {currentReason?.description || userScore.reason}
+              </p>
+            </div>
+            <ChevronRight
+              className={`w-4 h-4 sm:w-5 sm:h-5 ml-2 flex-shrink-0 transition-all duration-200 ${
+                isSelected
+                  ? "text-purple-600 rotate-90"
+                  : "text-gray-400 group-hover:text-purple-600"
+              }`}
+            />
+          </div>
         </div>
-        <ChevronRight
-          className={`w-5 h-5 transition-all duration-200 ${
-            isSelected
-              ? "text-purple-600 rotate-90"
-              : "text-gray-400 group-hover:text-purple-600"
-          }`}
-        />
       </div>
     </div>
   );
@@ -343,32 +353,34 @@ const ScoreInsight: React.FC<ScoreInsightProps> = ({
   );
 
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 sticky top-16 max-h-[calc(100vh-90px)] overflow-y-auto">
+    <div className="bg-white lg:rounded-2xl p-4 sm:p-6 lg:shadow-lg lg:border lg:border-gray-100 lg:sticky lg:top-16 lg:max-h-[calc(100vh-90px)] lg:overflow-y-auto">
       <div className="mb-6">
         <div className="flex items-center space-x-3 mb-4">
           <div
-            className={`w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br ${getCategoryGradient(
+            className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center bg-gradient-to-br ${getCategoryGradient(
               category.key
             )}`}
           >
             {React.createElement(getCategoryIcon(category.key), {
-              className: "w-6 h-6 text-white",
+              className: "w-5 h-5 sm:w-6 sm:h-6 text-white",
             })}
           </div>
           <div>
-            <h3 className="text-xl font-bold text-gray-900">
+            <h3 className="text-lg sm:text-xl font-bold text-gray-900">
               {category.displayName}
             </h3>
-            <p className="text-sm text-gray-600">
+            <p className="text-xs sm:text-sm text-gray-600">
               {userScore.score} / {maxScore} points
             </p>
           </div>
         </div>
 
-        <p className="text-gray-700 mb-4">{category.long_description}</p>
+        <p className="text-sm sm:text-base text-gray-700 mb-4">
+          {category.long_description}
+        </p>
 
         {/* Current Status */}
-        <div className="bg-gray-50 rounded-xl p-4 mb-4">
+        <div className="bg-gray-50 rounded-xl p-3 sm:p-4 mb-4">
           <div className="flex items-center justify-between mb-2">
             <span className="font-semibold text-gray-900">
               Current Achievement
@@ -478,7 +490,7 @@ const ScoreInsight: React.FC<ScoreInsightProps> = ({
             return (
               <div
                 key={reason.key}
-                className={`p-4 rounded-xl border-2 transition-all duration-200 ${
+                className={`p-3 sm:p-4 rounded-xl border-2 transition-all duration-200 ${
                   isCurrentLevel
                     ? "bg-purple-50 border-purple-300"
                     : isAchieved
@@ -489,9 +501,9 @@ const ScoreInsight: React.FC<ScoreInsightProps> = ({
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center space-x-2">
                     {isAchieved ? (
-                      <CheckCircle className="w-5 h-5 text-green-500" />
+                      <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" />
                     ) : (
-                      <div className="w-5 h-5 rounded-full border-2 border-gray-300" />
+                      <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 border-gray-300" />
                     )}
                     <h5
                       className={`font-semibold ${
@@ -616,6 +628,7 @@ const Reputation: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [isMobileModalOpen, setIsMobileModalOpen] = useState<boolean>(false);
 
   // Data state
   const [userScore, setUserScore] = useState<UserScore | null>(null);
@@ -705,7 +718,7 @@ const Reputation: React.FC = () => {
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-purple-50 px-4">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-purple-50 pt-14 px-4">
         <div className="max-w-7xl mx-auto py-8">
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-center">
@@ -728,7 +741,7 @@ const Reputation: React.FC = () => {
   // Error state
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-purple-50 px-4">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-purple-50 pt-14 px-4">
         <div className="max-w-7xl mx-auto py-8">
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-center">
@@ -753,7 +766,7 @@ const Reputation: React.FC = () => {
   // No score data state
   if (!userScore || !userScore.score_exists) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-purple-50 px-4">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-purple-50 pt-14 px-4">
         <div className="max-w-7xl mx-auto py-8">
           <div className="text-center py-16">
             <div className="w-20 h-20 bg-gradient-to-br from-pink-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -828,17 +841,84 @@ const Reputation: React.FC = () => {
     (item) => item.category.key === selectedCategory
   );
 
+  // Mobile Modal Component
+  const renderMobileModal = () => {
+    if (!selectedCategoryData) return null;
+
+    return (
+      <Transition appear show={isMobileModalOpen} as={Fragment}>
+        <Dialog
+          as="div"
+          className="relative z-50 lg:hidden"
+          onClose={() => setIsMobileModalOpen(false)}
+        >
+          {/* Backdrop */}
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
+          </Transition.Child>
+
+          {/* Modal Content */}
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95 translate-y-4"
+                enterTo="opacity-100 scale-100 translate-y-0"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100 translate-y-0"
+                leaveTo="opacity-0 scale-95 translate-y-4"
+              >
+                <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white shadow-xl transition-all">
+                  {/* Header with close button */}
+                  <div className="flex items-center justify-between p-4 border-b border-gray-100">
+                    <h3 className="text-lg font-bold text-gray-900">
+                      Category Details
+                    </h3>
+                    <button
+                      onClick={() => setIsMobileModalOpen(false)}
+                      className="cursor-pointer p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                    >
+                      <X className="w-5 h-5 text-gray-500" />
+                    </button>
+                  </div>
+
+                  {/* ScoreInsight content */}
+                  <div className="max-h-[calc(100vh-8rem)] overflow-y-auto">
+                    <ScoreInsight
+                      category={selectedCategoryData.category}
+                      userScore={selectedCategoryData.userScore}
+                      maxScore={selectedCategoryData.maxScore}
+                    />
+                  </div>
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
+    );
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-purple-50 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-purple-50 pt-14 px-4">
       <div className="max-w-7xl mx-auto py-8">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
                 Reputation Score
               </h1>
-              <p className="text-gray-600">
+              <p className="text-sm sm:text-base text-gray-600">
                 Your comprehensive on-chain reputation across the Polkadot
                 ecosystem
               </p>
@@ -846,7 +926,7 @@ const Reputation: React.FC = () => {
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="cursor-pointer flex items-center space-x-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-3 rounded-full font-semibold hover:shadow-lg hover:scale-105 transition-all duration-200 disabled:opacity-70"
+              className="cursor-pointer flex items-center justify-center space-x-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white px-5 py-2.5 sm:px-6 sm:py-3 rounded-full font-semibold hover:shadow-lg hover:scale-105 transition-all duration-200 disabled:opacity-70 text-sm sm:text-base w-full sm:w-auto"
             >
               <RefreshCw
                 className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`}
@@ -928,15 +1008,21 @@ const Reputation: React.FC = () => {
                     userScore={categoryScore}
                     maxScore={maxScore}
                     isSelected={selectedCategory === category.key}
-                    onClick={() => setSelectedCategory(category.key)}
+                    onClick={() => {
+                      setSelectedCategory(category.key);
+                      // On mobile, open modal
+                      if (window.innerWidth < 1024) {
+                        setIsMobileModalOpen(true);
+                      }
+                    }}
                   />
                 )
               )}
             </div>
           </div>
 
-          {/* Category Details Sidebar - Sticky */}
-          <div className="space-y-6 mt-12">
+          {/* Desktop sidebar - hidden on mobile */}
+          <div className="hidden lg:block space-y-6 mt-12">
             {selectedCategoryData ? (
               <ScoreInsight
                 category={selectedCategoryData.category}
@@ -957,6 +1043,9 @@ const Reputation: React.FC = () => {
             )}
           </div>
         </div>
+
+        {/* Mobile Modal */}
+        {renderMobileModal()}
       </div>
     </div>
   );
