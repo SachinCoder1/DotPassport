@@ -1,5 +1,3 @@
-// src/components/landing/AppLandingWrapper.tsx
-
 import { commonWallets } from "@/common/wallets";
 import { useWalletStore } from "@/store/walletStore";
 import {

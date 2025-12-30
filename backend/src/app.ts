@@ -28,7 +28,14 @@ export function createApp() {
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
   app.use(helmet());
-  app.use(cors({ origin: [CLIENT_URL] }));
+
+  // Apply global CORS to all routes EXCEPT /api/v2 (which has its own CORS middleware)
+  app.use((req, res, next) => {
+    if (req.path.startsWith('/api/v2')) {
+      return next(); // Skip global CORS for /api/v2
+    }
+    cors({ origin: [CLIENT_URL] })(req, res, next);
+  });
 
   // --- Rate limiting for v1 API only (v2 has its own per-key limits)
   app.use(

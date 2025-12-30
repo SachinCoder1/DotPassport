@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { apiKeyCors } from '../middleware/apiKeyCors';
 import { apiKeyAuth } from '../middleware/apiKeyAuth';
 import { apiKeyRateLimit } from '../middleware/apiKeyRateLimit';
 import {
@@ -13,7 +14,9 @@ import {
 
 const router = Router();
 
-// All developer routes require API key authentication and rate limiting
+// All developer routes require CORS validation, API key authentication, and rate limiting
+// IMPORTANT: apiKeyCors must run BEFORE apiKeyAuth to handle preflight OPTIONS requests
+router.use(apiKeyCors);
 router.use(apiKeyAuth);
 router.use(apiKeyRateLimit);
 
