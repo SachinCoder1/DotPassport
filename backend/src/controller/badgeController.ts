@@ -123,6 +123,7 @@ export async function refreshUserBadges(
             $set: {
               achievedLevelKey: achievedLevelKey,
               achievedLevelTitle: achievedLevelTitle,
+              updatedAt: new Date(), // Force timestamp update
             },
           },
           { upsert: true }

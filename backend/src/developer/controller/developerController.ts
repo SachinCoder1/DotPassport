@@ -7,6 +7,7 @@ import { Score } from '~/models/Score';
 import { UserBadge } from '~/models/UserBadge';
 import { Badge } from '~/models/Badge';
 import { Category } from '~/models/Category';
+import { getOrCreateApiUser, isValidPolkadotAddress } from '~/service/jit/apiUserService';
 
 /**
  * Get user profile by address
@@ -20,34 +21,52 @@ export async function getProfileByAddress(
   try {
     const address = req.params.address;
 
-    // Find user by address
+    // Validate address format
+    if (!isValidPolkadotAddress(address)) {
+      return next(new HttpError(400, 'Invalid Polkadot address format'));
+    }
+
+    // Try to find app user first
     const user = await User.findOne({ addresses: address }).populate('profile');
-    if (!user || !user.profile) {
-      return next(new HttpError(404, 'Profile not found'));
+
+    if (user && user.profile) {
+      const profile = await Profile.findById(user.profile);
+      if (profile) {
+        // Return app user profile
+        return res.status(200).json({
+          success: true,
+          data: {
+            address,
+            displayName: profile.displayName,
+            avatarUrl: profile.avatarUrl,
+            bio: profile.bio,
+            socialLinks: Object.fromEntries(profile.socialLinks || new Map()),
+            polkadotIdentities: profile.polkadotIdentities.map((id) => ({
+              address: id.address,
+              display: id.display,
+              web: id.web,
+              twitter: id.twitter,
+              github: id.github,
+              judgements: id.judgements,
+            })),
+            source: 'app',
+          },
+        });
+      }
     }
 
-    const profile = await Profile.findById(user.profile);
-    if (!profile) {
-      return next(new HttpError(404, 'Profile not found'));
-    }
+    // User not found in app, check/fetch from ApiUser
+    logger.info('App user not found, fetching ApiUser', { address });
+    const apiUser = await getOrCreateApiUser(address);
 
-    // Return only public fields
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       data: {
         address,
-        displayName: profile.displayName,
-        avatarUrl: profile.avatarUrl,
-        bio: profile.bio,
-        socialLinks: Object.fromEntries(profile.socialLinks || new Map()),
-        polkadotIdentities: profile.polkadotIdentities.map((id) => ({
-          address: id.address,
-          display: id.display,
-          web: id.web,
-          twitter: id.twitter,
-          github: id.github,
-          judgements: id.judgements,
-        })),
+        displayName: apiUser.profile.displayName,
+        polkadotIdentity: apiUser.profile.polkadotIdentity,
+        nftCount: apiUser.profile.nftCount,
+        source: 'api',
       },
     });
   } catch (err: any) {
