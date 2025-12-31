@@ -184,7 +184,7 @@ describe('Subscan Service Functions', () => {
       
       const result = await fetchAccountDetailsByAddress(TEST_ADDRESS);
 
-      expect(mockedSubscanRequest).toHaveBeenCalledWith('/api/v2/scan/search', { address: TEST_ADDRESS });
+      expect(mockedSubscanRequest).toHaveBeenCalledWith('/v2/scan/search', { key: TEST_ADDRESS });
       expect(result).toEqual(mockDetails);
     });
   });

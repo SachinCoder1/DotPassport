@@ -436,13 +436,14 @@ async function _fetchAccountAgeDays(address: string): Promise<number> {
 
 async function _fetchAccountDetailsByAddress(address: string): Promise<any> {
   try {
-    // api link: /api/v2/scan/search and pass key as address
-    const res = await subscanRequest(`/api/v2/scan/search`, { address });
+    // Subscan endpoint: /v2/scan/search (full URL: https://polkadot.api.subscan.io/api/v2/scan/search)
+    const res = await subscanRequest(`/v2/scan/search`, { key: address });
     if (!res || !res.data) {
       throw new HttpError(404, "Account details not found");
     }
     return res.data;
   } catch (err: any) {
+    console.log("error...... in _fetchAccountDetailsByAddress", address, err,)
     logger.error("fetchAccountDetailsByAddress failed", { address, err });
     throw new HttpError(
       err.status || 500,

@@ -89,25 +89,48 @@ export async function getScoresByAddress(
   try {
     const address = req.params.address;
 
-    // Find user by address
+    // Validate address format
+    if (!isValidPolkadotAddress(address)) {
+      return next(new HttpError(400, 'Invalid Polkadot address format'));
+    }
+
+    // Try to find app user first
     const user = await User.findOne({ addresses: address });
-    if (!user) {
-      return next(new HttpError(404, 'User not found'));
+
+    if (user) {
+      const score = await Score.findOne({ user: user._id });
+
+      if (score) {
+        // Return app user score
+        return res.status(200).json({
+          success: true,
+          data: {
+            address,
+            totalScore: score.totalScore,
+            categories: Object.fromEntries(score.categories),
+            calculatedAt: score.updatedAt,
+            source: 'app',
+          },
+        });
+      }
     }
 
-    // Find score
-    const score = await Score.findOne({ user: user._id });
-    if (!score) {
-      return next(new HttpError(404, 'Score not found'));
-    }
+    // User not found or no score, check/fetch from ApiUser
+    logger.info('App user score not found, fetching ApiUser', { address });
+    const apiUser = await getOrCreateApiUser(address);
 
-    res.status(200).json({
+    const categoryScores = apiUser.score.categories
+      ? Object.fromEntries(apiUser.score.categories)
+      : {};
+
+    return res.status(200).json({
       success: true,
       data: {
         address,
-        totalScore: score.totalScore,
-        calculatedAt: score.updatedAt,
-        categories: Object.fromEntries(score.categories),
+        totalScore: apiUser.score.totalScore,
+        categories: categoryScores,
+        calculatedAt: apiUser.score.calculatedAt,
+        source: 'api',
       },
     });
   } catch (err: any) {
@@ -130,20 +153,55 @@ export async function getSpecificCategoryScore(
   try {
     const { address, categoryKey } = req.params;
 
-    // Find user by address
+    // Validate address format
+    if (!isValidPolkadotAddress(address)) {
+      return next(new HttpError(400, 'Invalid Polkadot address format'));
+    }
+
+    // Try to find app user first
     const user = await User.findOne({ addresses: address });
-    if (!user) {
-      return next(new HttpError(404, 'User not found'));
+
+    if (user) {
+      const score = await Score.findOne({ user: user._id });
+
+      if (score) {
+        const categoryScore = score.categories.get(categoryKey as any);
+
+        if (categoryScore !== undefined) {
+          // Get category definition for additional context
+          const categoryDefinition = await Category.findOne({
+            key: categoryKey,
+            active: true
+          }).lean();
+
+          return res.status(200).json({
+            success: true,
+            data: {
+              address,
+              category: {
+                key: categoryKey,
+                score: categoryScore,
+              },
+              definition: categoryDefinition ? {
+                displayName: categoryDefinition.displayName,
+                short_description: categoryDefinition.short_description,
+                long_description: categoryDefinition.long_description,
+                order: categoryDefinition.order,
+                reasons: categoryDefinition.reasons,
+              } : null,
+              calculatedAt: score.updatedAt,
+              source: 'app',
+            },
+          });
+        }
+      }
     }
 
-    // Find score
-    const score = await Score.findOne({ user: user._id });
-    if (!score) {
-      return next(new HttpError(404, 'Score not found'));
-    }
+    // User not found or category not found, check/fetch from ApiUser
+    logger.info('App user category score not found, fetching ApiUser', { address, categoryKey });
+    const apiUser = await getOrCreateApiUser(address);
 
-    // Get the specific category score
-    const categoryScore = score.categories.get(categoryKey as any);
+    const categoryScore = apiUser.score.categories?.get(categoryKey as any);
     if (categoryScore === undefined) {
       return next(new HttpError(404, 'Category score not found for this user'));
     }
@@ -154,7 +212,7 @@ export async function getSpecificCategoryScore(
       active: true
     }).lean();
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       data: {
         address,
@@ -169,7 +227,8 @@ export async function getSpecificCategoryScore(
           order: categoryDefinition.order,
           reasons: categoryDefinition.reasons,
         } : null,
-        calculatedAt: score.updatedAt,
+        calculatedAt: apiUser.score.calculatedAt,
+        source: 'api',
       },
     });
   } catch (err: any) {
@@ -192,27 +251,47 @@ export async function getBadgesByAddress(
   try {
     const address = req.params.address;
 
-    // Find user by address
-    const user = await User.findOne({ addresses: address });
-    if (!user) {
-      return next(new HttpError(404, 'User not found'));
+    // Validate address format
+    if (!isValidPolkadotAddress(address)) {
+      return next(new HttpError(400, 'Invalid Polkadot address format'));
     }
 
-    // Find user badges
-    const badges = await UserBadge.find({ user: user._id }).lean();
+    // Try to find app user first
+    const user = await User.findOne({ addresses: address });
 
-    res.status(200).json({
+    if (user) {
+      const userBadges = await UserBadge.find({ user: user._id }).lean();
+
+      if (userBadges && userBadges.length > 0) {
+        return res.status(200).json({
+          success: true,
+          data: {
+            address,
+            badges: userBadges.map((badge) => ({
+              badgeKey: badge.badgeKey,
+              achievedLevel: badge.achievedLevel,
+              achievedLevelKey: badge.achievedLevelKey,
+              achievedLevelTitle: badge.achievedLevelTitle,
+              earnedAt: badge.earnedAt,
+            })),
+            count: userBadges.length,
+            source: 'app',
+          },
+        });
+      }
+    }
+
+    // User not found or no badges, check/fetch from ApiUser
+    logger.info('App user badges not found, fetching ApiUser', { address });
+    const apiUser = await getOrCreateApiUser(address);
+
+    return res.status(200).json({
       success: true,
       data: {
         address,
-        badges: badges.map((badge) => ({
-          badgeKey: badge.badgeKey,
-          achievedLevel: badge.achievedLevel,
-          achievedLevelKey: badge.achievedLevelKey,
-          achievedLevelTitle: badge.achievedLevelTitle,
-          earnedAt: badge.earnedAt,
-        })),
-        count: badges.length,
+        badges: apiUser.badges,
+        count: apiUser.badges.length,
+        source: 'api',
       },
     });
   } catch (err: any) {
@@ -235,35 +314,70 @@ export async function getSpecificBadgeByAddress(
   try {
     const { address, badgeKey } = req.params;
 
-    // Find user by address
-    const user = await User.findOne({ addresses: address });
-    if (!user) {
-      return next(new HttpError(404, 'User not found'));
+    // Validate address format
+    if (!isValidPolkadotAddress(address)) {
+      return next(new HttpError(400, 'Invalid Polkadot address format'));
     }
 
-    // Find specific badge for the user
-    const userBadge = await UserBadge.findOne({
-      user: user._id,
-      badgeKey
-    }).lean();
+    // Try to find app user first
+    const user = await User.findOne({ addresses: address });
 
-    if (!userBadge) {
+    if (user) {
+      const userBadge = await UserBadge.findOne({
+        user: user._id,
+        badgeKey
+      }).lean();
+
+      if (userBadge) {
+        // Get badge definition for additional context
+        const badgeDefinition = await Badge.findOne({ key: badgeKey, active: true }).lean();
+
+        return res.status(200).json({
+          success: true,
+          data: {
+            address,
+            badge: {
+              badgeKey: userBadge.badgeKey,
+              achievedLevel: userBadge.achievedLevel,
+              achievedLevelKey: userBadge.achievedLevelKey,
+              achievedLevelTitle: userBadge.achievedLevelTitle,
+              earnedAt: userBadge.earnedAt,
+            },
+            definition: badgeDefinition ? {
+              title: badgeDefinition.title,
+              shortDescription: badgeDefinition.shortDescription,
+              longDescription: badgeDefinition.longDescription,
+              metric: badgeDefinition.metric,
+              imageUrl: badgeDefinition.imageUrl,
+              levels: badgeDefinition.levels,
+            } : null,
+            source: 'app',
+          },
+        });
+      }
+    }
+
+    // User not found or badge not found, check/fetch from ApiUser
+    logger.info('App user badge not found, fetching ApiUser', { address, badgeKey });
+    const apiUser = await getOrCreateApiUser(address);
+
+    const apiBadge = apiUser.badges.find((b) => b.badgeKey === badgeKey);
+    if (!apiBadge) {
       return next(new HttpError(404, 'Badge not found for this user'));
     }
 
     // Get badge definition for additional context
     const badgeDefinition = await Badge.findOne({ key: badgeKey, active: true }).lean();
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       data: {
         address,
         badge: {
-          badgeKey: userBadge.badgeKey,
-          achievedLevel: userBadge.achievedLevel,
-          achievedLevelKey: userBadge.achievedLevelKey,
-          achievedLevelTitle: userBadge.achievedLevelTitle,
-          earnedAt: userBadge.earnedAt,
+          badgeKey: apiBadge.badgeKey,
+          achievedLevel: apiBadge.achievedLevel,
+          achievedLevelKey: apiBadge.achievedLevelKey,
+          achievedLevelTitle: apiBadge.achievedLevelTitle,
         },
         definition: badgeDefinition ? {
           title: badgeDefinition.title,
@@ -273,6 +387,7 @@ export async function getSpecificBadgeByAddress(
           imageUrl: badgeDefinition.imageUrl,
           levels: badgeDefinition.levels,
         } : null,
+        source: 'api',
       },
     });
   } catch (err: any) {

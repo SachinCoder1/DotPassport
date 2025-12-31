@@ -2,6 +2,7 @@ import { ApiUser, IApiUser } from '~/models/ApiUser';
 import { calculateScore } from '~/service/score';
 import { checkUserBadges } from '~/service/badge';
 import { fetchAccountDetailsByAddress } from '~/service/subscan';
+import { getOwnedNfts } from '~/service/kodadot';
 import { logger } from '~/utils/logger';
 import { Badge } from '~/models/Badge';
 import { BadgeKey } from '~/service/badge/badgeDefinitions';
@@ -53,12 +54,13 @@ export async function getOrCreateApiUser(
     logger.info('Fetching on-chain data for ApiUser', { address });
 
     // Fetch all data in parallel
-    const [scoreResult, checkedBadges, accountDetails, badgeDefinitions] =
+    const [scoreResult, checkedBadges, accountDetails, badgeDefinitions, nftData] =
       await Promise.all([
         calculateScore(address),
         checkUserBadges(address),
         fetchAccountDetailsByAddress(address),
-        Badge.find({ isActive: true }).lean(),
+        Badge.find({ active: true }).lean(),
+        getOwnedNfts(address).catch(() => ({ totalCount: 0, data: [] })),
       ]);
 
     // Map badge results to include level details
@@ -112,12 +114,12 @@ export async function getOrCreateApiUser(
               judgements: accountDetails.identity.judgements,
             }
           : undefined,
-        nftCount: scoreResult.onChainMetrics?.nfts?.totalCount || 0,
+        nftCount: nftData.totalCount || 0,
       },
       score: {
-        totalScore: scoreResult.totalScore,
+        totalScore: scoreResult.total,
         categories: new Map(
-          Object.entries(scoreResult.categoryScores || {})
+          Object.entries(scoreResult.categories)
         ),
         calculatedAt: now,
       },

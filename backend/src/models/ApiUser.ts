@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import { CategoryKey, ICategoryScore } from './Score';
-import { BadgeKey } from './Badge';
+import { ICategoryScore } from './Score';
+import { CategoryKey } from '~/service/score/scoreDefinitions';
+import { BadgeKey } from '~/service/badge/badgeDefinitions';
 
 export interface IApiUserBadge {
   badgeKey: BadgeKey;
