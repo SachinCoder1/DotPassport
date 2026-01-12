@@ -204,7 +204,13 @@ export abstract class BaseWidget<
     } else if (this.state.error) {
       this.container.innerHTML = this.renderError();
     } else if (this.state.data) {
-      this.container.innerHTML = this.render();
+      try {
+        this.container.innerHTML = this.render();
+      } catch (renderError) {
+        console.error(`[${this.getWidgetType()}Widget] Render error:`, renderError);
+        this.state.error = renderError as Error;
+        this.container.innerHTML = this.renderError();
+      }
     }
   }
 
@@ -229,9 +235,13 @@ export abstract class BaseWidget<
   protected renderError(): string {
     const theme = resolveTheme(this.config.theme);
     const error = this.state.error;
+    // Show actual error message for all error types to help debugging
     const message = error instanceof DotPassportError
       ? error.message
-      : 'An unexpected error occurred';
+      : error?.message || 'An unexpected error occurred';
+
+    // Log error for debugging
+    console.error(`[${this.getWidgetType()}Widget] Error:`, error);
 
     return `
       <div class="dp-widget dp-theme-${theme}">

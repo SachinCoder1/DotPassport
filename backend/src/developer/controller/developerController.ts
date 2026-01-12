@@ -7,7 +7,13 @@ import { Score } from '~/models/Score';
 import { UserBadge } from '~/models/UserBadge';
 import { Badge } from '~/models/Badge';
 import { Category } from '~/models/Category';
-import { getOrCreateApiUser, isValidPolkadotAddress } from '~/service/jit/apiUserService';
+import {
+  getOrCreateApiUser,
+  getOrCreateApiUserForProfile,
+  getOrCreateApiUserForScores,
+  getOrCreateApiUserForBadges,
+  isValidPolkadotAddress,
+} from '~/service/jit/apiUserService';
 
 /**
  * Get user profile by address
@@ -56,9 +62,9 @@ export async function getProfileByAddress(
       }
     }
 
-    // User not found in app, check/fetch from ApiUser
-    logger.info('App user not found, fetching ApiUser', { address, forceRefresh });
-    const apiUser = await getOrCreateApiUser(address, forceRefresh);
+    // User not found in app, check/fetch from ApiUser (fast path - profile only)
+    logger.info('App user not found, fetching ApiUser for profile', { address, forceRefresh });
+    const apiUser = await getOrCreateApiUserForProfile(address, forceRefresh);
 
     // Extract social links from polkadot identity
     const socialLinks: Record<string, string> = {};
@@ -153,9 +159,9 @@ export async function getScoresByAddress(
       }
     }
 
-    // User not found or no score, check/fetch from ApiUser
-    logger.info('App user score not found, fetching ApiUser', { address, forceRefresh });
-    const apiUser = await getOrCreateApiUser(address, forceRefresh);
+    // User not found or no score, check/fetch from ApiUser (scores path)
+    logger.info('App user score not found, fetching ApiUser for scores', { address, forceRefresh });
+    const apiUser = await getOrCreateApiUserForScores(address, forceRefresh);
 
     const categoryScores = apiUser.score.categories
       ? Object.fromEntries(apiUser.score.categories)
@@ -236,9 +242,9 @@ export async function getSpecificCategoryScore(
       }
     }
 
-    // User not found or category not found, check/fetch from ApiUser
-    logger.info('App user category score not found, fetching ApiUser', { address, categoryKey, forceRefresh });
-    const apiUser = await getOrCreateApiUser(address, forceRefresh);
+    // User not found or category not found, check/fetch from ApiUser (scores path)
+    logger.info('App user category score not found, fetching ApiUser for scores', { address, categoryKey, forceRefresh });
+    const apiUser = await getOrCreateApiUserForScores(address, forceRefresh);
 
     const categoryScore = apiUser.score.categories?.get(categoryKey as any);
     if (categoryScore === undefined) {
@@ -321,15 +327,21 @@ export async function getBadgesByAddress(
       }
     }
 
-    // User not found or no badges, check/fetch from ApiUser
-    logger.info('App user badges not found, fetching ApiUser', { address, forceRefresh });
-    const apiUser = await getOrCreateApiUser(address, forceRefresh);
+    // User not found or no badges, check/fetch from ApiUser (badges path)
+    logger.info('App user badges not found, fetching ApiUser for badges', { address, forceRefresh });
+    const apiUser = await getOrCreateApiUserForBadges(address, forceRefresh);
 
     return res.status(200).json({
       success: true,
       data: {
         address,
-        badges: apiUser.badges,
+        badges: apiUser.badges.map((badge) => ({
+          badgeKey: badge.badgeKey,
+          achievedLevel: badge.achievedLevel,
+          achievedLevelKey: badge.achievedLevelKey,
+          achievedLevelTitle: badge.achievedLevelTitle,
+          earnedAt: badge.earnedAt || new Date(), // Fallback for old cached data
+        })),
         count: apiUser.badges.length,
         source: 'api',
       },
@@ -398,17 +410,40 @@ export async function getSpecificBadgeByAddress(
       }
     }
 
-    // User not found or badge not found, check/fetch from ApiUser
-    logger.info('App user badge not found, fetching ApiUser', { address, badgeKey, forceRefresh });
-    const apiUser = await getOrCreateApiUser(address, forceRefresh);
+    // User not found or badge not found, check/fetch from ApiUser (badges path)
+    logger.info('App user badge not found, fetching ApiUser for badges', { address, badgeKey, forceRefresh });
+    const apiUser = await getOrCreateApiUserForBadges(address, forceRefresh);
 
     const apiBadge = apiUser.badges.find((b) => b.badgeKey === badgeKey);
-    if (!apiBadge) {
-      return next(new HttpError(404, 'Badge not found for this user'));
-    }
 
     // Get badge definition for additional context
     const badgeDefinition = await Badge.findOne({ key: badgeKey, active: true }).lean();
+
+    // If badge key doesn't exist in the system, return 404
+    if (!badgeDefinition) {
+      return next(new HttpError(404, 'Badge definition not found'));
+    }
+
+    // If user hasn't earned this badge, return earned: false with badge definition
+    if (!apiBadge) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          address,
+          badge: null,
+          earned: false,
+          definition: {
+            title: badgeDefinition.title,
+            shortDescription: badgeDefinition.shortDescription,
+            longDescription: badgeDefinition.longDescription,
+            metric: badgeDefinition.metric,
+            imageUrl: badgeDefinition.imageUrl,
+            levels: badgeDefinition.levels,
+          },
+          source: 'api',
+        },
+      });
+    }
 
     return res.status(200).json({
       success: true,
@@ -419,15 +454,17 @@ export async function getSpecificBadgeByAddress(
           achievedLevel: apiBadge.achievedLevel,
           achievedLevelKey: apiBadge.achievedLevelKey,
           achievedLevelTitle: apiBadge.achievedLevelTitle,
+          earnedAt: apiBadge.earnedAt || new Date(), // Fallback for old cached data
         },
-        definition: badgeDefinition ? {
+        earned: true,
+        definition: {
           title: badgeDefinition.title,
           shortDescription: badgeDefinition.shortDescription,
           longDescription: badgeDefinition.longDescription,
           metric: badgeDefinition.metric,
           imageUrl: badgeDefinition.imageUrl,
           levels: badgeDefinition.levels,
-        } : null,
+        },
         source: 'api',
       },
     });

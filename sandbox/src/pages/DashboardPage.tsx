@@ -9,6 +9,7 @@ import {
   ScrollText,
   RefreshCw,
   AlertTriangle,
+  LayoutDashboard,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useWalletStore } from '~/store/walletStore';
@@ -21,6 +22,7 @@ import { StatCard } from '~/components/dashboard/StatCard';
 import { StatusCodePieChart } from '~/components/dashboard/StatusCodePieChart';
 import { RecentActivityFeed } from '~/components/dashboard/RecentActivityFeed';
 import { Skeleton } from '~/components/ui';
+import { PageHeader } from '~/components/shared/PageHeader';
 
 export function DashboardPage() {
   const { user, signMessage, initialize } = useWalletStore();
@@ -199,23 +201,18 @@ export function DashboardPage() {
   return (
     <div className="max-w-7xl mx-auto space-y-8">
       {/* Welcome Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-      >
-        <div className="flex items-center gap-3">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white scroll-mt-24">
+      <PageHeader
+        icon={LayoutDashboard}
+        title={
+          <span className="flex items-center gap-3">
             Welcome to Your Sandbox
-          </h1>
-          {isBackgroundRefresh && (
-            <RefreshCw className="w-5 h-5 text-purple-500 animate-spin" />
-          )}
-        </div>
-        <p className="text-gray-600 dark:text-gray-300 mt-2">
-          Test and explore the DotPassport SDK with your free API key
-        </p>
-      </motion.div>
+            {isBackgroundRefresh && (
+              <RefreshCw className="w-5 h-5 text-purple-500 animate-spin" />
+            )}
+          </span>
+        }
+        description="Test and explore the DotPassport SDK with your free API key"
+      />
 
       {/* API Key Card */}
       <motion.div

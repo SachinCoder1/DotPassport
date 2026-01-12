@@ -12,6 +12,9 @@ interface IntegrationGuidePanelProps {
   showCategories?: boolean;
   maxCategories?: number;
   compactMode?: boolean;
+  // Badge widget options
+  badgeMaxBadges?: number;
+  badgeShowProgress?: boolean;
   // Category widget options
   categoryShowTitle?: boolean;
   categoryShowDescription?: boolean;
@@ -30,6 +33,8 @@ export function IntegrationGuidePanel({
   showCategories = true,
   maxCategories = 6,
   compactMode = false,
+  badgeMaxBadges = 20,
+  badgeShowProgress = true,
   categoryShowTitle = true,
   categoryShowDescription = true,
   categoryShowBreakdown = true,
@@ -70,12 +75,26 @@ export function IntegrationGuidePanel({
     ];
 
     if (widgetName === 'BadgeWidget') {
-      baseProps.push({
-        name: 'badgeKey',
-        type: 'string',
-        required: false,
-        description: 'Specific badge key to display (omit to show all badges)',
-      });
+      baseProps.push(
+        {
+          name: 'badgeKey',
+          type: 'string',
+          required: false,
+          description: 'Specific badge key to display (omit to show all badges)',
+        },
+        {
+          name: 'maxBadges',
+          type: 'number',
+          required: false,
+          description: 'Maximum badges to display (default: 6)',
+        },
+        {
+          name: 'showProgress',
+          type: 'boolean',
+          required: false,
+          description: 'Show earned date for badges (default: false)',
+        }
+      );
     }
 
     if (widgetName === 'CategoryWidget') {
@@ -159,8 +178,18 @@ export function IntegrationGuidePanel({
       apiKey="your-api-key-here"
       theme="${theme}"`;
 
-    if (widgetName === 'BadgeWidget' && badgeKey) {
-      propsCode += `\n      badgeKey="${badgeKey}"`;
+    if (widgetName === 'BadgeWidget') {
+      if (badgeKey) {
+        propsCode += `\n      badgeKey="${badgeKey}"`;
+      } else {
+        // Only show these options when showing all badges (not single badge)
+        if (badgeMaxBadges !== 20) {
+          propsCode += `\n      maxBadges={${badgeMaxBadges}}`;
+        }
+        if (badgeShowProgress) {
+          propsCode += `\n      showProgress={true}`;
+        }
+      }
     }
 
     if (widgetName === 'CategoryWidget' && categoryKey) {

@@ -8,6 +8,7 @@ export interface IApiUserBadge {
   achievedLevel: number;
   achievedLevelKey: string;
   achievedLevelTitle: string;
+  earnedAt?: Date;
 }
 
 export interface IApiUserScore {
@@ -102,6 +103,7 @@ const ApiUserSchema = new Schema<IApiUser>(
         achievedLevel: { type: Number, required: true },
         achievedLevelKey: { type: String, required: true },
         achievedLevelTitle: { type: String, required: true },
+        earnedAt: { type: Date },
       },
     ],
     metadata: {

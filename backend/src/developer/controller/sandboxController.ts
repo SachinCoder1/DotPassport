@@ -361,9 +361,16 @@ export async function getRequestLogsHandler(
       statusCode: statusCode ? parseInt(statusCode) : undefined,
     });
 
+    // Flatten pagination into top level for frontend compatibility
     res.json({
       success: true,
-      data: result,
+      data: {
+        logs: result.logs,
+        total: result.pagination.total,
+        page: result.pagination.page,
+        limit: result.pagination.limit,
+        totalPages: result.pagination.totalPages,
+      },
     });
   } catch (err: any) {
     logger.error('Error in getRequestLogsHandler', { error: err });

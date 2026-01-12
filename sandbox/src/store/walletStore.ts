@@ -42,6 +42,7 @@ interface WalletActions {
   closeWalletModal: () => void;
   clearNewApiKey: () => void;
   signMessage: (message: string) => Promise<string | null>;
+  refreshUsage: () => Promise<void>;
 }
 
 type WalletStore = WalletState & WalletActions;
@@ -354,6 +355,28 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
     } catch (error) {
       console.error('Failed to sign message:', error);
       return null;
+    }
+  },
+
+  refreshUsage: async () => {
+    const { user, isAuthenticated } = get();
+    if (!isAuthenticated || !user?.polkadotAddress) {
+      return;
+    }
+
+    try {
+      const userData = await getMe(user.polkadotAddress);
+      // Only update usage and rateLimits, preserve other user data
+      set({
+        user: {
+          ...user,
+          usage: userData.usage,
+          rateLimits: userData.rateLimits,
+        },
+      });
+    } catch (error) {
+      // Silently fail - this is a background refresh
+      console.debug('Usage refresh failed:', error);
     }
   },
 }));

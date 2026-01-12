@@ -401,8 +401,8 @@ export function ApiTestingPage() {
                     Configure parameters and execute the API method
                   </p>
 
-                  {/* Address Input (for most methods) */}
-                  {selectedMethodKey !== 'getCategories' && (
+                  {/* Address Input (for most methods except metadata endpoints) */}
+                  {selectedMethodKey !== 'getCategoryDefinitions' && selectedMethodKey !== 'getBadgeDefinitions' && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Polkadot Address *
@@ -550,11 +550,75 @@ export function ApiTestingPage() {
                       </Highlight>
                     </>
                   ) : (
-                    <div className="text-center py-12">
-                      <Code2 className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-3" />
-                      <p className="text-gray-600 dark:text-gray-400">
-                        No response yet. Execute a method to see results.
-                      </p>
+                    <div className="space-y-4">
+                      {/* Example Response Preview */}
+                      <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                        <div className="flex items-center justify-between px-4 py-3 bg-white/50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-amber-400"></div>
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                              Example Response
+                            </span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded">
+                              Preview
+                            </span>
+                          </div>
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(
+                                JSON.stringify(selectedMethod.exampleResponse, null, 2)
+                              );
+                              toast.success('Example copied to clipboard');
+                            }}
+                            className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 flex items-center gap-1"
+                          >
+                            <Copy className="w-3 h-3" />
+                            Copy
+                          </button>
+                        </div>
+                        <div className="p-4 max-h-80 overflow-auto">
+                          <Highlight
+                            theme={themes.vsDark}
+                            code={JSON.stringify(selectedMethod.exampleResponse, null, 2)}
+                            language="json"
+                          >
+                            {({ className, style, tokens, getLineProps, getTokenProps }) => (
+                              <pre
+                                className={`${className} rounded-lg p-3 text-xs opacity-75`}
+                                style={{ ...style, margin: 0, background: 'transparent' }}
+                              >
+                                {tokens.map((line, i) => (
+                                  <div key={i} {...getLineProps({ line })}>
+                                    {line.map((token, key) => (
+                                      <span key={key} {...getTokenProps({ token })} />
+                                    ))}
+                                  </div>
+                                ))}
+                              </pre>
+                            )}
+                          </Highlight>
+                        </div>
+                      </div>
+
+                      {/* Call to Action */}
+                      <div className="flex flex-col items-center py-6 text-center">
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                          This is an example of what the response will look like.
+                          <br />
+                          Execute the method to get real data.
+                        </p>
+                        <button
+                          onClick={() => {
+                            setActiveTab('test');
+                            setTimeout(() => handleExecute(), 100);
+                          }}
+                          disabled={!sdkClient || isLoading}
+                          className="btn btn-primary inline-flex items-center gap-2"
+                        >
+                          <Play className="w-4 h-4" />
+                          Execute {selectedMethod.displayName}
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>

@@ -323,14 +323,19 @@ export class DotPassportClient {
     if (!forceRefresh) {
       const cached = this.getCached<UserBadges | SpecificUserBadge>(cacheKey);
       if (cached) {
+        console.log('[DotPassportClient] Returning cached badge data');
         return cached;
       }
     }
+
+    console.log('[DotPassportClient] Fetching badge data from API:', { address, badgeKey });
 
     const response = await this.client.get<ApiResponse<UserBadges | SpecificUserBadge>>(
       `/api/v2/widget/badge/${address}`,
       { params, signal }
     );
+
+    console.log('[DotPassportClient] Badge API response:', response.data);
 
     // Cache the response
     this.setCache(cacheKey, response.data.data);

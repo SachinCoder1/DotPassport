@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Palette, Sparkles, Settings, BookOpen, RefreshCw, Play } from 'lucide-react';
+import { Palette, Sparkles, Settings, BookOpen, RefreshCw, Play, Download } from 'lucide-react';
+import html2canvas from 'html2canvas';
 import { useWalletStore } from '~/store/walletStore';
 import { useSandboxStore } from '~/store/sandboxStore';
 import { SUGGESTED_ADDRESSES } from '~/utils/constants';
@@ -10,7 +11,8 @@ import { IntegrationGuidePanel } from '~/components/widget-testing/IntegrationGu
 
 // Fallback categories in case API fails or is slow to load
 // These match the actual category keys from the database
-const FALLBACK_CATEGORIES: CategoryDefinition[] = [
+// Using Partial<CategoryDefinition> since we only need key/displayName/short_description for dropdowns
+const FALLBACK_CATEGORIES: Partial<CategoryDefinition>[] = [
   { key: 'longevity', displayName: 'Account Longevity', short_description: 'Measures the age of your account, rewarding long-term commitment.' },
   { key: 'txCount', displayName: 'Transaction Count', short_description: 'Rewards the frequency of your on-chain activity.' },
   { key: 'txVolume', displayName: 'Transaction Volume', short_description: 'Measures the total value of DOT transferred.' },
@@ -27,7 +29,8 @@ const FALLBACK_CATEGORIES: CategoryDefinition[] = [
 
 // Fallback badges in case API fails or is slow to load
 // These match the actual badge keys from the database
-const FALLBACK_BADGES: BadgeDefinition[] = [
+// Using Partial<BadgeDefinition> since we only need key/title/shortDescription for dropdowns
+const FALLBACK_BADGES: Partial<BadgeDefinition>[] = [
   { key: 'RelayChainInitiate', title: 'Relay Chain Initiate', shortDescription: 'Marks your first active participation on the Polkadot Relay Chain.' },
   { key: 'PolkadotRegular', title: 'Polkadot Regular', shortDescription: 'Recognizes your sustained presence and long-term commitment.' },
   { key: 'ExtrinsicEngine', title: 'Extrinsic Engine', shortDescription: 'Measures your overall activity level on the network.' },
@@ -116,8 +119,8 @@ export function WidgetTestingPage() {
   // Badge and category selection
   const [badgeKey, setBadgeKey] = useState('');
   const [category, setCategory] = useState('');
-  const [badges, setBadges] = useState<BadgeDefinition[]>([]);
-  const [categories, setCategories] = useState<CategoryDefinition[]>([]);
+  const [badges, setBadges] = useState<Partial<BadgeDefinition>[]>([]);
+  const [categories, setCategories] = useState<Partial<CategoryDefinition>[]>([]);
   const [isLoadingMetadata, setIsLoadingMetadata] = useState(false);
   const [metadataError, setMetadataError] = useState<string | null>(null);
 
@@ -125,6 +128,10 @@ export function WidgetTestingPage() {
   const [showCategories, setShowCategories] = useState(true);
   const [maxCategories, setMaxCategories] = useState(6);
   const [compactMode, setCompactMode] = useState(false);
+
+  // Badge widget config options
+  const [maxBadges, setBadgeMaxBadges] = useState(20); // High default to show all
+  const [badgeShowProgress, setBadgeShowProgress] = useState(true);
 
   // Category widget config options
   const [categoryShowTitle, setCategoryShowTitle] = useState(true);
@@ -137,7 +144,41 @@ export function WidgetTestingPage() {
   // Widget loading state - manual load instead of auto-load
   const [isWidgetLoaded, setIsWidgetLoaded] = useState(false);
   const [isWidgetLoading, setIsWidgetLoading] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const widgetInstanceRef = useRef<WidgetInstance | null>(null);
+
+  // Download widget as PNG
+  const downloadWidgetAsPng = async () => {
+    const container = document.getElementById('widget-preview-container');
+    if (!container || !isWidgetLoaded) return;
+
+    setIsDownloading(true);
+    try {
+      // Find the actual widget element inside the container
+      const widgetElement = container.querySelector('.dp-widget') as HTMLElement;
+      const targetElement = widgetElement || container;
+
+      const canvas = await html2canvas(targetElement, {
+        backgroundColor: theme === 'dark' ? '#1f2937' : '#ffffff',
+        scale: 2, // Higher quality
+        logging: false,
+        useCORS: true,
+        allowTaint: true,
+      });
+
+      // Create download link
+      const link = document.createElement('a');
+      const timestamp = new Date().toISOString().slice(0, 10);
+      const widgetName = selectedWidget.name.toLowerCase();
+      link.download = `dotpassport-${widgetName}-widget-${timestamp}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch (error) {
+      console.error('Failed to download widget:', error);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   // Track data config (requires API call) vs display config (can update locally)
   const lastDataConfigRef = useRef<string>('');
@@ -148,9 +189,9 @@ export function WidgetTestingPage() {
     if (!sdkClient) {
       // Use fallback data if no SDK client
       setBadges(FALLBACK_BADGES);
-      setBadgeKey(FALLBACK_BADGES[0].key);
+      // Don't auto-select badge - let user choose or show all badges
       setCategories(FALLBACK_CATEGORIES);
-      setCategory(FALLBACK_CATEGORIES[0].key);
+      setCategory(FALLBACK_CATEGORIES[0].key || 'longevity');
       return;
     }
 
@@ -163,10 +204,10 @@ export function WidgetTestingPage() {
       ]);
 
       // Use API badges if available, otherwise use fallback
-      const badges = badgesResult.badges?.length > 0
+      const fetchedBadges = badgesResult.badges?.length > 0
         ? badgesResult.badges
         : FALLBACK_BADGES;
-      setBadges(badges);
+      setBadges(fetchedBadges);
 
       // Use API categories if available, otherwise use fallback
       const cats = categoriesResult.categories?.length > 0
@@ -174,23 +215,18 @@ export function WidgetTestingPage() {
         : FALLBACK_CATEGORIES;
       setCategories(cats);
 
-      // Set defaults
-      if (badges.length > 0 && !badgeKey) {
-        setBadgeKey(badges[0].key);
-      }
+      // Set defaults - only auto-select category (required), not badge (optional)
+      // Badge defaults to empty string which means "show all badges"
       if (cats.length > 0 && !category) {
-        setCategory(cats[0].key);
+        setCategory(cats[0].key || 'longevity');
       }
     } catch (error) {
       console.error('Failed to load metadata:', error);
       // Use fallback data on error
       setBadges(FALLBACK_BADGES);
       setCategories(FALLBACK_CATEGORIES);
-      if (!badgeKey) {
-        setBadgeKey(FALLBACK_BADGES[0].key);
-      }
       if (!category) {
-        setCategory(FALLBACK_CATEGORIES[0].key);
+        setCategory(FALLBACK_CATEGORIES[0].key || 'longevity');
       }
       setMetadataError(null); // Don't show error since we have fallback data
     } finally {
@@ -219,6 +255,9 @@ export function WidgetTestingPage() {
       showCategories: selectedWidget.id === 'reputation' ? showCategories : true,
       maxCategories: selectedWidget.id === 'reputation' ? maxCategories : 6,
       compactMode: selectedWidget.id === 'reputation' ? compactMode : false,
+      // Badge widget options
+      badgeMaxBadges: selectedWidget.id === 'badge' ? maxBadges : 20,
+      badgeShowProgress: selectedWidget.id === 'badge' ? badgeShowProgress : true,
       // Category widget options
       categoryShowTitle: selectedWidget.id === 'category' ? categoryShowTitle : true,
       categoryShowDescription: selectedWidget.id === 'category' ? categoryShowDescription : true,
@@ -227,7 +266,7 @@ export function WidgetTestingPage() {
       categoryShowScoreOnly: selectedWidget.id === 'category' ? categoryShowScoreOnly : false,
       categoryCompactMode: selectedWidget.id === 'category' ? categoryCompactMode : false,
     });
-  }, [selectedWidget.id, theme, showCategories, maxCategories, compactMode, categoryShowTitle, categoryShowDescription, categoryShowBreakdown, categoryShowAdvice, categoryShowScoreOnly, categoryCompactMode]);
+  }, [selectedWidget.id, theme, showCategories, maxCategories, compactMode, maxBadges, badgeShowProgress, categoryShowTitle, categoryShowDescription, categoryShowBreakdown, categoryShowAdvice, categoryShowScoreOnly, categoryCompactMode]);
 
   // Check if data config changed (requires new API call)
   const hasDataConfigChanged = getDataConfigKey() !== lastDataConfigRef.current;
@@ -276,8 +315,12 @@ export function WidgetTestingPage() {
       };
 
       // Add specific props for certain widgets
-      if (selectedWidget.requiresBadge && badgeKey) {
-        props.badgeKey = badgeKey;
+      if (selectedWidget.requiresBadge) {
+        if (badgeKey) {
+          props.badgeKey = badgeKey;
+        }
+        props.maxBadges = maxBadges;
+        props.showProgress = badgeShowProgress;
       }
       if (selectedWidget.requiresCategory && category) {
         props.categoryKey = category;
@@ -320,6 +363,9 @@ export function WidgetTestingPage() {
         showCategories: selectedWidget.id === 'reputation' ? showCategories : undefined,
         maxCategories: selectedWidget.id === 'reputation' ? maxCategories : undefined,
         compactMode: selectedWidget.id === 'reputation' ? compactMode : undefined,
+        // Badge widget options
+        badgeMaxBadges: selectedWidget.id === 'badge' ? maxBadges : undefined,
+        badgeShowProgress: selectedWidget.id === 'badge' ? badgeShowProgress : undefined,
         // Category widget options
         categoryShowTitle: selectedWidget.id === 'category' ? categoryShowTitle : undefined,
         categoryShowDescription: selectedWidget.id === 'category' ? categoryShowDescription : undefined,
@@ -332,7 +378,7 @@ export function WidgetTestingPage() {
       console.error('Failed to mount widget:', error);
       setIsWidgetLoading(false);
     }
-  }, [selectedWidget, address, theme, badgeKey, category, user?.apiKey, sdkClient, showCategories, maxCategories, compactMode, categoryShowTitle, categoryShowDescription, categoryShowBreakdown, categoryShowAdvice, categoryShowScoreOnly, categoryCompactMode, getDataConfigKey, getDisplayConfigKey, setWidgetCache]);
+  }, [selectedWidget, address, theme, badgeKey, category, user?.apiKey, sdkClient, showCategories, maxCategories, compactMode, maxBadges, badgeShowProgress, categoryShowTitle, categoryShowDescription, categoryShowBreakdown, categoryShowAdvice, categoryShowScoreOnly, categoryCompactMode, getDataConfigKey, getDisplayConfigKey, setWidgetCache]);
 
   // Auto-fetch when data config changes AFTER first load (widget type, address, badge, category)
   useEffect(() => {
@@ -375,9 +421,20 @@ export function WidgetTestingPage() {
         setTheme(widgetCache.theme);
         if (widgetCache.badgeKey) setBadgeKey(widgetCache.badgeKey);
         if (widgetCache.categoryKey) setCategory(widgetCache.categoryKey);
+        // Reputation widget options
         if (widgetCache.showCategories !== undefined) setShowCategories(widgetCache.showCategories);
         if (widgetCache.maxCategories !== undefined) setMaxCategories(widgetCache.maxCategories);
         if (widgetCache.compactMode !== undefined) setCompactMode(widgetCache.compactMode);
+        // Badge widget options
+        if (widgetCache.badgeMaxBadges !== undefined) setBadgeMaxBadges(widgetCache.badgeMaxBadges);
+        if (widgetCache.badgeShowProgress !== undefined) setBadgeShowProgress(widgetCache.badgeShowProgress);
+        // Category widget options
+        if (widgetCache.categoryShowTitle !== undefined) setCategoryShowTitle(widgetCache.categoryShowTitle);
+        if (widgetCache.categoryShowDescription !== undefined) setCategoryShowDescription(widgetCache.categoryShowDescription);
+        if (widgetCache.categoryShowBreakdown !== undefined) setCategoryShowBreakdown(widgetCache.categoryShowBreakdown);
+        if (widgetCache.categoryShowAdvice !== undefined) setCategoryShowAdvice(widgetCache.categoryShowAdvice);
+        if (widgetCache.categoryShowScoreOnly !== undefined) setCategoryShowScoreOnly(widgetCache.categoryShowScoreOnly);
+        if (widgetCache.categoryCompactMode !== undefined) setCategoryCompactMode(widgetCache.categoryCompactMode);
       }
     }
   }, []); // Only run once on mount
@@ -413,17 +470,24 @@ export function WidgetTestingPage() {
     { value: 'auto', label: 'Auto', description: 'Match system preference' },
   ];
 
-  const badgeOptions = badges.map((badge) => ({
-    value: badge.key,
-    label: badge.title,
-    description: badge.shortDescription,
-  }));
+  const badgeOptions = [
+    { value: '', label: 'Show All Badges', description: 'Display all earned badges' },
+    ...badges
+      .filter((badge) => badge.key && badge.title)
+      .map((badge) => ({
+        value: badge.key!,
+        label: badge.title!,
+        description: badge.shortDescription || '',
+      })),
+  ];
 
-  const categoryOptions = categories.map((cat) => ({
-    value: cat.key,
-    label: cat.displayName,
-    description: cat.short_description?.substring(0, 50),
-  }));
+  const categoryOptions = categories
+    .filter((cat) => cat.key && cat.displayName)
+    .map((cat) => ({
+      value: cat.key!,
+      label: cat.displayName!,
+      description: cat.short_description?.substring(0, 50) || '',
+    }));
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -512,38 +576,82 @@ export function WidgetTestingPage() {
 
               {/* Badge Selection (only for BadgeWidget) */}
               {selectedWidget.requiresBadge && (
-                <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Badge (Optional)
-                  </label>
-                  {metadataError ? (
-                    <button
-                      onClick={loadMetadata}
-                      className="text-sm text-red-600 dark:text-red-400 hover:underline"
-                    >
-                      {metadataError}
-                    </button>
-                  ) : isLoadingMetadata ? (
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Loading badges...
+                <>
+                  <div className="col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Badge (Optional)
+                    </label>
+                    {metadataError ? (
+                      <button
+                        onClick={loadMetadata}
+                        className="text-sm text-red-600 dark:text-red-400 hover:underline"
+                      >
+                        {metadataError}
+                      </button>
+                    ) : isLoadingMetadata ? (
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Loading badges...
+                      </p>
+                    ) : badgeOptions.length > 0 ? (
+                      <Select
+                        options={badgeOptions}
+                        value={badgeKey}
+                        onChange={(value) => setBadgeKey(value as string)}
+                        placeholder="Select badge (or leave empty for all)"
+                        searchable
+                      />
+                    ) : (
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        No badges available
+                      </p>
+                    )}
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      Leave empty to show all badges, or select a specific badge
                     </p>
-                  ) : badgeOptions.length > 0 ? (
-                    <Select
-                      options={badgeOptions}
-                      value={badgeKey}
-                      onChange={(value) => setBadgeKey(value as string)}
-                      placeholder="Select badge (or leave empty for all)"
-                      searchable
-                    />
-                  ) : (
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      No badges available
-                    </p>
+                  </div>
+
+                  {/* Badge Widget Config Options */}
+                  {!badgeKey && (
+                    <div className="col-span-2 border-t border-gray-200 dark:border-gray-600 pt-4 mt-2">
+                      <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
+                        Badge Widget Options
+                      </h4>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Max Badges to Display
+                          </label>
+                          <Select
+                            options={[
+                              { value: '6', label: '6 badges' },
+                              { value: '8', label: '8 badges' },
+                              { value: '10', label: '10 badges' },
+                              { value: '12', label: '12 badges' },
+                              { value: '15', label: '15 badges' },
+                              { value: '20', label: '20 badges (show all)' },
+                            ]}
+                            value={String(maxBadges)}
+                            onChange={(value) => setBadgeMaxBadges(Number(value))}
+                            placeholder="Select max badges"
+                          />
+                        </div>
+                        <div className="flex items-end">
+                          <label className="flex items-center gap-3 cursor-pointer pb-2">
+                            <input
+                              type="checkbox"
+                              checked={badgeShowProgress}
+                              onChange={(e) => setBadgeShowProgress(e.target.checked)}
+                              className="w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500 dark:focus:ring-purple-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                            />
+                            <span className="text-sm text-gray-700 dark:text-gray-300">
+                              Show earned date
+                            </span>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
                   )}
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    Leave empty to show all badges, or select a specific badge
-                  </p>
-                </div>
+                </>
               )}
 
               {/* Category Selection (only for CategoryWidget) */}
@@ -756,32 +864,60 @@ export function WidgetTestingPage() {
                     <h3 className="font-semibold text-gray-900 dark:text-white">
                       Widget Preview
                     </h3>
-                    <button
-                      onClick={() => loadWidget(isWidgetLoaded)}
-                      disabled={isWidgetLoading || !user?.apiKey || (selectedWidget.requiresCategory && !category)}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                        isWidgetLoading
-                          ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
-                          : 'bg-purple-600 hover:bg-purple-700 text-white'
-                      }`}
-                    >
-                      {isWidgetLoading ? (
-                        <>
-                          <RefreshCw className="w-4 h-4 animate-spin" />
-                          Loading...
-                        </>
-                      ) : isWidgetLoaded ? (
-                        <>
-                          <RefreshCw className="w-4 h-4" />
-                          Refresh
-                        </>
-                      ) : (
-                        <>
-                          <Play className="w-4 h-4" />
-                          Load Preview
-                        </>
+                    <div className="flex items-center gap-2">
+                      {/* Download Button - only show when widget is loaded */}
+                      {isWidgetLoaded && (
+                        <button
+                          onClick={downloadWidgetAsPng}
+                          disabled={isDownloading}
+                          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                            isDownloading
+                              ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
+                              : 'bg-green-600 hover:bg-green-700 text-white'
+                          }`}
+                          title="Save widget as PNG image"
+                        >
+                          {isDownloading ? (
+                            <>
+                              <Download className="w-4 h-4 animate-pulse" />
+                              Saving...
+                            </>
+                          ) : (
+                            <>
+                              <Download className="w-4 h-4" />
+                              Save PNG
+                            </>
+                          )}
+                        </button>
                       )}
-                    </button>
+                      {/* Refresh/Load Button */}
+                      <button
+                        onClick={() => loadWidget(isWidgetLoaded)}
+                        disabled={isWidgetLoading || !user?.apiKey || (selectedWidget.requiresCategory && !category)}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                          isWidgetLoading
+                            ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
+                            : 'bg-purple-600 hover:bg-purple-700 text-white'
+                        }`}
+                      >
+                        {isWidgetLoading ? (
+                          <>
+                            <RefreshCw className="w-4 h-4 animate-spin" />
+                            Loading...
+                          </>
+                        ) : isWidgetLoaded ? (
+                          <>
+                            <RefreshCw className="w-4 h-4" />
+                            Refresh
+                          </>
+                        ) : (
+                          <>
+                            <Play className="w-4 h-4" />
+                            Load Preview
+                          </>
+                        )}
+                      </button>
+                    </div>
                   </div>
 
                   {/* Info message about manual loading */}
@@ -842,6 +978,8 @@ export function WidgetTestingPage() {
                   showCategories={selectedWidget.id === 'reputation' ? showCategories : undefined}
                   maxCategories={selectedWidget.id === 'reputation' ? maxCategories : undefined}
                   compactMode={selectedWidget.id === 'reputation' ? compactMode : undefined}
+                  badgeMaxBadges={selectedWidget.id === 'badge' ? maxBadges : undefined}
+                  badgeShowProgress={selectedWidget.id === 'badge' ? badgeShowProgress : undefined}
                   categoryShowTitle={selectedWidget.id === 'category' ? categoryShowTitle : undefined}
                   categoryShowDescription={selectedWidget.id === 'category' ? categoryShowDescription : undefined}
                   categoryShowBreakdown={selectedWidget.id === 'category' ? categoryShowBreakdown : undefined}

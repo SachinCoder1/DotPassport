@@ -206,6 +206,13 @@ export function getWidgetStyles(): string {
       color: var(--dp-text-secondary);
     }
 
+    .dp-badge-date {
+      font-size: 0.65rem;
+      color: var(--dp-text-secondary);
+      margin-top: 0.25rem;
+      opacity: 0.8;
+    }
+
     /* Profile Widget */
     .dp-profile-widget .dp-profile-header {
       display: flex;

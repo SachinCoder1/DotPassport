@@ -40,10 +40,20 @@ export function CodeExamplesPanel({
 
   const generateCode = (language: Language): string => {
     const baseUrl = 'https://api.dotpassport.com';
-    const endpoint = method.endpoint;
+    let endpoint = method.endpoint;
 
+    // Replace path parameters in endpoint (e.g., :address, :badgeKey)
+    const pathParams = method.parameters.filter((p) => p.description.includes('path parameter'));
+    pathParams.forEach((param) => {
+      const value = getParamValue(param.name);
+      if (value !== undefined) {
+        endpoint = endpoint.replace(`:${param.name}`, String(value));
+      }
+    });
+
+    // Build query parameters (non-path parameters)
     const queryParams = method.parameters
-      .filter((p) => getParamValue(p.name) !== undefined)
+      .filter((p) => !p.description.includes('path parameter') && getParamValue(p.name) !== undefined)
       .map(
         (p) => `${p.name}=${encodeURIComponent(String(getParamValue(p.name)))}`
       )
@@ -69,34 +79,49 @@ export function CodeExamplesPanel({
 
   const generateTypeScript = (withTypes: boolean): string => {
     const imports = withTypes
-      ? `import { DotPassport } from '@dotpassport/sdk';\nimport type { ${method.responseSchema} } from '@dotpassport/sdk/types';\n\n`
-      : `import { DotPassport } from '@dotpassport/sdk';\n\n`;
+      ? `import { DotPassportClient } from '@dotpassport/sdk';\nimport type { ${method.responseSchema} } from '@dotpassport/sdk';\n\n`
+      : `import { DotPassportClient } from '@dotpassport/sdk';\n\n`;
 
-    const paramsObj = method.parameters
-      .filter((p) => getParamValue(p.name) !== undefined)
+    // Build method arguments based on parameter order
+    // Path parameters come first, then optional query parameters
+    const pathParams = method.parameters.filter((p) => p.description.includes('path parameter'));
+    const queryParams = method.parameters.filter((p) => !p.description.includes('path parameter'));
+
+    const args: string[] = [];
+
+    // Add path parameter values
+    pathParams.forEach((p) => {
+      const value = getParamValue(p.name);
+      if (value !== undefined) {
+        args.push(typeof value === 'string' ? `'${value}'` : String(value));
+      }
+    });
+
+    // Add optional parameters as comments if they have non-default values
+    const optionalArgs = queryParams
+      .filter((p) => getParamValue(p.name) !== undefined && getParamValue(p.name) !== p.default)
       .map((p) => {
         const value = getParamValue(p.name);
-        const formattedValue =
-          typeof value === 'string' ? `'${value}'` : value;
-        return `  ${p.name}: ${formattedValue}`;
-      })
-      .join(',\n');
+        return typeof value === 'string' ? `'${value}'` : String(value);
+      });
 
-    const hasParams = paramsObj.length > 0;
-    const paramsBlock = hasParams ? `{\n${paramsObj}\n}` : '';
+    if (optionalArgs.length > 0) {
+      args.push(...optionalArgs);
+    }
 
-    const typeAnnotation = withTypes ? `: ${method.responseSchema}` : '';
+    const methodCall = args.length > 0 ? `client.${method.name}(${args.join(', ')})` : `client.${method.name}()`;
+    const typeAnnotation = withTypes ? `: Promise<${method.responseSchema}>` : '';
 
-    return `${imports}// Initialize the SDK
-const client = new DotPassport({
+    return `${imports}// Initialize the SDK client
+const client = new DotPassportClient({
   apiKey: 'your-api-key-here',
   baseUrl: 'https://api.dotpassport.com'
 });
 
-// Call the method
-async function example() {
+// Call the ${method.displayName} method
+async function example()${typeAnnotation} {
   try {
-    const response${typeAnnotation} = await client.${method.name}(${hasParams ? paramsBlock : ''});
+    const response = await ${methodCall};
     console.log('Response:', response);
     return response;
   } catch (error) {

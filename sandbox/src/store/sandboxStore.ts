@@ -16,9 +16,20 @@ interface WidgetCacheEntry {
   timestamp: number;
   // Display config for restoration
   theme: 'light' | 'dark' | 'auto';
+  // Reputation widget options
   showCategories?: boolean;
   maxCategories?: number;
   compactMode?: boolean;
+  // Badge widget options
+  badgeMaxBadges?: number;
+  badgeShowProgress?: boolean;
+  // Category widget options
+  categoryShowTitle?: boolean;
+  categoryShowDescription?: boolean;
+  categoryShowBreakdown?: boolean;
+  categoryShowAdvice?: boolean;
+  categoryShowScoreOnly?: boolean;
+  categoryCompactMode?: boolean;
 }
 
 interface SandboxState {

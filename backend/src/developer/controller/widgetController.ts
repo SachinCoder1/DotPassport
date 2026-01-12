@@ -7,7 +7,12 @@ import { Score } from '~/models/Score';
 import { UserBadge } from '~/models/UserBadge';
 import { Badge } from '~/models/Badge';
 import { Category } from '~/models/Category';
-import { getOrCreateApiUser, isValidPolkadotAddress } from '~/service/jit/apiUserService';
+import {
+  getOrCreateApiUserForProfile,
+  getOrCreateApiUserForScores,
+  getOrCreateApiUserForBadges,
+  isValidPolkadotAddress,
+} from '~/service/jit/apiUserService';
 
 /**
  * Widget API Controller
@@ -115,9 +120,9 @@ async function getReputationWidgetData(
     }
   }
 
-  // Fetch from ApiUser
+  // Fetch from ApiUser (optimized for scores - skips badge fetching)
   logger.info('Fetching ApiUser for reputation widget', { address, forceRefresh });
-  const apiUser = await getOrCreateApiUser(address, forceRefresh);
+  const apiUser = await getOrCreateApiUserForScores(address, forceRefresh);
 
   const categoryScores = apiUser.score.categories
     ? Object.fromEntries(apiUser.score.categories)
@@ -172,9 +177,9 @@ async function getProfileWidgetData(
     }
   }
 
-  // Fetch from ApiUser
+  // Fetch from ApiUser (fast path - only profile data, no scores/badges)
   logger.info('Fetching ApiUser for profile widget', { address, forceRefresh });
-  const apiUser = await getOrCreateApiUser(address, forceRefresh);
+  const apiUser = await getOrCreateApiUserForProfile(address, forceRefresh);
 
   // Extract social links from polkadot identity
   const socialLinks: Record<string, string> = {};
@@ -295,18 +300,40 @@ async function getBadgeWidgetData(
     }
   }
 
-  // Fetch from ApiUser
+  // Fetch from ApiUser (optimized for badges - skips score calculation)
   logger.info('Fetching ApiUser for badge widget', { address, badgeKey, forceRefresh });
-  const apiUser = await getOrCreateApiUser(address, forceRefresh);
+  const apiUser = await getOrCreateApiUserForBadges(address, forceRefresh);
 
   if (badgeKey) {
     // Specific badge
     const apiBadge = apiUser.badges.find((b) => b.badgeKey === badgeKey);
-    if (!apiBadge) {
-      return next(new HttpError(404, 'Badge not found for this user'));
+    const badgeDefinition = await Badge.findOne({ key: badgeKey, active: true }).lean();
+
+    // If badge key doesn't exist in the system, return 404
+    if (!badgeDefinition) {
+      return next(new HttpError(404, 'Badge definition not found'));
     }
 
-    const badgeDefinition = await Badge.findOne({ key: badgeKey, active: true }).lean();
+    // If user hasn't earned this badge, return earned: false with badge definition
+    if (!apiBadge) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          address,
+          badge: null,
+          earned: false,
+          definition: {
+            title: badgeDefinition.title,
+            shortDescription: badgeDefinition.shortDescription,
+            longDescription: badgeDefinition.longDescription,
+            metric: badgeDefinition.metric,
+            imageUrl: badgeDefinition.imageUrl,
+            levels: badgeDefinition.levels,
+          },
+          source: 'api',
+        },
+      });
+    }
 
     return res.status(200).json({
       success: true,
@@ -317,26 +344,34 @@ async function getBadgeWidgetData(
           achievedLevel: apiBadge.achievedLevel,
           achievedLevelKey: apiBadge.achievedLevelKey,
           achievedLevelTitle: apiBadge.achievedLevelTitle,
+          earnedAt: apiBadge.earnedAt || new Date(), // Include earnedAt with fallback
         },
-        definition: badgeDefinition ? {
+        earned: true,
+        definition: {
           title: badgeDefinition.title,
           shortDescription: badgeDefinition.shortDescription,
           longDescription: badgeDefinition.longDescription,
           metric: badgeDefinition.metric,
           imageUrl: badgeDefinition.imageUrl,
           levels: badgeDefinition.levels,
-        } : null,
+        },
         source: 'api',
       },
     });
   }
 
-  // All badges
+  // All badges - map to ensure earnedAt is included with fallback for cached data
   return res.status(200).json({
     success: true,
     data: {
       address,
-      badges: apiUser.badges,
+      badges: apiUser.badges.map((badge) => ({
+        badgeKey: badge.badgeKey,
+        achievedLevel: badge.achievedLevel,
+        achievedLevelKey: badge.achievedLevelKey,
+        achievedLevelTitle: badge.achievedLevelTitle,
+        earnedAt: badge.earnedAt || new Date(), // Fallback for old cached data without earnedAt
+      })),
       count: apiUser.badges.length,
       source: 'api',
     },
@@ -391,9 +426,9 @@ async function getCategoryWidgetData(
     }
   }
 
-  // Fetch from ApiUser
+  // Fetch from ApiUser (optimized for scores - skips badge fetching)
   logger.info('Fetching ApiUser for category widget', { address, categoryKey, forceRefresh });
-  const apiUser = await getOrCreateApiUser(address, forceRefresh);
+  const apiUser = await getOrCreateApiUserForScores(address, forceRefresh);
 
   const categoryScore = apiUser.score.categories?.get(categoryKey as any);
   if (categoryScore === undefined) {

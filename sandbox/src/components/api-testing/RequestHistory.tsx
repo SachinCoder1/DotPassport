@@ -8,7 +8,22 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, format, isToday, isYesterday } from 'date-fns';
+
+// Session start time to distinguish current session entries
+const SESSION_START_TIME = Date.now();
+
+// Format timestamp to show actual date/time
+function formatTimestamp(timestamp: number): string {
+  const date = new Date(timestamp);
+  if (isToday(date)) {
+    return format(date, 'h:mm a');
+  }
+  if (isYesterday(date)) {
+    return `Yesterday ${format(date, 'h:mm a')}`;
+  }
+  return format(date, 'MMM d, h:mm a');
+}
 
 interface HistoryEntry {
   id: string;
@@ -182,12 +197,25 @@ export function RequestHistory({
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   {/* Timestamp */}
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
+                    {/* Current session indicator */}
+                    {entry.timestamp >= SESSION_START_TIME && (
+                      <span className="px-1.5 py-0.5 text-[10px] font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded">
+                        This session
+                      </span>
+                    )}
+                    {/* Relative time */}
                     <span className="text-xs text-gray-600 dark:text-gray-400">
                       {formatDistanceToNow(entry.timestamp, {
                         addSuffix: true,
                       })}
                     </span>
+                    {/* Actual date/time for older entries */}
+                    {entry.timestamp < SESSION_START_TIME && (
+                      <span className="text-[10px] text-gray-400 dark:text-gray-500">
+                        ({formatTimestamp(entry.timestamp)})
+                      </span>
+                    )}
                     {entry.responseStatus && (
                       <span
                         className={`px-2 py-0.5 text-xs font-medium rounded ${

@@ -83,8 +83,10 @@ export interface UserBadges {
 
 export interface SpecificUserBadge {
   address: string;
-  badge: UserBadge;
+  badge: UserBadge | null;
+  earned?: boolean;
   definition: BadgeDefinition | null;
+  source?: 'app' | 'api';
 }
 
 /**

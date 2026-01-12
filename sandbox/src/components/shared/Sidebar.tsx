@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -42,7 +43,56 @@ export function Sidebar({
   onMobileClose,
 }: SidebarProps) {
   const location = useLocation();
-  const { user } = useWalletStore();
+  const { user, refreshUsage, isAuthenticated } = useWalletStore();
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Auto-refresh usage every 60 seconds when page is visible
+  // Note: Usage also refreshes after API calls via the sandboxStore
+  useEffect(() => {
+    if (!isAuthenticated || !user) return;
+
+    const startRefreshInterval = () => {
+      // Clear any existing interval
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+      // Start new interval (60 seconds - reduced from 15s to minimize API calls)
+      intervalRef.current = setInterval(() => {
+        refreshUsage();
+      }, 60000);
+    };
+
+    const stopRefreshInterval = () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        // Page became visible - refresh immediately and start interval
+        refreshUsage();
+        startRefreshInterval();
+      } else {
+        // Page became hidden - stop refreshing
+        stopRefreshInterval();
+      }
+    };
+
+    // Initial setup
+    if (document.visibilityState === 'visible') {
+      startRefreshInterval();
+    }
+
+    // Listen for visibility changes
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      stopRefreshInterval();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isAuthenticated, user?.polkadotAddress, refreshUsage]);
 
   const MobileSidebar = () => (
     <>
