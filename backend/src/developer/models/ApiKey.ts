@@ -33,6 +33,10 @@ export interface IApiKey extends Document {
   keyPrefix: string;
   appName: string;
   contactEmail: string;
+  polkadotAddress?: string; // Optional Polkadot address for sandbox users
+  encryptedKey?: string; // NEW: Encrypted API key (can be decrypted)
+  encryptionIV?: string; // NEW: Initialization vector for decryption
+  encryptionAuthTag?: string; // NEW: Authentication tag for AES-GCM
   tier: ApiKeyTier;
   isActive: boolean;
   allowedOrigins: string[];
@@ -46,6 +50,10 @@ export interface IApiKey extends Document {
   revokedReason: string | null;
   createdAt: Date;
   updatedAt: Date;
+  // Methods
+  hashApiKey(apiKey: string): string;
+  verifyApiKey(apiKey: string): boolean;
+  getPlaintextKey(): string | null;
 }
 
 // Default rate limits by tier
@@ -118,6 +126,34 @@ const ApiKeySchema = new Schema<IApiKey>(
       trim: true,
       lowercase: true,
     },
+    polkadotAddress: {
+      type: String,
+      required: false,
+      sparse: true,
+      index: true,
+      validate: {
+        validator: function(v: string) {
+          // Validate Polkadot address format (47-48 chars, base58)
+          return !v || /^[1-9A-HJ-NP-Za-km-z]{47,48}$/.test(v);
+        },
+        message: 'Invalid Polkadot address format'
+      }
+    },
+    encryptedKey: {
+      type: String,
+      required: false,
+      select: false, // Don't include in queries by default
+    },
+    encryptionIV: {
+      type: String,
+      required: false,
+      select: false,
+    },
+    encryptionAuthTag: {
+      type: String,
+      required: false,
+      select: false,
+    },
     tier: {
       type: String,
       enum: Object.values(ApiKeyTier),
@@ -176,6 +212,7 @@ const ApiKeySchema = new Schema<IApiKey>(
 ApiKeySchema.index({ isActive: 1, tier: 1 });
 ApiKeySchema.index({ createdBy: 1 });
 ApiKeySchema.index({ contactEmail: 1 });
+ApiKeySchema.index({ polkadotAddress: 1, isActive: 1 });
 
 // Instance methods
 ApiKeySchema.methods.hashApiKey = function (apiKey: string): string {
@@ -185,6 +222,14 @@ ApiKeySchema.methods.hashApiKey = function (apiKey: string): string {
 ApiKeySchema.methods.verifyApiKey = function (apiKey: string): boolean {
   const hash = this.hashApiKey(apiKey);
   return this.keyHash === hash;
+};
+
+ApiKeySchema.methods.getPlaintextKey = function (): string | null {
+  if (!this.encryptedKey || !this.encryptionIV || !this.encryptionAuthTag) {
+    return null;
+  }
+  const { decryptApiKey } = require('~/developer/utils/encryption');
+  return decryptApiKey(this.encryptedKey, this.encryptionIV, this.encryptionAuthTag);
 };
 
 export const ApiKey = model<IApiKey>('ApiKey', ApiKeySchema);

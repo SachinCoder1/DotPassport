@@ -14,12 +14,13 @@ import { getOrCreateApiUser, isValidPolkadotAddress } from '~/service/jit/apiUse
  * GET /api/v2/profiles/:address
  */
 export async function getProfileByAddress(
-  req: Request<{ address: string }>,
+  req: Request<{ address: string }, {}, {}, { forceRefresh?: string }>,
   res: Response,
   next: NextFunction
 ) {
   try {
     const address = req.params.address;
+    const forceRefresh = req.query.forceRefresh === 'true';
 
     // Validate address format
     if (!isValidPolkadotAddress(address)) {
@@ -56,15 +57,51 @@ export async function getProfileByAddress(
     }
 
     // User not found in app, check/fetch from ApiUser
-    logger.info('App user not found, fetching ApiUser', { address });
-    const apiUser = await getOrCreateApiUser(address);
+    logger.info('App user not found, fetching ApiUser', { address, forceRefresh });
+    const apiUser = await getOrCreateApiUser(address, forceRefresh);
+
+    // Extract social links from polkadot identity
+    const socialLinks: Record<string, string> = {};
+    if (apiUser.profile.polkadotIdentity) {
+      const identity = apiUser.profile.polkadotIdentity;
+      if (identity.web) socialLinks.web = identity.web;
+      if (identity.twitter) socialLinks.twitter = identity.twitter;
+      if (identity.github) socialLinks.github = identity.github;
+      if (identity.email) socialLinks.email = identity.email;
+      if (identity.matrix) socialLinks.matrix = identity.matrix;
+      if (identity.discord) socialLinks.discord = identity.discord;
+      if (identity.riot) socialLinks.riot = identity.riot;
+    }
+
+    // Build polkadot identities array (consistent with app user format)
+    const polkadotIdentities = [];
+    if (apiUser.profile.polkadotIdentity) {
+      polkadotIdentities.push({
+        address: apiUser.profile.polkadotIdentity.address || address,
+        display: apiUser.profile.polkadotIdentity.display,
+        legal: apiUser.profile.polkadotIdentity.legal,
+        email: apiUser.profile.polkadotIdentity.email,
+        web: apiUser.profile.polkadotIdentity.web,
+        twitter: apiUser.profile.polkadotIdentity.twitter,
+        github: apiUser.profile.polkadotIdentity.github,
+        matrix: apiUser.profile.polkadotIdentity.matrix,
+        discord: apiUser.profile.polkadotIdentity.discord,
+        riot: apiUser.profile.polkadotIdentity.riot,
+        judgements: apiUser.profile.polkadotIdentity.judgements || [],
+        role: apiUser.profile.polkadotIdentity.role,
+        nonce: apiUser.profile.polkadotIdentity.nonce,
+      });
+    }
 
     return res.status(200).json({
       success: true,
       data: {
         address,
-        displayName: apiUser.profile.displayName,
-        polkadotIdentity: apiUser.profile.polkadotIdentity,
+        displayName: apiUser.profile.polkadotIdentity?.display || apiUser.profile.displayName || undefined,
+        avatarUrl: undefined, // Not available from on-chain data
+        bio: undefined, // Not available from on-chain data
+        socialLinks,
+        polkadotIdentities,
         nftCount: apiUser.profile.nftCount,
         source: 'api',
       },
@@ -82,12 +119,13 @@ export async function getProfileByAddress(
  * GET /api/v2/scores/:address
  */
 export async function getScoresByAddress(
-  req: Request<{ address: string }>,
+  req: Request<{ address: string }, {}, {}, { forceRefresh?: string }>,
   res: Response,
   next: NextFunction
 ) {
   try {
     const address = req.params.address;
+    const forceRefresh = req.query.forceRefresh === 'true';
 
     // Validate address format
     if (!isValidPolkadotAddress(address)) {
@@ -116,8 +154,8 @@ export async function getScoresByAddress(
     }
 
     // User not found or no score, check/fetch from ApiUser
-    logger.info('App user score not found, fetching ApiUser', { address });
-    const apiUser = await getOrCreateApiUser(address);
+    logger.info('App user score not found, fetching ApiUser', { address, forceRefresh });
+    const apiUser = await getOrCreateApiUser(address, forceRefresh);
 
     const categoryScores = apiUser.score.categories
       ? Object.fromEntries(apiUser.score.categories)
@@ -146,12 +184,13 @@ export async function getScoresByAddress(
  * GET /api/v2/scores/:address/:categoryKey
  */
 export async function getSpecificCategoryScore(
-  req: Request<{ address: string; categoryKey: string }>,
+  req: Request<{ address: string; categoryKey: string }, {}, {}, { forceRefresh?: string }>,
   res: Response,
   next: NextFunction
 ) {
   try {
     const { address, categoryKey } = req.params;
+    const forceRefresh = req.query.forceRefresh === 'true';
 
     // Validate address format
     if (!isValidPolkadotAddress(address)) {
@@ -198,8 +237,8 @@ export async function getSpecificCategoryScore(
     }
 
     // User not found or category not found, check/fetch from ApiUser
-    logger.info('App user category score not found, fetching ApiUser', { address, categoryKey });
-    const apiUser = await getOrCreateApiUser(address);
+    logger.info('App user category score not found, fetching ApiUser', { address, categoryKey, forceRefresh });
+    const apiUser = await getOrCreateApiUser(address, forceRefresh);
 
     const categoryScore = apiUser.score.categories?.get(categoryKey as any);
     if (categoryScore === undefined) {
@@ -244,12 +283,13 @@ export async function getSpecificCategoryScore(
  * GET /api/v2/badges/:address
  */
 export async function getBadgesByAddress(
-  req: Request<{ address: string }>,
+  req: Request<{ address: string }, {}, {}, { forceRefresh?: string }>,
   res: Response,
   next: NextFunction
 ) {
   try {
     const address = req.params.address;
+    const forceRefresh = req.query.forceRefresh === 'true';
 
     // Validate address format
     if (!isValidPolkadotAddress(address)) {
@@ -282,8 +322,8 @@ export async function getBadgesByAddress(
     }
 
     // User not found or no badges, check/fetch from ApiUser
-    logger.info('App user badges not found, fetching ApiUser', { address });
-    const apiUser = await getOrCreateApiUser(address);
+    logger.info('App user badges not found, fetching ApiUser', { address, forceRefresh });
+    const apiUser = await getOrCreateApiUser(address, forceRefresh);
 
     return res.status(200).json({
       success: true,
@@ -307,12 +347,13 @@ export async function getBadgesByAddress(
  * GET /api/v2/badges/:address/:badgeKey
  */
 export async function getSpecificBadgeByAddress(
-  req: Request<{ address: string; badgeKey: string }>,
+  req: Request<{ address: string; badgeKey: string }, {}, {}, { forceRefresh?: string }>,
   res: Response,
   next: NextFunction
 ) {
   try {
     const { address, badgeKey } = req.params;
+    const forceRefresh = req.query.forceRefresh === 'true';
 
     // Validate address format
     if (!isValidPolkadotAddress(address)) {
@@ -358,8 +399,8 @@ export async function getSpecificBadgeByAddress(
     }
 
     // User not found or badge not found, check/fetch from ApiUser
-    logger.info('App user badge not found, fetching ApiUser', { address, badgeKey });
-    const apiUser = await getOrCreateApiUser(address);
+    logger.info('App user badge not found, fetching ApiUser', { address, badgeKey, forceRefresh });
+    const apiUser = await getOrCreateApiUser(address, forceRefresh);
 
     const apiBadge = apiUser.badges.find((b) => b.badgeKey === badgeKey);
     if (!apiBadge) {

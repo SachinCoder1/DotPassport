@@ -1,0 +1,12 @@
+@import "tailwindcss";
+
+/* Tailwind v4 dark mode custom variant - enables class-based dark mode */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/inter/700.css";
+@import "./design-tokens.css";
+@import "./professional-tokens.css";
+

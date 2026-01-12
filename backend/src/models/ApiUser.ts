@@ -19,6 +19,7 @@ export interface IApiUserScore {
 export interface IApiUserProfile {
   displayName?: string;
   polkadotIdentity?: {
+    address?: string;
     display?: string;
     legal?: string;
     email?: string;
@@ -27,7 +28,10 @@ export interface IApiUserProfile {
     github?: string;
     matrix?: string;
     discord?: string;
+    riot?: string;
     judgements?: Array<{ index: number; judgement: string }>;
+    role?: string;
+    nonce?: number;
   };
   nftCount?: number;
 }
@@ -59,6 +63,7 @@ const ApiUserSchema = new Schema<IApiUser>(
     profile: {
       displayName: String,
       polkadotIdentity: {
+        address: String,
         display: String,
         legal: String,
         email: String,
@@ -67,12 +72,15 @@ const ApiUserSchema = new Schema<IApiUser>(
         github: String,
         matrix: String,
         discord: String,
+        riot: String,
         judgements: [
           {
             index: Number,
             judgement: String,
           },
         ],
+        role: String,
+        nonce: Number,
       },
       nftCount: Number,
     },

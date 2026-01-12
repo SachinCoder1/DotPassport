@@ -31,6 +31,9 @@ export default function ApiKeyCard({ apiKey }: ApiKeyCardProps) {
           <div>
             <h3 className="text-white font-semibold">{apiKey.appName}</h3>
             <p className="text-purple-300 text-sm">{apiKey.contactEmail}</p>
+            {apiKey.polkadotAddress && (
+              <p className="text-purple-400 text-xs font-mono mt-1">{apiKey.polkadotAddress}</p>
+            )}
           </div>
         </div>
       </div>

@@ -15,7 +15,8 @@
   "type": "commonjs",
   "dependencies": {
     "@kodadot1/uniquery": "^0.7.2-rc.1",
-    "@polkadot/util-crypto": "^13.5.3",
+    "@polkadot/util": "^12.6.2",
+    "@polkadot/util-crypto": "^12.6.2",
     "@types/compression": "^1.8.1",
     "@types/cors": "^2.8.19",
     "@types/js-yaml": "^4.0.9",
@@ -33,7 +34,7 @@
     "hpp": "^0.2.3",
     "joi": "^17.13.3",
     "js-yaml": "^4.1.0",
-    "jsonwebtoken": "^9.0.2",
+    "jsonwebtoken": "^9.0.3",
     "module-alias": "^2.2.3",
     "mongoose": "^8.16.3",
     "node-cache": "^5.1.2",

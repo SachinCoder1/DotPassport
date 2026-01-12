@@ -21,6 +21,7 @@ export interface CreateApiKeyRequest {
   tier: ApiKeyTier;
   allowedOrigins?: string[];
   metadata?: Record<string, any>;
+  polkadotAddress?: string;
 }
 
 export interface UpdateApiKeyRequest {
@@ -30,6 +31,7 @@ export interface UpdateApiKeyRequest {
   allowedOrigins?: string[];
   isActive?: boolean;
   metadata?: Record<string, any>;
+  polkadotAddress?: string;
 }
 
 export interface RevokeApiKeyRequest {
@@ -55,6 +57,7 @@ export interface ApiKeyResponse {
   allowedOrigins: string[];
   rateLimits: IRateLimitConfig;
   createdAt: Date;
+  polkadotAddress?: string;
 }
 
 export interface ApiKeyDetailResponse {
@@ -78,6 +81,7 @@ export interface ApiKeyDetailResponse {
   createdBy: string;
   createdAt: Date;
   updatedAt: Date;
+  polkadotAddress?: string;
 }
 
 export interface UsageStatsResponse {

@@ -29,6 +29,7 @@ export interface ApiKey {
   revokedAt?: Date;
   revokedBy?: string;
   revokedReason?: string;
+  polkadotAddress?: string;
 }
 
 export interface CreateApiKeyPayload {
@@ -36,12 +37,14 @@ export interface CreateApiKeyPayload {
   contactEmail: string;
   tier: 'free' | 'pro' | 'enterprise';
   allowedOrigins?: string[];
+  polkadotAddress?: string;
 }
 
 export interface UpdateApiKeyPayload {
   appName?: string;
   tier?: 'free' | 'pro' | 'enterprise';
   allowedOrigins?: string[];
+  polkadotAddress?: string;
 }
 
 export interface RevokeApiKeyPayload {

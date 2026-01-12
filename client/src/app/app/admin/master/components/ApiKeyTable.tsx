@@ -34,6 +34,7 @@ export default function ApiKeyTable() {
               <th className="text-left px-6 py-4 text-purple-300 font-semibold text-sm">App Name</th>
               <th className="text-left px-6 py-4 text-purple-300 font-semibold text-sm">API Key</th>
               <th className="text-left px-6 py-4 text-purple-300 font-semibold text-sm">Email</th>
+              <th className="text-left px-6 py-4 text-purple-300 font-semibold text-sm">Address</th>
               <th className="text-left px-6 py-4 text-purple-300 font-semibold text-sm">Tier</th>
               <th className="text-left px-6 py-4 text-purple-300 font-semibold text-sm">Status</th>
               <th className="text-left px-6 py-4 text-purple-300 font-semibold text-sm">Created</th>
@@ -54,6 +55,9 @@ export default function ApiKeyTable() {
                     </div>
                   </td>
                   <td className="px-6 py-4 text-purple-200 text-sm">{key.contactEmail}</td>
+                  <td className="px-6 py-4 text-purple-200 text-sm font-mono">
+                    {key.polkadotAddress ? `${key.polkadotAddress.substring(0, 8)}...` : '-'}
+                  </td>
                   <td className="px-6 py-4">
                     <TierBadge tier={key.tier} />
                   </td>

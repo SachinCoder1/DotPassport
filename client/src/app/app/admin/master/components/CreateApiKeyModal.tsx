@@ -146,6 +146,21 @@ export default function CreateApiKeyModal() {
                   />
                 </div>
 
+                {/* Polkadot Address */}
+                <div>
+                  <label className="block text-purple-300 text-sm font-semibold mb-2">
+                    Polkadot Address (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.polkadotAddress || ''}
+                    onChange={(e) => setFormData({ ...formData, polkadotAddress: e.target.value })}
+                    className="w-full px-4 py-2 bg-slate-900/50 border border-purple-500/30 rounded-lg text-white focus:outline-none focus:border-purple-500"
+                    placeholder="5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY"
+                  />
+                  <p className="text-purple-400/60 text-xs mt-1">For sandbox users - their Polkadot wallet address</p>
+                </div>
+
                 {/* Tier */}
                 <div>
                   <label className="block text-purple-300 text-sm font-semibold mb-2">

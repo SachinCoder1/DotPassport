@@ -6,6 +6,15 @@ import { trackApiKeyUsage, checkRateLimit } from '../service/rateLimitService';
 /**
  * API Key Rate Limiting Middleware
  * Enforces tier-based rate limits per API key
+ *
+ * Widget handling:
+ * - Metadata endpoints (/metadata/badges, /metadata/categories) are free
+ * - Widget requests include ?widget=type query param for tracking
+ * - Each API call from a widget counts toward the rate limit
+ *
+ * Future enhancements (TODO):
+ * - Add widget session grouping to count widget loads as single request
+ * - Implement reduced rate for widget requests (e.g., 0.25 per call)
  */
 export const apiKeyRateLimit = async (
   req: Request,
@@ -41,6 +50,12 @@ export const apiKeyRateLimit = async (
           `Rate limit exceeded. Limit: ${rateLimitResult.limit} requests per ${rateLimitResult.window}. Resets at ${new Date(rateLimitResult.resetAt).toISOString()}`
         )
       );
+    }
+
+    // Skip tracking for metadata endpoints - they're free and internal
+    const METADATA_ENDPOINTS = ['/metadata/badges', '/metadata/categories'];
+    if (METADATA_ENDPOINTS.includes(req.path)) {
+      return next(); // Skip tracking
     }
 
     // Track usage (increment counters)

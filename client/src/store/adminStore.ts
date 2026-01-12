@@ -107,6 +107,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
         searchQuery === '' ||
         key.appName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         key.contactEmail.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        key.polkadotAddress?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         key.keyPrefix.toLowerCase().includes(searchQuery.toLowerCase());
 
       // Tier filter

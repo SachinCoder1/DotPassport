@@ -24,6 +24,7 @@ export default function EditKeyModal() {
         appName: selectedKey.appName,
         tier: selectedKey.tier,
         allowedOrigins: selectedKey.allowedOrigins,
+        polkadotAddress: selectedKey.polkadotAddress,
       });
       setOriginsInput(selectedKey.allowedOrigins?.join(', ') || '');
     }
@@ -111,6 +112,21 @@ export default function EditKeyModal() {
                 value={selectedKey.contactEmail}
                 className="w-full px-4 py-2 bg-slate-900/30 border border-purple-500/30 rounded-lg text-purple-400 cursor-not-allowed"
               />
+            </div>
+
+            {/* Polkadot Address */}
+            <div>
+              <label className="block text-purple-300 text-sm font-semibold mb-2">
+                Polkadot Address (Optional)
+              </label>
+              <input
+                type="text"
+                value={formData.polkadotAddress || selectedKey.polkadotAddress || ''}
+                onChange={(e) => setFormData({ ...formData, polkadotAddress: e.target.value })}
+                className="w-full px-4 py-2 bg-slate-900/50 border border-purple-500/30 rounded-lg text-white focus:outline-none focus:border-purple-500"
+                placeholder="5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY"
+              />
+              <p className="text-purple-400/60 text-xs mt-1">For sandbox users - their Polkadot wallet address</p>
             </div>
 
             {/* App Name */}

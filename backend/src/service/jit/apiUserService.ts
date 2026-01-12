@@ -1,7 +1,7 @@
 import { ApiUser, IApiUser } from '~/models/ApiUser';
 import { calculateScore } from '~/service/score';
 import { checkUserBadges } from '~/service/badge';
-import { fetchAccountDetailsByAddress } from '~/service/subscan';
+import { fetchAccountDetailsByAddress, clearAddressCache } from '~/service/subscan';
 import { getOwnedNfts } from '~/service/kodadot';
 import { logger } from '~/utils/logger';
 import { Badge } from '~/models/Badge';
@@ -27,6 +27,12 @@ export async function getOrCreateApiUser(
   forceRefresh = false
 ): Promise<IApiUser> {
   try {
+    // If force refresh, clear all Subscan cache for this address
+    if (forceRefresh) {
+      logger.info('Force refresh requested, clearing Subscan cache', { address });
+      clearAddressCache(address);
+    }
+
     // Check if ApiUser exists
     let apiUser = await ApiUser.findOne({ address });
 
@@ -51,7 +57,7 @@ export async function getOrCreateApiUser(
       }
     }
 
-    logger.info('Fetching on-chain data for ApiUser', { address });
+    logger.info('Fetching on-chain data for ApiUser', { address, forceRefresh });
 
     // Fetch all data in parallel
     const [scoreResult, checkedBadges, accountDetails, badgeDefinitions, nftData] =
@@ -95,23 +101,30 @@ export async function getOrCreateApiUser(
       });
     }
 
+    // Extract account data from Subscan response
+    const onChainData = accountDetails.data?.account;
+
     // Prepare data
     const now = new Date();
     const apiUserData = {
       address,
       profile: {
-        displayName: accountDetails.display || undefined,
-        polkadotIdentity: accountDetails.identity
+        displayName: onChainData?.display || undefined,
+        polkadotIdentity: onChainData
           ? {
-              display: accountDetails.identity.display,
-              legal: accountDetails.identity.legal,
-              email: accountDetails.identity.email,
-              web: accountDetails.identity.web,
-              twitter: accountDetails.identity.twitter,
-              github: accountDetails.identity.github,
-              matrix: accountDetails.identity.matrix,
-              discord: accountDetails.identity.discord,
-              judgements: accountDetails.identity.judgements,
+              address: onChainData.address,
+              display: onChainData.display ?? undefined,
+              legal: onChainData.legal ?? undefined,
+              email: onChainData.email ?? undefined,
+              web: onChainData.web ?? undefined,
+              twitter: onChainData.twitter ?? undefined,
+              github: onChainData.github ?? undefined,
+              matrix: onChainData.matrix ?? undefined,
+              discord: onChainData.discord ?? undefined,
+              riot: onChainData.riot ?? undefined,
+              judgements: onChainData.judgements ?? [],
+              role: onChainData.role ?? undefined,
+              nonce: onChainData.nonce ?? undefined,
             }
           : undefined,
         nftCount: nftData.totalCount || 0,
