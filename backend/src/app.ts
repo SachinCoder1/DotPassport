@@ -8,7 +8,7 @@ import fs from "fs";
 import path from "path";
 import yaml from "js-yaml";
 
-import { CLIENT_URL, DEFAULT_API_URL } from "~/config";
+import { CLIENT_URL, DEFAULT_API_URL, ENV, SANDBOX_URL } from "~/config";
 import { requestLogger } from "~/middleware/requestLogger";
 import { errorHandler } from "~/middleware/errorHandler";
 import userRoutes from "~/routes/userRoutes";
@@ -20,6 +20,7 @@ import developerRoutes from "~/developer/routes/developerRoutes";
 import sandboxRoutes from "~/developer/routes/sandboxRoutes";
 import { logApiRequest } from "~/developer/middleware/requestLogger";
 import { OpenAPIV3 } from "openapi-types";
+import { ENV_TYPE } from "./types/enum";
 
 export function createApp() {
   const app = express();
@@ -47,7 +48,7 @@ export function createApp() {
     if (req.path.startsWith('/api/v2')) {
       return next(); // Skip global CORS for /api/v2
     }
-    cors({ origin: [CLIENT_URL, "http://localhost:5173", "http://localhost:4173"] })(req, res, next);
+    cors({ origin: [CLIENT_URL, SANDBOX_URL] })(req, res, next);
   });
 
   // --- Rate limiting for v1 API only (v2 has its own per-key limits)

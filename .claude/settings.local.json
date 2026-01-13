@@ -14,7 +14,15 @@
       "Bash(npx eslint:*)",
       "Bash(npm run lint:*)",
       "Bash(cd:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(npm run test:sandbox:*)",
+      "Bash(npm run test:jit:*)",
+      "Bash(npm run test:all:*)",
+      "Bash(npm pack:*)",
+      "Bash(pushd:*)",
+      "Bash(popd)",
+      "Bash(more:*)",
+      "Bash(findstr:*)"
     ]
   }
 }

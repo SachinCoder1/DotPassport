@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@dotpassport/sdk": "file:../sdk",
+    "@dotpassport/sdk": "^0.1.1",
     "@fontsource/inter": "^5.2.8",
     "@headlessui/react": "^2.2.9",
     "@polkadot/extension-dapp": "^0.62.6",

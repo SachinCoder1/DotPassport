@@ -207,7 +207,7 @@ export function getWidgetStyles(): string {
     }
 
     .dp-badge-date {
-      font-size: 0.65rem;
+      font-size: 0.4rem;
       color: var(--dp-text-secondary);
       margin-top: 0.25rem;
       opacity: 0.8;

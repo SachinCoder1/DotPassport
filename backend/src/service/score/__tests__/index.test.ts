@@ -64,18 +64,73 @@ describe('Score Service', () => {
   });
 
   describe('calculateScore', () => {
-    it('should correctly calculate a total score based on mocked on-chain metrics', async () => {
-      // Arrange
+    it('should return 0 total score when all metrics are at minimum', async () => {
+      // All mocks already return 0/empty from beforeEach
+      const result = await calculateScore(ADDRESS);
+
+      // All categories should be 0 when metrics are 0
+      expect(result.categories.longevity.score).toBe(0);
+      expect(result.categories.txCount.score).toBe(0);
+      expect(result.categories.txVolume.score).toBe(0);
+      expect(result.categories.modules.score).toBe(0);
+      expect(result.categories.governance.score).toBe(0);
+      expect(result.categories.stakingRewards.score).toBe(0);
+      expect(result.categories.stakingNominators.score).toBe(0);
+      expect(result.categories.stakingSlash.score).toBe(0);
+      expect(result.categories.tokenDiversity.score).toBe(0);
+      expect(result.categories.nftHoldings.score).toBe(0);
+      expect(result.categories.nftActivity.score).toBe(0);
+      expect(result.categories.extrinsicDepth.score).toBe(0);
+      expect(result.total).toBe(0);
+    });
+
+    it('should correctly calculate longevity score based on account age', async () => {
+      mockedFetchAccountAgeDays.mockResolvedValue(400); // >= 365 days = 10 points
+
+      const result = await calculateScore(ADDRESS);
+
+      expect(result.categories.longevity.score).toBe(10);
+      expect(result.total).toBe(10);
+    });
+
+    it('should correctly calculate transaction count score', async () => {
+      mockedFetchTransfersList.mockResolvedValue({ count: 55, transfers: [] }); // >= 50 = 10 points
+
+      const result = await calculateScore(ADDRESS);
+
+      expect(result.categories.txCount.score).toBe(10);
+      expect(result.total).toBe(10);
+    });
+
+    it('should correctly calculate combined score for multiple metrics', async () => {
+      // Set up multiple metrics
       mockedFetchAccountAgeDays.mockResolvedValue(400); // 10 points
       mockedFetchTransfersList.mockResolvedValue({ count: 55, transfers: [] }); // 10 points
+      mockedFetchExtrinsicsList.mockResolvedValue({ count: 100, extrinsics: [] }); // 10 points
 
-      // Act
-      const result = await calculateScore('');
+      const result = await calculateScore(ADDRESS);
 
-      // Assert
-      expect(result.total).toBe(20);
       expect(result.categories.longevity.score).toBe(10);
       expect(result.categories.txCount.score).toBe(10);
+      expect(result.categories.extrinsicDepth.score).toBe(10);
+      expect(result.total).toBe(30);
+    });
+
+    it('should handle governance voting correctly', async () => {
+      // User voted on 5 of 10 referenda - majority = 10 points
+      mockedFetchReferendaVotes.mockResolvedValue({ count: 10, list: [1, 2, 3, 4, 5] });
+
+      const result = await calculateScore(ADDRESS);
+
+      expect(result.categories.governance.score).toBe(10);
+    });
+
+    it('should penalize for slashes', async () => {
+      mockedFetchAccountRewardSlashList.mockResolvedValue({ count: 3, list: [{}, {}, {}] });
+
+      const result = await calculateScore(ADDRESS);
+
+      expect(result.categories.stakingSlash.score).toBe(-3);
     });
   });
 
@@ -116,15 +171,18 @@ describe('Score Service', () => {
             totalScore: 10,
             categories: new Map([[CategoryKey.Longevity, { score: 10, reason: 'old', title: 'Longevity' }]]),
         });
-        
+
         // Override mocks to produce a new, different score
-        mockedFetchAccountAgeDays.mockResolvedValue(500); // 10 points
-        mockedFetchTransfersList.mockResolvedValue({ count: 100, transfers: [] }); // 10 points
+        // 500 days >= 365 = 10 points longevity
+        // 100 transfers >= 100 = 12 points txCount (see calculateTxCountScore)
+        mockedFetchAccountAgeDays.mockResolvedValue(500);
+        mockedFetchTransfersList.mockResolvedValue({ count: 100, transfers: [] });
 
         // Act
         const { status, score: updatedScore } = await updateUserScore(userId.toHexString());
-        
-        const expectedScore = 20;
+
+        // Expected: 10 (longevity) + 12 (txCount >= 100) = 22
+        const expectedScore = 22;
 
         // Assert
         expect(status).toBe(ScoreRefreshStatus.Updated);

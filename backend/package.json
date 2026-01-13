@@ -7,7 +7,16 @@
     "dev": "nodemon",
     "build": "tsc && tsc-alias",
     "start": "node dist/server.js",
-    "test": "jest --verbose --detectOpenHandles"
+    "test": "jest --verbose --detectOpenHandles",
+    "test:platform": "jest routes/__tests__ --verbose --detectOpenHandles",
+    "test:developer": "jest developer/routes/developerRoutes developer/routes/adminRoutes --verbose --detectOpenHandles",
+    "test:sandbox": "jest sandboxRoutes sandboxAuth sandboxService requestLogService encryption --verbose --detectOpenHandles",
+    "test:jit": "jest service/jit --verbose --detectOpenHandles",
+    "test:services": "jest service/ --verbose --detectOpenHandles",
+    "test:middleware": "jest middleware --verbose --detectOpenHandles",
+    "test:all": "jest --verbose --coverage --detectOpenHandles",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage --detectOpenHandles"
   },
   "keywords": [],
   "author": "",

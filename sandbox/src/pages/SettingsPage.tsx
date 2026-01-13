@@ -9,8 +9,14 @@ import {
   Download,
   Code,
   Webhook,
+  MapPin,
+  Star,
+  Trash2,
+  Edit2,
+  Plus,
 } from 'lucide-react';
 import { useWalletStore } from '~/store/walletStore';
+import { useSandboxStore, isValidPolkadotAddress } from '~/store/sandboxStore';
 import { regenerateApiKey, requestChallenge } from '~/service/authService';
 import { maskApiKey } from '~/service/apiKeyService';
 import { stringToHex } from '@polkadot/util';
@@ -19,8 +25,26 @@ import { PageHeader } from '~/components/shared/PageHeader';
 
 export function SettingsPage() {
   const { user, selectedAccount } = useWalletStore();
+  const {
+    customAddresses,
+    defaultAddress,
+    addCustomAddress,
+    removeCustomAddress,
+    updateCustomAddress,
+    setDefaultAddress,
+    clearCustomAddresses,
+  } = useSandboxStore();
+
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [newApiKey, setNewApiKey] = useState<string | null>(null);
+
+  // Custom address form state
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newAddress, setNewAddress] = useState('');
+  const [newAddressName, setNewAddressName] = useState('');
+  const [addressError, setAddressError] = useState('');
+  const [editingAddress, setEditingAddress] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState('');
 
   const handleRegenerateKey = async () => {
     if (!user || !selectedAccount) {
@@ -74,6 +98,74 @@ export function SettingsPage() {
   const handleCopyKey = (key: string) => {
     navigator.clipboard.writeText(key);
     toast.success('API key copied to clipboard!');
+  };
+
+  const handleAddAddress = () => {
+    setAddressError('');
+
+    if (!newAddress.trim()) {
+      setAddressError('Address is required');
+      return;
+    }
+
+    if (!isValidPolkadotAddress(newAddress.trim())) {
+      setAddressError('Invalid Polkadot address format (SS58)');
+      return;
+    }
+
+    const success = addCustomAddress(newAddress.trim(), newAddressName.trim() || 'Custom Address');
+    if (success) {
+      setNewAddress('');
+      setNewAddressName('');
+      setShowAddForm(false);
+      toast.success('Custom address added successfully!');
+    } else {
+      setAddressError('Address already exists');
+    }
+  };
+
+  const handleRemoveAddress = (address: string) => {
+    const confirmed = window.confirm('Are you sure you want to remove this custom address?');
+    if (confirmed) {
+      removeCustomAddress(address);
+      toast.success('Address removed');
+    }
+  };
+
+  const handleSetDefault = (address: string) => {
+    if (defaultAddress === address) {
+      setDefaultAddress(null);
+      toast.info('Default address cleared');
+    } else {
+      setDefaultAddress(address);
+      toast.success('Default address set');
+    }
+  };
+
+  const handleStartEdit = (address: string, name: string) => {
+    setEditingAddress(address);
+    setEditingName(name);
+  };
+
+  const handleSaveEdit = (address: string) => {
+    if (editingName.trim()) {
+      updateCustomAddress(address, editingName.trim());
+      toast.success('Address name updated');
+    }
+    setEditingAddress(null);
+    setEditingName('');
+  };
+
+  const handleClearAllAddresses = () => {
+    if (customAddresses.length === 0) {
+      toast.info('No custom addresses to clear');
+      return;
+    }
+    const confirmed = window.confirm('Are you sure you want to remove all custom addresses? This cannot be undone.');
+    if (confirmed) {
+      clearCustomAddresses();
+      toast.success('All custom addresses cleared');
+    }
   };
 
   if (!user) return null;
@@ -372,6 +464,217 @@ export function SettingsPage() {
             )}
           </div>
         </div>
+      </div>
+
+      {/* Custom Addresses */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-8 border border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <MapPin className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+              Custom Addresses
+            </h3>
+          </div>
+          <div className="flex items-center gap-2">
+            {customAddresses.length > 0 && (
+              <button
+                onClick={handleClearAllAddresses}
+                className="text-xs text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:underline"
+              >
+                Clear All
+              </button>
+            )}
+            {!showAddForm && (
+              <button
+                onClick={() => setShowAddForm(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                Add Address
+              </button>
+            )}
+          </div>
+        </div>
+
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          Add custom Polkadot addresses to test with in the API Testing and Widget Playground pages.
+          You can set a default address that will be pre-selected when testing.
+        </p>
+
+        {/* Add Address Form */}
+        {showAddForm && (
+          <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
+            <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
+              Add New Custom Address
+            </h4>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Polkadot Address (SS58) *
+                </label>
+                <input
+                  type="text"
+                  value={newAddress}
+                  onChange={(e) => {
+                    setNewAddress(e.target.value);
+                    setAddressError('');
+                  }}
+                  placeholder="e.g., 5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY"
+                  className={`w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border rounded-lg font-mono text-gray-900 dark:text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 ${
+                    addressError ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                  }`}
+                />
+                {addressError && (
+                  <p className="mt-1 text-xs text-red-500">{addressError}</p>
+                )}
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Name (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={newAddressName}
+                  onChange={(e) => setNewAddressName(e.target.value)}
+                  placeholder="e.g., My Test Wallet"
+                  className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleAddAddress}
+                  className="px-4 py-2 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transition-colors"
+                >
+                  Add Address
+                </button>
+                <button
+                  onClick={() => {
+                    setShowAddForm(false);
+                    setNewAddress('');
+                    setNewAddressName('');
+                    setAddressError('');
+                  }}
+                  className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Address List */}
+        {customAddresses.length > 0 ? (
+          <div className="space-y-2">
+            {customAddresses.map((addr) => (
+              <div
+                key={addr.address}
+                className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
+                  defaultAddress === addr.address
+                    ? 'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-700'
+                    : 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                }`}
+              >
+                <div className="flex-1 min-w-0">
+                  {editingAddress === addr.address ? (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={editingName}
+                        onChange={(e) => setEditingName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleSaveEdit(addr.address);
+                          if (e.key === 'Escape') {
+                            setEditingAddress(null);
+                            setEditingName('');
+                          }
+                        }}
+                        className="px-2 py-1 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                        autoFocus
+                      />
+                      <button
+                        onClick={() => handleSaveEdit(addr.address)}
+                        className="text-xs text-purple-600 dark:text-purple-400 hover:underline"
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={() => {
+                          setEditingAddress(null);
+                          setEditingName('');
+                        }}
+                        className="text-xs text-gray-500 hover:underline"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-gray-900 dark:text-white text-sm">
+                        {addr.name}
+                      </span>
+                      {defaultAddress === addr.address && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 text-xs rounded-full">
+                          <Star className="w-3 h-3 fill-current" />
+                          Default
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  <code className="text-xs text-gray-500 dark:text-gray-400 font-mono block mt-1 truncate">
+                    {addr.address}
+                  </code>
+                  <span className="text-xs text-gray-400 dark:text-gray-500 mt-1 block">
+                    Added {new Date(addr.addedAt).toLocaleDateString()}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1 ml-4">
+                  <button
+                    onClick={() => handleSetDefault(addr.address)}
+                    className={`p-2 rounded-lg transition-colors ${
+                      defaultAddress === addr.address
+                        ? 'text-yellow-500 hover:bg-yellow-100 dark:hover:bg-yellow-900/30'
+                        : 'text-gray-400 hover:text-yellow-500 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    }`}
+                    title={defaultAddress === addr.address ? 'Remove as default' : 'Set as default'}
+                  >
+                    <Star className={`w-4 h-4 ${defaultAddress === addr.address ? 'fill-current' : ''}`} />
+                  </button>
+                  <button
+                    onClick={() => handleStartEdit(addr.address, addr.name)}
+                    className="p-2 rounded-lg text-gray-400 hover:text-purple-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    title="Edit name"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(addr.address);
+                      toast.success('Address copied to clipboard');
+                    }}
+                    className="p-2 rounded-lg text-gray-400 hover:text-purple-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    title="Copy address"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleRemoveAddress(addr.address)}
+                    className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
+                    title="Remove address"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            <MapPin className="w-10 h-10 mx-auto mb-3 opacity-50" />
+            <p className="text-sm">No custom addresses added yet.</p>
+            <p className="text-xs mt-1">Click "Add Address" to add your first custom address.</p>
+          </div>
+        )}
       </div>
 
       {/* Security & Audit */}

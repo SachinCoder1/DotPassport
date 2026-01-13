@@ -17,8 +17,8 @@ import {
 } from 'lucide-react';
 import { useSandboxStore } from '~/store/sandboxStore';
 import { useWalletStore } from '~/store/walletStore';
-import { SUGGESTED_ADDRESSES } from '~/utils/constants';
 import { Select } from '~/components/ui';
+import { AddressSelector } from '~/components/shared/AddressSelector';
 import { toast } from 'sonner';
 import type {
   CategoryDefinition,
@@ -54,7 +54,7 @@ type ApiResult =
 type TabType = 'test' | 'response' | 'docs' | 'code' | 'history';
 
 export function ApiTestingPage() {
-  const { sdkClient } = useSandboxStore();
+  const { sdkClient, defaultAddress, lastUsedAddress } = useSandboxStore();
   const { user } = useWalletStore();
 
   const methodKeys = Object.keys(SDK_METHODS) as Array<
@@ -63,7 +63,8 @@ export function ApiTestingPage() {
   const [selectedMethodKey, setSelectedMethodKey] = useState<
     keyof typeof SDK_METHODS
   >(methodKeys[0]);
-  const [address, setAddress] = useState(SUGGESTED_ADDRESSES[0].address);
+  // Use default address from settings, last used address, or empty string
+  const [address, setAddress] = useState(defaultAddress || lastUsedAddress || '');
   const [category, setCategory] = useState('longevity');
   const [badgeName, setBadgeName] = useState('');
   const [result, setResult] = useState<ApiResult | null>(null);
@@ -248,12 +249,6 @@ export function ApiTestingPage() {
     setActiveTab('test');
   }
 
-  const addressOptions = SUGGESTED_ADDRESSES.map((addr) => ({
-    value: addr.address,
-    label: addr.name,
-    description: addr.address.substring(0, 12) + '...',
-  }));
-
   const categoryOptions = categoryDefinitions.map((cat) => ({
     value: cat.key,
     label: cat.displayName,
@@ -407,15 +402,13 @@ export function ApiTestingPage() {
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Polkadot Address *
                       </label>
-                      <Select
-                        options={addressOptions}
+                      <AddressSelector
                         value={address}
-                        onChange={(value) => setAddress(value as string)}
+                        onChange={setAddress}
                         placeholder="Select or enter address"
-                        searchable
                       />
                       <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                        The Polkadot SS58 address to query
+                        The Polkadot SS58 address to query. You can add custom addresses.
                       </p>
                     </div>
                   )}

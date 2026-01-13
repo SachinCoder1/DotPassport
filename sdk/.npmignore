@@ -1,9 +1,42 @@
+# Source files (we publish compiled dist/)
 src/
+__mocks__/
+
+# Test files
 *.test.ts
 *.spec.ts
+jest.config.cjs
+coverage/
+
+# Development files
 tsconfig.json
 .gitignore
-node_modules/
-coverage/
+.gitbook.yaml
+SUMMARY.md
+GITBOOK_SETUP.md
+
+# Documentation (separate from README)
+docs/
+
+# Examples and scripts
+examples/
+scripts/
+
+# Environment files
 .env
-.env.test
+.env.*
+
+# Node modules (auto-excluded but explicit)
+node_modules/
+
+# Editor and OS files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+*.log
+*.tgz

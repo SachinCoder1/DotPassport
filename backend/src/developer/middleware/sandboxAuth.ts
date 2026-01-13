@@ -54,12 +54,13 @@ export const sandboxAuth = async (
   } catch (err: any) {
     logger.error('Error in sandboxAuth middleware', { error: err });
 
-    if (err instanceof jwt.JsonWebTokenError) {
-      return next(new HttpError(401, 'Invalid token'));
-    }
-
+    // Check TokenExpiredError first since it extends JsonWebTokenError
     if (err instanceof jwt.TokenExpiredError) {
       return next(new HttpError(401, 'Token expired'));
+    }
+
+    if (err instanceof jwt.JsonWebTokenError) {
+      return next(new HttpError(401, 'Invalid token'));
     }
 
     if (err instanceof HttpError) {

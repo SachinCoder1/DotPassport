@@ -3,8 +3,8 @@ import { Palette, Sparkles, Settings, BookOpen, RefreshCw, Play, Download } from
 import html2canvas from 'html2canvas';
 import { useWalletStore } from '~/store/walletStore';
 import { useSandboxStore } from '~/store/sandboxStore';
-import { SUGGESTED_ADDRESSES } from '~/utils/constants';
 import { Select } from '~/components/ui';
+import { AddressSelector } from '~/components/shared/AddressSelector';
 import type { BadgeDefinition, CategoryDefinition } from '@dotpassport/sdk';
 import { PageHeader } from '~/components/shared/PageHeader';
 import { IntegrationGuidePanel } from '~/components/widget-testing/IntegrationGuidePanel';
@@ -107,10 +107,11 @@ const WIDGETS: WidgetType[] = [
 
 export function WidgetTestingPage() {
   const { user } = useWalletStore();
-  const { sdkClient, widgetCache, setWidgetCache } = useSandboxStore();
+  const { sdkClient, widgetCache, setWidgetCache, defaultAddress, lastUsedAddress } = useSandboxStore();
 
   const [selectedWidget, setSelectedWidget] = useState<WidgetType>(WIDGETS[0]);
-  const [address, setAddress] = useState(SUGGESTED_ADDRESSES[0].address);
+  // Use default address from settings, last used address, or empty string
+  const [address, setAddress] = useState(defaultAddress || lastUsedAddress || '');
   const [theme, setTheme] = useState<'light' | 'dark' | 'auto'>('light');
   const [activeTab, setActiveTab] = useState<'preview' | 'integration'>(
     'preview'
@@ -458,12 +459,6 @@ export function WidgetTestingPage() {
     }
   }, [selectedWidget.id, address, widgetCache, isWidgetLoaded, isWidgetLoading, user?.apiKey, loadWidget]);
 
-  const addressOptions = SUGGESTED_ADDRESSES.map((addr) => ({
-    value: addr.address,
-    label: addr.name,
-    description: addr.address.substring(0, 12) + '...',
-  }));
-
   const themeOptions = [
     { value: 'light', label: 'Light', description: 'Light color scheme' },
     { value: 'dark', label: 'Dark', description: 'Dark color scheme' },
@@ -550,12 +545,10 @@ export function WidgetTestingPage() {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Polkadot Address
                 </label>
-                <Select
-                  options={addressOptions}
+                <AddressSelector
                   value={address}
-                  onChange={(value) => setAddress(value as string)}
-                  placeholder="Select address"
-                  searchable
+                  onChange={setAddress}
+                  placeholder="Select or add custom address"
                 />
               </div>
 

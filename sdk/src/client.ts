@@ -9,6 +9,7 @@ import {
   BadgeDefinitions,
   CategoryDefinitions,
 } from './types';
+import { getDefaultBaseUrl } from './config';
 
 export interface DotPassportConfig {
   apiKey: string;
@@ -40,6 +41,13 @@ const globalWidgetCache = new Map<string, CacheEntry<unknown>>();
 // Default cache TTL: 5 minutes (300000ms)
 const DEFAULT_CACHE_TTL = 5 * 60 * 1000;
 
+/**
+ * Clear all global widget cache (for testing purposes)
+ */
+export function clearGlobalCache(): void {
+  globalWidgetCache.clear();
+}
+
 export class DotPassportClient {
   private client: AxiosInstance;
   private cacheTTL: number;
@@ -52,7 +60,7 @@ export class DotPassportClient {
     this.cacheTTL = DEFAULT_CACHE_TTL;
 
     this.client = axios.create({
-      baseURL: config.baseUrl || 'http://localhost:4000',
+      baseURL: config.baseUrl || getDefaultBaseUrl(),
       headers: {
         'X-API-Key': config.apiKey,
         'Content-Type': 'application/json',

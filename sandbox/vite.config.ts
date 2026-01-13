@@ -12,7 +12,8 @@ export default defineConfig({
   resolve: {
     alias: {
       '~': path.resolve(__dirname, './src'),
-      '@dotpassport/sdk': path.resolve(__dirname, '../sdk/dist/index.js')  // Direct alias to SDK dist
+      // NOTE: To use local SDK for development, uncomment the line below:
+      // '@dotpassport/sdk': path.resolve(__dirname, '../sdk/dist/index.js')
     },
   },
   server: {
