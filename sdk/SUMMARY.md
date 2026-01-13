@@ -36,6 +36,12 @@
 * [Angular](docs/frameworks/angular.md)
 * [Vanilla JavaScript](docs/frameworks/vanilla-js.md)
 
+## Wallet Integration
+
+* [Overview](docs/wallets/overview.md)
+* [Talisman Wallet](docs/wallets/talisman.md)
+* [SubWallet](docs/wallets/subwallet.md)
+
 ## Advanced
 
 * [TypeScript Support](docs/advanced/typescript.md)
