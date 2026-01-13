@@ -11,9 +11,11 @@ module.exports = {
   // The directory where Jest should output its coverage files
   coverageDirectory: "coverage",
 
+  // Ignore compiled JS files in dist folder
+  testPathIgnorePatterns: ['/node_modules/', '/dist/'],
+
   // Load environment variables from .env.test file
   setupFiles: ['./src/test/loadEnv.ts'],
-
 
   // A map from regular expressions to module names that allow to stub out resources
   // This is CRITICAL for handling your custom path aliases like "~/*"

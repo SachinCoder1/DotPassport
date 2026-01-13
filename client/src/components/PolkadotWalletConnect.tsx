@@ -1,5 +1,3 @@
-// src/components/PolkadotWalletConnect.tsx
-
 "use client";
 
 import React, { useState, useEffect, Fragment } from "react";

@@ -1,0 +1,303 @@
+/**
+ * Professional Design Tokens
+ * Extended design system for industry-grade sandbox platform
+ */
+
+:root {
+  /* ======================
+     Chart Colors - Data Visualization Palette
+     ====================== */
+  --chart-1: #8B5CF6;  /* Purple - Primary */
+  --chart-2: #EC4899;  /* Pink - Secondary */
+  --chart-3: #10B981;  /* Green - Success */
+  --chart-4: #F59E0B;  /* Amber - Warning */
+  --chart-5: #3B82F6;  /* Blue - Info */
+  --chart-6: #EF4444;  /* Red - Error */
+  --chart-7: #14B8A6;  /* Teal - Accent */
+  --chart-8: #8B5A3C;  /* Brown - Neutral */
+
+  /* Chart color with alpha for areas */
+  --chart-1-alpha: rgba(139, 92, 246, 0.1);
+  --chart-2-alpha: rgba(236, 72, 153, 0.1);
+  --chart-3-alpha: rgba(16, 185, 129, 0.1);
+  --chart-4-alpha: rgba(245, 158, 11, 0.1);
+  --chart-5-alpha: rgba(59, 130, 246, 0.1);
+  --chart-6-alpha: rgba(239, 68, 68, 0.1);
+  --chart-7-alpha: rgba(20, 184, 166, 0.1);
+  --chart-8-alpha: rgba(139, 90, 60, 0.1);
+
+  /* ======================
+     Professional Card Elevations
+     ====================== */
+  --elevation-0: none;
+  --elevation-1: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --elevation-2: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.05);
+  --elevation-3: 0 10px 15px rgba(0, 0, 0, 0.08), 0 4px 6px rgba(0, 0, 0, 0.04);
+  --elevation-4: 0 20px 25px rgba(0, 0, 0, 0.10), 0 10px 10px rgba(0, 0, 0, 0.04);
+
+  /* Colored shadows for brand elements */
+  --shadow-purple: 0 10px 40px rgba(139, 92, 246, 0.2);
+  --shadow-pink: 0 10px 40px rgba(236, 72, 153, 0.2);
+  --shadow-brand: 0 10px 40px rgba(139, 92, 246, 0.15), 0 4px 12px rgba(236, 72, 153, 0.15);
+
+  /* ======================
+     Status Indicator Colors
+     ====================== */
+  --status-success: #10B981;
+  --status-success-bg: #D1FAE5;
+  --status-success-border: #6EE7B7;
+
+  --status-warning: #F59E0B;
+  --status-warning-bg: #FEF3C7;
+  --status-warning-border: #FCD34D;
+
+  --status-error: #EF4444;
+  --status-error-bg: #FEE2E2;
+  --status-error-border: #FCA5A5;
+
+  --status-info: #3B82F6;
+  --status-info-bg: #DBEAFE;
+  --status-info-border: #93C5FD;
+
+  /* ======================
+     Skeleton Loading Colors
+     ====================== */
+  --skeleton-base: #E5E7EB;
+  --skeleton-highlight: #F3F4F6;
+  --skeleton-animation-duration: 1.5s;
+
+  /* ======================
+     Animation Timing Functions
+     ====================== */
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --ease-sharp: cubic-bezier(0.4, 0, 0.6, 1);
+
+  /* Animation Durations */
+  --duration-instant: 0ms;
+  --duration-fast: 150ms;
+  --duration-normal: 300ms;
+  --duration-slow: 500ms;
+  --duration-slower: 700ms;
+
+  /* ======================
+     Interactive States
+     ====================== */
+  --hover-lift: translateY(-2px);
+  --hover-scale: scale(1.02);
+  --active-scale: scale(0.98);
+
+  /* Focus ring */
+  --focus-ring: 0 0 0 3px rgba(139, 92, 246, 0.3);
+  --focus-ring-error: 0 0 0 3px rgba(239, 68, 68, 0.3);
+
+  /* ======================
+     Performance Indicators
+     ====================== */
+  --perf-excellent: #10B981;  /* < 100ms */
+  --perf-good: #84CC16;       /* 100-300ms */
+  --perf-fair: #F59E0B;       /* 300-500ms */
+  --perf-poor: #EF4444;       /* > 500ms */
+
+  /* ======================
+     Chart Grid & Axis
+     ====================== */
+  --chart-grid: #E5E7EB;
+  --chart-axis: #9CA3AF;
+  --chart-tooltip-bg: rgba(17, 24, 39, 0.95);
+  --chart-tooltip-text: #F9FAFB;
+}
+
+/* ======================
+   Dark Mode Palette
+   ====================== */
+.dark {
+  /* Backgrounds - Professional Stripe/Vercel-inspired palette */
+  --bg-primary: #111827;  /* Tailwind gray-900 */
+  --bg-secondary: #1F2937;  /* Tailwind gray-800 */
+  --bg-tertiary: #374151;  /* Tailwind gray-700 */
+
+  /* Surfaces */
+  --surface: #1F2937;  /* Tailwind gray-800 for cards */
+  --surface-elevated: #374151;  /* Tailwind gray-700 for elevated cards */
+  --surface-overlay: #4B5563;  /* Tailwind gray-600 for overlays */
+
+  /* Text */
+  --text-primary: #FFFFFF;
+  --text-secondary: #A0A0A0;
+  --text-tertiary: #707070;
+  --text-disabled: #4A4A4A;
+
+  /* Borders */
+  --border-default: #2A2A2A;
+  --border-hover: #404040;
+  --border-focus: #5A5A5A;
+
+  /* Elevated shadows for dark mode */
+  --elevation-1: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+  --elevation-2: 0 4px 6px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.25);
+  --elevation-3: 0 10px 15px rgba(0, 0, 0, 0.5), 0 4px 6px rgba(0, 0, 0, 0.3);
+  --elevation-4: 0 20px 25px rgba(0, 0, 0, 0.6), 0 10px 10px rgba(0, 0, 0, 0.4);
+
+  /* Skeleton colors for dark mode */
+  --skeleton-base: #2A2A2A;
+  --skeleton-highlight: #3A3A3A;
+
+  /* Status colors (dark mode adjustments) */
+  --status-success-bg: rgba(16, 185, 129, 0.1);
+  --status-success-border: rgba(16, 185, 129, 0.3);
+
+  --status-warning-bg: rgba(245, 158, 11, 0.1);
+  --status-warning-border: rgba(245, 158, 11, 0.3);
+
+  --status-error-bg: rgba(239, 68, 68, 0.1);
+  --status-error-border: rgba(239, 68, 68, 0.3);
+
+  --status-info-bg: rgba(59, 130, 246, 0.1);
+  --status-info-border: rgba(59, 130, 246, 0.3);
+
+  /* Chart colors stay the same but with adjusted grid/axis */
+  --chart-grid: #2A2A2A;
+  --chart-axis: #6B7280;
+  --chart-tooltip-bg: rgba(55, 65, 81, 0.95);
+  --chart-tooltip-text: #F9FAFB;
+}
+
+/* ======================
+   Utility Classes
+   ====================== */
+
+/* Elevation utilities */
+.elevation-0 { box-shadow: var(--elevation-0); }
+.elevation-1 { box-shadow: var(--elevation-1); }
+.elevation-2 { box-shadow: var(--elevation-2); }
+.elevation-3 { box-shadow: var(--elevation-3); }
+.elevation-4 { box-shadow: var(--elevation-4); }
+
+/* Skeleton loading animation */
+@keyframes skeleton-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--skeleton-base) 0%,
+    var(--skeleton-highlight) 50%,
+    var(--skeleton-base) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-loading var(--skeleton-animation-duration) ease-in-out infinite;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Performance indicator utilities */
+.perf-excellent { color: var(--perf-excellent); }
+.perf-good { color: var(--perf-good); }
+.perf-fair { color: var(--perf-fair); }
+.perf-poor { color: var(--perf-poor); }
+
+.bg-perf-excellent { background-color: var(--perf-excellent); }
+.bg-perf-good { background-color: var(--perf-good); }
+.bg-perf-fair { background-color: var(--perf-fair); }
+.bg-perf-poor { background-color: var(--perf-poor); }
+
+/* Status utilities */
+.status-success {
+  color: var(--status-success);
+  background-color: var(--status-success-bg);
+  border-color: var(--status-success-border);
+}
+
+.status-warning {
+  color: var(--status-warning);
+  background-color: var(--status-warning-bg);
+  border-color: var(--status-warning-border);
+}
+
+.status-error {
+  color: var(--status-error);
+  background-color: var(--status-error-bg);
+  border-color: var(--status-error-border);
+}
+
+.status-info {
+  color: var(--status-info);
+  background-color: var(--status-info-bg);
+  border-color: var(--status-info-border);
+}
+
+/* Smooth transitions */
+.transition-smooth {
+  transition: all var(--duration-normal) var(--ease-smooth);
+}
+
+.transition-fast {
+  transition: all var(--duration-fast) var(--ease-smooth);
+}
+
+.transition-slow {
+  transition: all var(--duration-slow) var(--ease-smooth);
+}
+
+/* Interactive states */
+.hover-lift {
+  transition: transform var(--duration-fast) var(--ease-smooth), box-shadow var(--duration-fast) var(--ease-smooth);
+}
+
+.hover-lift:hover {
+  transform: var(--hover-lift);
+}
+
+.hover-scale {
+  transition: transform var(--duration-fast) var(--ease-smooth);
+}
+
+.hover-scale:hover {
+  transform: var(--hover-scale);
+}
+
+.active-scale:active {
+  transform: var(--active-scale);
+}
+
+/* Focus ring */
+.focus-ring:focus {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.focus-ring-error:focus {
+  outline: none;
+  box-shadow: var(--focus-ring-error);
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .skeleton {
+    animation: none;
+    opacity: 0.5;
+  }
+}

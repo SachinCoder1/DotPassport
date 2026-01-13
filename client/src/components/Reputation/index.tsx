@@ -669,13 +669,10 @@ const Reputation: React.FC = () => {
     // This promise encapsulates the entire refresh and data-fetching logic for sonner
     const refreshProcess = new Promise(async (resolve, reject) => {
       try {
-        // 1. Store the timestamp from the current state before refreshing
-        const previousCalculatedAt = userScore?.calculatedAt;
-
-        // 2. Trigger the backend refresh process
+        // 1. Trigger the backend refresh process
         await refreshUserScore();
 
-        // 3. Fetch the new, potentially updated score data.
+        // 2. Fetch the new, potentially updated score data.
         // We don't need to re-fetch categories as they are static definitions.
         const newScoreData = await getUserScore().catch(() => null);
 
@@ -683,11 +680,13 @@ const Reputation: React.FC = () => {
           // Update the score state with the new data
           setUserScore(newScoreData);
 
-          // 4. Compare timestamps to see if the score was actually recalculated
-          if (newScoreData.calculatedAt !== previousCalculatedAt) {
+          // 3. Compare actual score values to see if the score changed
+          const scoreChanged = newScoreData.totalScore !== userScore?.totalScore;
+
+          if (scoreChanged) {
             resolve("Reputation score updated successfully!");
           } else {
-            resolve("Your score is already up-to-date.");
+            resolve("Score refreshed - already up-to-date.");
           }
         } else {
           // This handles the case where getUserScore might fail after a successful refresh trigger

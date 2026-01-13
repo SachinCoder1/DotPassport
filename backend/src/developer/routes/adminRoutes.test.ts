@@ -1,6 +1,7 @@
 import request from 'supertest';
 import { createApp } from '~/app';
 import { User } from '~/models/User';
+import { Admin } from '~/models/Admin';
 import { generateAccessToken } from '~/utils/authTokens';
 import { ApiKey, ApiKeyTier } from '../models/ApiKey';
 
@@ -11,12 +12,21 @@ describe('Admin API Routes (/api/v1/admin/api-keys)', () => {
   let adminUserId: string;
 
   beforeEach(async () => {
-    // Create an admin user
+    // Create a user
     const adminUser = await User.create({
       addresses: ['test-admin-address'],
-      roles: ['admin'],
+      roles: ['user'],  // Keep roles as 'user'
     });
     adminUserId = adminUser.id;
+
+    // Create admin record separately
+    await Admin.create({
+      userId: adminUser._id,
+      address: 'test-admin-address',
+      role: 'admin',
+      isActive: true
+    });
+
     adminToken = generateAccessToken(adminUserId);
   });
 

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { authMiddleware } from '~/middleware/auth';
+import { requireAdmin } from '~/middleware/adminAuth';
 import { validateRequest } from '~/middleware/validateResource';
 import {
   createApiKeyHandler,
@@ -19,6 +20,9 @@ const router = Router();
 
 // All admin routes require JWT authentication
 router.use(authMiddleware);
+
+// All admin routes require admin role
+router.use(requireAdmin);
 
 /**
  * @route   POST /api/v1/admin/api-keys

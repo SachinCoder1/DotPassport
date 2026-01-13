@@ -178,14 +178,25 @@ describe('Subscan Service Functions', () => {
   });
 
   describe('fetchAccountDetailsByAddress', () => {
-    it('should call the correct endpoint and return the data', async () => {
-      const mockDetails = { account: { address: TEST_ADDRESS, nonce: 5 } };
-      mockedSubscanRequest.mockResolvedValue({ data: mockDetails });
-      
+    it('should call the correct endpoint and return the full response', async () => {
+      const mockAccount = { address: TEST_ADDRESS, nonce: 5, display: 'TestUser' };
+      const mockResponse = { data: { account: mockAccount } };
+      mockedSubscanRequest.mockResolvedValue(mockResponse);
+
       const result = await fetchAccountDetailsByAddress(TEST_ADDRESS);
 
-      expect(mockedSubscanRequest).toHaveBeenCalledWith('/api/v2/scan/search', { address: TEST_ADDRESS });
-      expect(result).toEqual(mockDetails);
+      expect(mockedSubscanRequest).toHaveBeenCalledWith('/v2/scan/search', { key: TEST_ADDRESS });
+      // Function returns full response so apiUserService can access res.data.account
+      expect(result).toEqual(mockResponse);
+      expect(result.data.account).toEqual(mockAccount);
+    });
+
+    it('should throw HttpError when account is not found', async () => {
+      // Use a different address to avoid cache hit from previous test
+      const UNKNOWN_ADDRESS = '5HGjWAeFDfFCWPsjFQdVV2Msvz2XtMktvgocEZcCj68kUMaw';
+      mockedSubscanRequest.mockResolvedValue({ data: null });
+
+      await expect(fetchAccountDetailsByAddress(UNKNOWN_ADDRESS)).rejects.toThrow('Account details not found');
     });
   });
 });

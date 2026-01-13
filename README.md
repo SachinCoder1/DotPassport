@@ -1,8 +1,8 @@
 <div align="left">
 
   <div style="display: flex; align-items: center; justify-content: left; gap: 12px;">
-    <img src="https://i.postimg.cc/26gVDPK7/cleaned-logo-preserve-inner-white-1.png"
-      width="60px" alt="DotPassport Banner">
+    <img src="https://i.ibb.co/sdxrkW6F/dotpassport-logo.png"
+      width="60px" alt="DotPassport Logo">
     <h1 style="margin: 0; padding: 0; border: none;">DotPassport.io</h1>
   </div>
 

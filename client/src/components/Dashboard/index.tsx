@@ -712,9 +712,6 @@ const Dashboard: React.FC = () => {
     // Define the entire asynchronous process as a promise
     const refreshProcess = new Promise(async (resolve, reject) => {
       try {
-        // Store the timestamp before refreshing
-        const previousCalculatedAt = userScore?.calculatedAt;
-
         // 1. Trigger the backend refresh processes
         await Promise.all([
           refreshUserScore().catch((e) =>
@@ -740,13 +737,13 @@ const Dashboard: React.FC = () => {
         }
 
         // 4. Check if the score actually changed and resolve the promise with a message
-        if (
-          newScoreData &&
-          newScoreData.calculatedAt !== previousCalculatedAt
-        ) {
+        const scoreChanged = newScoreData &&
+          newScoreData.totalScore !== userScore?.totalScore;
+
+        if (scoreChanged) {
           resolve("Dashboard synced successfully!");
         } else {
-          resolve("Your data is already up-to-date!");
+          resolve("Data refreshed - already up-to-date!");
         }
       } catch (error) {
         console.error("Failed to refresh data:", error);

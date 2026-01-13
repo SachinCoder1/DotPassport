@@ -3,6 +3,7 @@ import { ApiKey, IApiKey, ApiKeyTier, TIER_RATE_LIMITS } from '../models/ApiKey'
 import { HttpError } from '~/errors/HttpError';
 import { logger } from '~/utils/logger';
 import { ListApiKeysQuery } from '../types';
+import { encryptApiKey } from '~/developer/utils/encryption';
 
 /**
  * Generate a secure API key
@@ -38,6 +39,9 @@ export async function createApiKey(data: {
     const keyHash = hashApiKey(apiKey);
     const keyPrefix = apiKey.substring(0, 8);
 
+    // NEW: Encrypt the API key for storage
+    const { encrypted, iv, authTag } = encryptApiKey(apiKey);
+
     // Get rate limits for tier
     const rateLimits = TIER_RATE_LIMITS[data.tier];
 
@@ -45,6 +49,9 @@ export async function createApiKey(data: {
     const apiKeyDoc = await ApiKey.create({
       keyHash,
       keyPrefix,
+      encryptedKey: encrypted,     // NEW
+      encryptionIV: iv,            // NEW
+      encryptionAuthTag: authTag,  // NEW
       appName: data.appName,
       contactEmail: data.contactEmail,
       tier: data.tier,
@@ -84,6 +91,7 @@ export async function listApiKeys(options: ListApiKeysQuery) {
     query.$or = [
       { appName: { $regex: options.search, $options: 'i' } },
       { contactEmail: { $regex: options.search, $options: 'i' } },
+      { polkadotAddress: { $regex: options.search, $options: 'i' } },
     ];
   }
 
@@ -225,4 +233,32 @@ export async function getUsageStats(keyId: string) {
       month: (usage.currentMonthRequests / rateLimits.requestsPerMonth) * 100,
     },
   };
+}
+
+/**
+ * Get plaintext API key by ID (for display purposes)
+ */
+export async function getPlaintextApiKey(keyId: string): Promise<string | null> {
+  const apiKeyDoc = await ApiKey.findById(keyId)
+    .select('+encryptedKey +encryptionIV +encryptionAuthTag');
+
+  if (!apiKeyDoc) {
+    return null;
+  }
+
+  return apiKeyDoc.getPlaintextKey();
+}
+
+/**
+ * Get plaintext API key by Polkadot address (for sandbox users)
+ */
+export async function getPlaintextApiKeyByAddress(polkadotAddress: string): Promise<string | null> {
+  const apiKeyDoc = await ApiKey.findOne({ polkadotAddress, isActive: true })
+    .select('+encryptedKey +encryptionIV +encryptionAuthTag');
+
+  if (!apiKeyDoc) {
+    return null;
+  }
+
+  return apiKeyDoc.getPlaintextKey();
 }

@@ -4,7 +4,25 @@
       "Bash(cat:*)",
       "Bash(npm test:*)",
       "Bash(npm install:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(xargs basename:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(npm view:*)",
+      "Bash(npx prettier src/pages/ApiTestingPage.tsx --write)",
+      "Bash(find . -name \"*.tsx\" -type f -exec sh -c 'echo \"\"=== {} ===\"\" && head -5 \"\"$1\"\"' _ {} ;)",
+      "Bash(npx eslint:*)",
+      "Bash(npm run lint:*)",
+      "Bash(cd:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run test:sandbox:*)",
+      "Bash(npm run test:jit:*)",
+      "Bash(npm run test:all:*)",
+      "Bash(npm pack:*)",
+      "Bash(pushd:*)",
+      "Bash(popd)",
+      "Bash(more:*)",
+      "Bash(findstr:*)"
     ]
   }
 }

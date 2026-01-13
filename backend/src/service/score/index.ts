@@ -338,6 +338,7 @@ export async function updateUserScore(userId: string) {
     !areCategoriesEqual(existingScore.categories, newCategoriesMap);
 
   if (!hasChanged) {
+    existingScore.updatedAt = new Date(); // Explicitly update timestamp
     await existingScore.save(); // Just to update the `updatedAt` timestamp
     logger.info("Score refresh checked, no changes detected.", { userId });
     return { status: ScoreRefreshStatus.NoChange, score: existingScore };

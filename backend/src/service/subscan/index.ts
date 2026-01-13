@@ -30,6 +30,39 @@ const ROW_LIMIT_DEFAULT = 100;
 const apiCache = new NodeCache({ stdTTL: 600 });
 
 /**
+ * Clear cache for a specific function and arguments.
+ * @param functionName The name of the cached function.
+ * @param args The arguments used in the function call.
+ */
+export function clearSubscanCache(functionName: string, ...args: any[]): void {
+  const key = `${functionName}:${JSON.stringify(args)}`;
+  const deleted = apiCache.del(key);
+  if (deleted) {
+    logger.info(`[CACHE CLEARED] for key: ${key}`);
+  }
+}
+
+/**
+ * Clear all cached data for a specific address across all Subscan functions.
+ * @param address The Polkadot address to clear cache for.
+ */
+export function clearAddressCache(address: string): void {
+  // Get all cache keys
+  const keys = apiCache.keys();
+  let clearedCount = 0;
+
+  // Delete any keys that contain this address
+  for (const key of keys) {
+    if (key.includes(`"${address}"`)) {
+      apiCache.del(key);
+      clearedCount++;
+    }
+  }
+
+  logger.info(`[CACHE CLEARED] ${clearedCount} entries for address: ${address}`);
+}
+
+/**
  * A higher-order function that adds a caching layer to any async function.
  * @param fn The async function to wrap.
  * @param functionName A unique name for the function to serve as a namespace for the cache key.
@@ -436,12 +469,18 @@ async function _fetchAccountAgeDays(address: string): Promise<number> {
 
 async function _fetchAccountDetailsByAddress(address: string): Promise<any> {
   try {
-    // api link: /api/v2/scan/search and pass key as address
-    const res = await subscanRequest(`/api/v2/scan/search`, { address });
+    // Subscan endpoint: /v2/scan/search (full URL: https://polkadot.api.subscan.io/api/v2/scan/search)
+    const res = await subscanRequest(`/v2/scan/search`, { key: address });
     if (!res || !res.data) {
       throw new HttpError(404, "Account details not found");
     }
-    return res.data;
+    // Return full response so apiUserService can access res.data.account
+    logger.info('Subscan account details fetched', {
+      address,
+      hasAccount: !!res.data.account,
+      display: res.data.account?.display
+    });
+    return res;
   } catch (err: any) {
     logger.error("fetchAccountDetailsByAddress failed", { address, err });
     throw new HttpError(
