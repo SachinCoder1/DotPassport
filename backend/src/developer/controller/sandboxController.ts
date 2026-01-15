@@ -138,7 +138,7 @@ export async function authenticateHandler(
 
     // Refresh rate limit counters (reset expired windows) before returning
     // This ensures returning users see accurate usage after time has passed
-    const refreshedUsage = await refreshRateLimitCounters(result.apiKeyDoc._id.toString());
+    const refreshedUsage = await refreshRateLimitCounters(String(result.apiKeyDoc._id));
     const usage = refreshedUsage;
 
     // Build user object for response
@@ -253,7 +253,7 @@ export async function getMeHandler(
     const plaintextKey = await getPlaintextApiKeyByAddress(address);
 
     // Refresh rate limit counters (reset expired windows) before returning
-    const refreshedUsage = await refreshRateLimitCounters(apiKey._id.toString());
+    const refreshedUsage = await refreshRateLimitCounters(String(apiKey._id));
 
     // Transform rate limits and usage to frontend expected format
     const rateLimits = {
