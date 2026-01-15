@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import crypto from "crypto";
 import { ApiKey } from "../models/ApiKey";
-import { CLIENT_URL } from "~/config";
+import { CLIENT_URL, SANDBOX_URL } from "~/config";
 import { logger } from "~/utils/logger";
 
 /**
@@ -28,8 +28,8 @@ export const apiKeyCors = async (
     return next();
   }
 
-  // Always allow CLIENT_URL (for admin panel or main app)
-  if (origin === CLIENT_URL) {
+  // Always allow CLIENT_URL and SANDBOX_URL (for main app and developer sandbox)
+  if (origin === CLIENT_URL || origin === SANDBOX_URL) {
     res.setHeader("Access-Control-Allow-Origin", origin);
     res.setHeader("Access-Control-Allow-Credentials", "true");
     res.setHeader(
