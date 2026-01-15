@@ -431,10 +431,10 @@ export async function getOriginsHandler(
       throw new HttpError(404, 'API key not found');
     }
 
-    // Filter out system origins and localhost (which are managed internally)
+    // Filter out only system origins (sandbox.dotpassport.io)
+    // Users can add/manage localhost themselves if needed
     const customOrigins = apiKey.allowedOrigins.filter(
-      (origin) =>
-        !SYSTEM_ORIGINS.includes(origin) && !origin.includes('localhost')
+      (origin) => !SYSTEM_ORIGINS.includes(origin)
     );
 
     res.json({
@@ -498,9 +498,9 @@ export async function updateOriginsHandler(
       throw new HttpError(404, 'API key not found');
     }
 
-    // Keep existing system origins and localhost (if present), add new custom origins
+    // Keep only system origins (sandbox.dotpassport.io), users manage all others including localhost
     const existingSystemOrigins = apiKey.allowedOrigins.filter(
-      (origin) => SYSTEM_ORIGINS.includes(origin) || origin.includes('localhost')
+      (origin) => SYSTEM_ORIGINS.includes(origin)
     );
 
     // Combine system origins with new custom origins
