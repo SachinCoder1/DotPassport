@@ -37,30 +37,29 @@ User profile information.
 
 ```typescript
 interface UserProfile {
-  address: string;           // Polkadot address
-  displayName: string;       // Display name
-  bio?: string;              // User biography
-  avatar?: string;           // Avatar URL
-  identities: Identity[];    // On-chain identities
-  socials: UserSocials;      // Social media links
-  joinedAt: string;          // ISO 8601 date
-  updatedAt: string;         // ISO 8601 date
+  address: string;                          // Polkadot address
+  displayName?: string;                     // Display name
+  avatarUrl?: string;                       // Avatar URL
+  bio?: string;                             // User biography
+  socialLinks?: Record<string, string>;     // Social media links
+  polkadotIdentities?: PolkadotIdentity[];  // On-chain identities
+  nftCount?: number;                        // NFT count
+  source?: 'app' | 'api';                   // Data source
 }
 
-interface Identity {
-  chain: string;         // Chain name (polkadot, kusama, etc.)
-  address: string;       // Chain-specific address
-  displayName?: string;  // On-chain display name
-  verified: boolean;     // Verification status
-}
-
-interface UserSocials {
+interface PolkadotIdentity {
+  address: string;
+  display?: string;
+  legal?: string;
+  web?: string;
+  email?: string;
   twitter?: string;
   github?: string;
+  matrix?: string;
   discord?: string;
-  telegram?: string;
-  email?: string;
-  website?: string;
+  riot?: string;
+  judgements?: Array<{ index: number; judgement: string }>;
+  role?: string;
 }
 ```
 
@@ -70,20 +69,17 @@ User reputation scores.
 
 ```typescript
 interface UserScores {
-  address: string;                           // Polkadot address
-  totalScore: number;                        // Total reputation score
-  categories: Record<string, CategoryScore>; // Category breakdown
-  rank?: number;                             // User rank
-  percentile?: number;                       // Percentile ranking
-  calculatedAt: string;                      // ISO 8601 date
+  address: string;                            // Polkadot address
+  totalScore: number;                         // Total reputation score
+  calculatedAt: string;                       // ISO 8601 date
+  categories?: Record<string, CategoryScore>; // Category breakdown
+  source?: 'app' | 'api';                     // Data source
 }
 
 interface CategoryScore {
-  score: number;        // Category score
-  title: string;        // Category title
-  key: string;          // Category key
-  reason?: string;      // Scoring reason
-  maxPossible?: number; // Maximum possible score
+  score: number;   // Category score
+  reason: string;  // Scoring reason
+  title: string;   // Category title
 }
 ```
 
@@ -111,20 +107,18 @@ User badges collection.
 
 ```typescript
 interface UserBadges {
-  address: string;       // Polkadot address
-  count: number;         // Total badges earned
-  badges: Badge[];       // Badge array
+  address: string;        // Polkadot address
+  badges: UserBadge[];    // Badge array (all are earned)
+  count: number;          // Total badges earned
+  source?: 'app' | 'api'; // Data source
 }
 
-interface Badge {
-  key: string;                                              // Badge key
-  title: string;                                            // Badge title
-  description: string;                                      // Description
-  icon: string;                                             // Icon URL
-  tier: 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond'; // Badge tier
-  earned: boolean;                                          // Earned status
-  earnedAt?: string;                                        // ISO 8601 date
-  progress?: number;                                        // Progress (0-100)
+interface UserBadge {
+  badgeKey: string;          // Badge identifier
+  achievedLevel: number;     // Level achieved (1, 2, 3, etc.)
+  achievedLevelKey: string;  // Level key (e.g., "bronze", "silver")
+  achievedLevelTitle: string; // Level title (e.g., "Gold Early Adopter")
+  earnedAt?: string;         // ISO 8601 date when earned
 }
 ```
 
@@ -135,8 +129,10 @@ Specific badge with definition.
 ```typescript
 interface SpecificUserBadge {
   address: string;
-  badge: Badge;
-  definition: BadgeDefinition;
+  badge: UserBadge | null;
+  earned?: boolean;
+  definition: BadgeDefinition | null;
+  source?: 'app' | 'api';
 }
 ```
 
@@ -153,20 +149,19 @@ interface CategoryDefinition {
   short_description: string;    // Short description
   long_description: string;     // Detailed description
   order: number;                // Display order
-  active: boolean;              // Active status
-  reasons: ScoringReason[];     // Scoring reasons
+  reasons: ReasonDetail[];      // Scoring reasons
 }
 
-interface ScoringReason {
+interface ReasonDetail {
   key: string;                  // Reason key
   points: number;               // Points awarded
   title: string;                // Reason title
   description: string;          // Description
-  thresholds: Threshold[];      // Achievement thresholds
+  thresholds: ThresholdDetail[]; // Achievement thresholds
   advices: string[];            // Improvement advice
 }
 
-interface Threshold {
+interface ThresholdDetail {
   label: string;       // Threshold label
   description: string; // Description
 }
@@ -178,7 +173,6 @@ Collection of all category definitions.
 
 ```typescript
 interface CategoryDefinitions {
-  count: number;                      // Total categories
   categories: CategoryDefinition[];   // Category array
 }
 ```
@@ -189,15 +183,22 @@ Badge metadata and requirements.
 
 ```typescript
 interface BadgeDefinition {
-  key: string;                                              // Badge key
-  title: string;                                            // Badge title
-  description: string;                                      // Description
-  icon: string;                                             // Icon URL
-  tier: 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond'; // Badge tier
-  category: string;                                         // Category
-  requirements: string;                                     // Requirements
-  order: number;                                            // Display order
-  active: boolean;                                          // Active status
+  key: string;              // Badge key
+  title: string;            // Badge title
+  shortDescription: string; // Short description
+  longDescription: string;  // Detailed description
+  metric: string;           // Metric being measured
+  imageUrl?: string;        // Badge image URL
+  levels: BadgeLevel[];     // Level progression
+}
+
+interface BadgeLevel {
+  level: number;            // Level number (1, 2, 3, etc.)
+  key: string;              // Level key (e.g., "bronze")
+  value: number;            // Required value to achieve
+  title: string;            // Level title
+  shortDescription: string; // Short description
+  longDescription: string;  // Detailed description
 }
 ```
 
@@ -207,7 +208,6 @@ Collection of all badge definitions.
 
 ```typescript
 interface BadgeDefinitions {
-  count: number;                    // Total badges
   badges: BadgeDefinition[];        // Badge array
 }
 ```
@@ -275,10 +275,14 @@ Category widget configuration.
 
 ```typescript
 interface CategoryWidgetConfig extends BaseWidgetConfig {
-  type: 'category';         // Widget type
-  categoryKey: string;      // Required: Category key
-  showBreakdown?: boolean;  // Show score breakdown
-  showAdvice?: boolean;     // Show improvement advice
+  type: 'category';           // Widget type
+  categoryKey: string;        // Required: Category key
+  showTitle?: boolean;        // Show category title
+  showDescription?: boolean;  // Show category description
+  showBreakdown?: boolean;    // Show score breakdown
+  showAdvice?: boolean;       // Show improvement advice
+  showScoreOnly?: boolean;    // Show only the score
+  compact?: boolean;          // Compact layout
 }
 ```
 

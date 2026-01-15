@@ -14,6 +14,7 @@ import {
   getRequestLogStats,
 } from '../service/requestLogService';
 import { getPlaintextApiKeyByAddress } from '../service/apiKeyService';
+import { refreshRateLimitCounters } from '../service/rateLimitService';
 import crypto from 'crypto';
 import { TIER_RATE_LIMITS } from '../models/ApiKey';
 
@@ -135,11 +136,10 @@ export async function authenticateHandler(
       monthly: result.apiKeyDoc.rateLimits.requestsPerMonth,
     };
 
-    const usage = {
-      hourly: result.apiKeyDoc.usage.currentHourRequests,
-      daily: result.apiKeyDoc.usage.currentDayRequests,
-      monthly: result.apiKeyDoc.usage.currentMonthRequests,
-    };
+    // Refresh rate limit counters (reset expired windows) before returning
+    // This ensures returning users see accurate usage after time has passed
+    const refreshedUsage = await refreshRateLimitCounters(result.apiKeyDoc._id.toString());
+    const usage = refreshedUsage;
 
     // Build user object for response
     const userResponse: any = {
@@ -252,6 +252,9 @@ export async function getMeHandler(
     // Retrieve plaintext API key for display
     const plaintextKey = await getPlaintextApiKeyByAddress(address);
 
+    // Refresh rate limit counters (reset expired windows) before returning
+    const refreshedUsage = await refreshRateLimitCounters(apiKey._id.toString());
+
     // Transform rate limits and usage to frontend expected format
     const rateLimits = {
       hourly: apiKey.rateLimits.requestsPerHour,
@@ -259,11 +262,8 @@ export async function getMeHandler(
       monthly: apiKey.rateLimits.requestsPerMonth,
     };
 
-    const usage = {
-      hourly: apiKey.usage.currentHourRequests,
-      daily: apiKey.usage.currentDayRequests,
-      monthly: apiKey.usage.currentMonthRequests,
-    };
+    // Use refreshed usage values (expired windows are reset)
+    const usage = refreshedUsage;
 
     res.json({
       success: true,

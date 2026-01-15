@@ -39,7 +39,7 @@ export function CodeExamplesPanel({
   };
 
   const generateCode = (language: Language): string => {
-    const baseUrl = 'https://api.dotpassport.com';
+    const baseUrl = 'https://api.dotpassport.io';
     let endpoint = method.endpoint;
 
     // Replace path parameters in endpoint (e.g., :address, :badgeKey)
@@ -115,7 +115,7 @@ export function CodeExamplesPanel({
     return `${imports}// Initialize the SDK client
 const client = new DotPassportClient({
   apiKey: 'your-api-key-here',
-  baseUrl: 'https://api.dotpassport.com'
+  baseUrl: 'https://api.dotpassport.io'
 });
 
 // Call the ${method.displayName} method

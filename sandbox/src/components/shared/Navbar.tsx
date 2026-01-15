@@ -135,7 +135,7 @@ export function Navbar({ onMobileMenuClick }: NavbarProps) {
                           <Menu.Item>
                             {({ active }) => (
                               <a
-                                href="https://docs.dotpassport.com"
+                                href="https://docs.dotpassport.io"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${

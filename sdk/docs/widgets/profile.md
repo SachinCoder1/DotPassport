@@ -30,12 +30,11 @@ widget.mount('#container');
 | `address` | `string` | *required* | Polkadot address to display |
 | `type` | `'profile'` | *required* | Widget type |
 | `theme` | `'light' \| 'dark' \| 'auto'` | `'light'` | Color theme |
-| `showAvatar` | `boolean` | `true` | Display user avatar |
-| `showBio` | `boolean` | `true` | Display user bio |
-| `showSocials` | `boolean` | `true` | Display social links |
 | `showIdentities` | `boolean` | `true` | Display chain identities |
-| `compact` | `boolean` | `false` | Compact display mode |
+| `showSocials` | `boolean` | `true` | Display social links |
+| `showBio` | `boolean` | `true` | Display user bio |
 | `className` | `string` | `''` | Custom CSS class |
+| `baseUrl` | `string` | - | Custom API base URL |
 | `onLoad` | `() => void` | - | Callback when loaded |
 | `onError` | `(error: Error) => void` | - | Error callback |
 
@@ -50,25 +49,22 @@ createWidget({
   apiKey: 'your_api_key',
   address: '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY',
   type: 'profile',
-  showAvatar: true,
   showBio: true,
   showSocials: true,
   showIdentities: true
 }).mount('#container');
 ```
 
-### Avatar and Name Only
+### Minimal Profile
 
 ```typescript
 createWidget({
   apiKey: 'your_api_key',
   address: '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY',
   type: 'profile',
-  showAvatar: true,
   showBio: false,
   showSocials: false,
-  showIdentities: false,
-  compact: true
+  showIdentities: false
 }).mount('#container');
 ```
 

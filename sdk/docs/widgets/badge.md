@@ -29,13 +29,13 @@ widget.mount('#container');
 |--------|------|---------|-------------|
 | `apiKey` | `string` | *required* | Your DotPassport API key |
 | `address` | `string` | *required* | Polkadot address to display |
-| `type` | `'badge'` | *required* | Widget type |
+| `type` | `'badge' \| 'badges'` | *required* | Widget type |
 | `theme` | `'light' \| 'dark' \| 'auto'` | `'light'` | Color theme |
 | `badgeKey` | `string` | - | Show single specific badge |
-| `maxBadges` | `number` | `10` | Max badges to display |
-| `showProgress` | `boolean` | `true` | Show earned dates |
-| `compact` | `boolean` | `false` | Compact display mode |
+| `maxBadges` | `number` | `6` | Max badges to display |
+| `showProgress` | `boolean` | `false` | Show earned dates |
 | `className` | `string` | `''` | Custom CSS class |
+| `baseUrl` | `string` | - | Custom API base URL |
 | `onLoad` | `() => void` | - | Callback when loaded |
 | `onError` | `(error: Error) => void` | - | Error callback |
 

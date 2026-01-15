@@ -216,13 +216,12 @@ npm install @dotpassport/sdk
         .join('');
       document.getElementById('categories').innerHTML = categoriesHtml;
 
-      // Display badges
+      // Display badges (all badges in the array are earned)
       const badgesHtml = badges.badges
-        .filter(b => b.earned)
         .map(badge => `
-          <div class="badge ${badge.tier}">
-            <span class="badge-icon">${badge.icon}</span>
-            <span class="badge-title">${badge.title}</span>
+          <div class="badge level-${badge.achievedLevel}">
+            <span class="badge-title">${badge.achievedLevelTitle}</span>
+            <span class="badge-key">${badge.badgeKey}</span>
           </div>
         `)
         .join('');

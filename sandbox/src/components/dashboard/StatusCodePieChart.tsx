@@ -105,12 +105,13 @@ export function StatusCodePieChart({ data }: StatusCodePieChartProps) {
               ))}
             </Pie>
             <Tooltip
+              wrapperStyle={{ zIndex: 100 }}
               contentStyle={{
-                backgroundColor: 'var(--tooltip-bg, #1f2937)',
-                border: 'none',
+                backgroundColor: '#ffffff',
+                border: '1px solid #e5e7eb',
                 borderRadius: '8px',
                 boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                color: 'var(--tooltip-text, #fff)',
+                color: '#374151',
               }}
               formatter={(value: number) => [
                 `${value} (${((value / total) * 100).toFixed(1)}%)`,
@@ -128,8 +129,8 @@ export function StatusCodePieChart({ data }: StatusCodePieChartProps) {
           </PieChart>
         </ResponsiveContainer>
 
-        {/* Center text - success rate */}
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
+        {/* Center text - success rate (offset up to account for legend at bottom) */}
+        <div className="absolute top-[calc(50%-18px)] left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
           <div className="text-3xl font-bold text-green-600 dark:text-green-400">
             {successRate}%
           </div>

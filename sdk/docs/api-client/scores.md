@@ -26,6 +26,7 @@ const scores = await client.getScores(address);
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `address` | `string` | Yes | Polkadot address of the user |
+| `signal` | `AbortSignal` | No | Optional abort signal for request cancellation |
 
 ### Response Type
 
@@ -33,18 +34,15 @@ const scores = await client.getScores(address);
 interface UserScores {
   address: string;
   totalScore: number;
-  categories: Record<string, CategoryScore>;
-  rank?: number;
-  percentile?: number;
   calculatedAt: string;  // ISO 8601 date
+  categories?: Record<string, CategoryScore>;
+  source?: 'app' | 'api';
 }
 
 interface CategoryScore {
   score: number;
+  reason: string;
   title: string;
-  key: string;
-  reason?: string;
-  maxPossible?: number;
 }
 ```
 
@@ -60,13 +58,31 @@ const scores = await client.getScores(
 );
 
 console.log(`Total Score: ${scores.totalScore}`);
-console.log(`Rank: #${scores.rank}`);
-console.log(`Top ${100 - scores.percentile}%`);
+console.log(`Calculated At: ${scores.calculatedAt}`);
 
 // Access category scores
-Object.entries(scores.categories).forEach(([key, category]) => {
-  console.log(`${category.title}: ${category.score}/${category.maxPossible}`);
-});
+if (scores.categories) {
+  Object.entries(scores.categories).forEach(([key, category]) => {
+    console.log(`${category.title}: ${category.score} (${category.reason})`);
+  });
+}
+```
+
+### Example Response
+
+```json
+{
+  "address": "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
+  "totalScore": 450,
+  "calculatedAt": "2024-01-15T12:00:00Z",
+  "categories": {
+    "longevity": { "score": 100, "reason": "TwoYears", "title": "Account Age" },
+    "txCount": { "score": 75, "reason": "Moderate", "title": "Transaction Count" },
+    "governance": { "score": 125, "reason": "Active", "title": "Governance" },
+    "stakingRewards": { "score": 150, "reason": "High", "title": "Staking" }
+  },
+  "source": "api"
+}
 ```
 
 ### Available Categories
@@ -74,11 +90,11 @@ Object.entries(scores.categories).forEach(([key, category]) => {
 | Key | Title | Description |
 |-----|-------|-------------|
 | `longevity` | Account Longevity | Account age and history |
-| `tx_count` | Transaction Count | On-chain transaction volume |
+| `txCount` | Transaction Count | On-chain transaction volume |
 | `governance` | Governance | Governance participation |
 | `identity` | Identity | On-chain identity verification |
-| `unique_interactions` | Unique Interactions | Network diversity |
-| `technical_contributions` | Technical Contributions | Developer activity |
+| `uniqueInteractions` | Unique Interactions | Network diversity |
+| `stakingRewards` | Staking | Staking activity |
 
 ---
 
@@ -98,6 +114,7 @@ const categoryScore = await client.getCategoryScore(address, categoryKey);
 |-----------|------|----------|-------------|
 | `address` | `string` | Yes | Polkadot address of the user |
 | `categoryKey` | `string` | Yes | Category identifier (e.g., "longevity") |
+| `signal` | `AbortSignal` | No | Optional abort signal for request cancellation |
 
 ### Response Type
 
@@ -106,11 +123,9 @@ interface SpecificCategoryScore {
   address: string;
   category: {
     key: string;
-    score: number;
-    title: string;
-    reason?: string;
+    score: CategoryScore;
   };
-  definition: CategoryDefinition;
+  definition: CategoryDefinition | null;
   calculatedAt: string;
 }
 
@@ -120,17 +135,21 @@ interface CategoryDefinition {
   short_description: string;
   long_description: string;
   order: number;
-  active: boolean;
-  reasons: ScoringReason[];
+  reasons: ReasonDetail[];
 }
 
-interface ScoringReason {
+interface ReasonDetail {
   key: string;
   points: number;
   title: string;
   description: string;
-  thresholds: { label: string; description: string }[];
+  thresholds: ThresholdDetail[];
   advices: string[];
+}
+
+interface ThresholdDetail {
+  label: string;
+  description: string;
 }
 ```
 
@@ -142,15 +161,47 @@ const categoryScore = await client.getCategoryScore(
   'governance'
 );
 
-console.log(`Category: ${categoryScore.category.title}`);
-console.log(`Score: ${categoryScore.category.score}`);
-console.log(`Description: ${categoryScore.definition.long_description}`);
+console.log(`Category: ${categoryScore.category.key}`);
+console.log(`Score: ${categoryScore.category.score.score}`);
+console.log(`Reason: ${categoryScore.category.score.reason}`);
 
-// Display improvement advice
-categoryScore.definition.reasons.forEach(reason => {
-  console.log(`\n${reason.title}: +${reason.points} points`);
-  reason.advices.forEach(advice => console.log(`  - ${advice}`));
-});
+if (categoryScore.definition) {
+  console.log(`Description: ${categoryScore.definition.long_description}`);
+
+  // Display improvement advice
+  categoryScore.definition.reasons.forEach(reason => {
+    console.log(`\n${reason.title}: +${reason.points} points`);
+    reason.advices.forEach(advice => console.log(`  - ${advice}`));
+  });
+}
+```
+
+### Example Response
+
+```json
+{
+  "address": "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
+  "category": {
+    "key": "longevity",
+    "score": { "score": 100, "reason": "TwoYears", "title": "Account Age" }
+  },
+  "definition": {
+    "key": "longevity",
+    "displayName": "Account Longevity",
+    "short_description": "How long your account has been active",
+    "long_description": "This category measures the age of your Polkadot account.",
+    "order": 1,
+    "reasons": [{
+      "key": "TwoYears",
+      "points": 100,
+      "title": "2+ Years",
+      "description": "Account is over 2 years old",
+      "thresholds": [{ "label": "2 years", "description": "Account created 2+ years ago" }],
+      "advices": ["Keep your account active to maintain this score"]
+    }]
+  },
+  "calculatedAt": "2024-01-15T12:00:00Z"
+}
 ```
 
 ---
@@ -174,6 +225,25 @@ try {
       default:
         console.log(`Error: ${error.message}`);
     }
+  }
+}
+```
+
+---
+
+## Request Cancellation
+
+```typescript
+const controller = new AbortController();
+
+// Cancel after 5 seconds
+setTimeout(() => controller.abort(), 5000);
+
+try {
+  const scores = await client.getScores(address, controller.signal);
+} catch (error) {
+  if (error.name === 'AbortError') {
+    console.log('Request was cancelled');
   }
 }
 ```

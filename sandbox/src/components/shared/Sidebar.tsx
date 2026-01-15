@@ -251,7 +251,7 @@ export function Sidebar({
               Learn more about the DotPassport SDK
             </p>
             <a
-              href="https://docs.dotpassport.com"
+              href="https://docs.dotpassport.io"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center text-xs text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-medium transition-colors duration-200"

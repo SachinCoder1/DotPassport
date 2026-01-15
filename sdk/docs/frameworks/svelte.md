@@ -264,7 +264,7 @@ export function disconnectWallet() {
     widgets = [
       createWidget({ apiKey, address, type: 'reputation' }),
       createWidget({ apiKey, address, type: 'badge', maxBadges: 4 }),
-      createWidget({ apiKey, address, type: 'profile', compact: true })
+      createWidget({ apiKey, address, type: 'profile' })
     ];
 
     widgets[0].mount(reputationContainer);

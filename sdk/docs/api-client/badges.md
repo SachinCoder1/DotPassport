@@ -26,25 +26,24 @@ const badges = await client.getBadges(address);
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `address` | `string` | Yes | Polkadot address of the user |
+| `signal` | `AbortSignal` | No | Optional abort signal for request cancellation |
 
 ### Response Type
 
 ```typescript
 interface UserBadges {
   address: string;
+  badges: UserBadge[];
   count: number;
-  badges: Badge[];
+  source?: 'app' | 'api';
 }
 
-interface Badge {
-  key: string;
-  title: string;
-  description: string;
-  icon: string;
-  tier: 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond';
-  earned: boolean;
+interface UserBadge {
+  badgeKey: string;
+  achievedLevel: number;
+  achievedLevelKey: string;
+  achievedLevelTitle: string;
   earnedAt?: string;  // ISO 8601 date
-  progress?: number;  // 0-100 percentage
 }
 ```
 
@@ -62,20 +61,50 @@ const badges = await client.getBadges(
 console.log(`Total Badges: ${badges.count}`);
 
 badges.badges.forEach(badge => {
-  const status = badge.earned ? 'Earned' : `${badge.progress}% progress`;
-  console.log(`${badge.title} (${badge.tier}) - ${status}`);
+  console.log(`${badge.achievedLevelTitle} (Level ${badge.achievedLevel})`);
+  if (badge.earnedAt) {
+    console.log(`  Earned: ${badge.earnedAt}`);
+  }
 });
 ```
 
-### Badge Tiers
+### Example Response
 
-| Tier | Description | Color |
-|------|-------------|-------|
-| `bronze` | Entry-level achievement | #CD7F32 |
-| `silver` | Intermediate achievement | #C0C0C0 |
-| `gold` | Advanced achievement | #FFD700 |
-| `platinum` | Expert achievement | #E5E4E2 |
-| `diamond` | Legendary achievement | #B9F2FF |
+```json
+{
+  "address": "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
+  "badges": [
+    {
+      "badgeKey": "early_adopter",
+      "achievedLevel": 3,
+      "achievedLevelKey": "gold",
+      "achievedLevelTitle": "Gold Early Adopter",
+      "earnedAt": "2024-01-10T10:00:00Z"
+    },
+    {
+      "badgeKey": "governance_voter",
+      "achievedLevel": 2,
+      "achievedLevelKey": "silver",
+      "achievedLevelTitle": "Silver Governance Voter",
+      "earnedAt": "2024-01-12T14:30:00Z"
+    }
+  ],
+  "count": 2,
+  "source": "api"
+}
+```
+
+### Badge Level Keys
+
+Badges have multiple levels with different keys:
+
+| Level | Common Keys | Description |
+|-------|-------------|-------------|
+| 1 | `bronze` | Entry-level achievement |
+| 2 | `silver` | Intermediate achievement |
+| 3 | `gold` | Advanced achievement |
+| 4 | `platinum` | Expert achievement |
+| 5 | `diamond` | Legendary achievement |
 
 ---
 
@@ -95,26 +124,36 @@ const badge = await client.getBadge(address, badgeKey);
 |-----------|------|----------|-------------|
 | `address` | `string` | Yes | Polkadot address of the user |
 | `badgeKey` | `string` | Yes | Badge identifier |
+| `signal` | `AbortSignal` | No | Optional abort signal for request cancellation |
 
 ### Response Type
 
 ```typescript
 interface SpecificUserBadge {
   address: string;
-  badge: Badge;
-  definition: BadgeDefinition;
+  badge: UserBadge | null;
+  earned?: boolean;
+  definition: BadgeDefinition | null;
+  source?: 'app' | 'api';
 }
 
 interface BadgeDefinition {
   key: string;
   title: string;
-  description: string;
-  icon: string;
-  tier: 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond';
-  category: string;
-  requirements: string;
-  order: number;
-  active: boolean;
+  shortDescription: string;
+  longDescription: string;
+  metric: string;
+  imageUrl?: string;
+  levels: BadgeLevel[];
+}
+
+interface BadgeLevel {
+  level: number;
+  key: string;
+  value: number;
+  title: string;
+  shortDescription: string;
+  longDescription: string;
 }
 ```
 
@@ -126,54 +165,93 @@ const badge = await client.getBadge(
   'governance_voter'
 );
 
-console.log(`Badge: ${badge.badge.title}`);
-console.log(`Tier: ${badge.badge.tier}`);
-console.log(`Earned: ${badge.badge.earned ? 'Yes' : 'No'}`);
-
-if (badge.badge.earned) {
-  console.log(`Earned on: ${badge.badge.earnedAt}`);
+if (badge.badge) {
+  console.log(`Badge: ${badge.badge.achievedLevelTitle}`);
+  console.log(`Level: ${badge.badge.achievedLevel}`);
+  console.log(`Earned: ${badge.badge.earnedAt}`);
 }
 
-console.log(`Requirements: ${badge.definition.requirements}`);
+if (badge.definition) {
+  console.log(`Description: ${badge.definition.longDescription}`);
+  console.log(`\nAvailable Levels:`);
+  badge.definition.levels.forEach(level => {
+    console.log(`  Level ${level.level}: ${level.title} (${level.value} ${badge.definition.metric})`);
+  });
+}
+```
+
+### Example Response
+
+```json
+{
+  "address": "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
+  "badge": {
+    "badgeKey": "governance_voter",
+    "achievedLevel": 2,
+    "achievedLevelKey": "silver",
+    "achievedLevelTitle": "Silver Governance Voter",
+    "earnedAt": "2024-01-12T14:30:00Z"
+  },
+  "earned": true,
+  "definition": {
+    "key": "governance_voter",
+    "title": "Governance Voter",
+    "shortDescription": "Active participant in governance",
+    "longDescription": "Awarded for voting on governance proposals",
+    "metric": "votes",
+    "levels": [
+      { "level": 1, "key": "bronze", "value": 5, "title": "Bronze Voter", "shortDescription": "5 votes", "longDescription": "Cast at least 5 votes" },
+      { "level": 2, "key": "silver", "value": 25, "title": "Silver Voter", "shortDescription": "25 votes", "longDescription": "Cast at least 25 votes" },
+      { "level": 3, "key": "gold", "value": 100, "title": "Gold Voter", "shortDescription": "100 votes", "longDescription": "Cast at least 100 votes" }
+    ]
+  },
+  "source": "api"
+}
 ```
 
 ### Common Badge Keys
 
-| Key | Title | Tier |
-|-----|-------|------|
-| `relay_chain_initiate` | Relay Chain Initiate | Bronze |
-| `governance_voter` | Governance Voter | Silver |
-| `parachain_explorer` | Parachain Explorer | Gold |
-| `identity_verified` | Identity Verified | Silver |
-| `staking_champion` | Staking Champion | Platinum |
+| Key | Title | Description |
+|-----|-------|-------------|
+| `early_adopter` | Early Adopter | Early network participation |
+| `governance_voter` | Governance Voter | Voting participation |
+| `staking_champion` | Staking Champion | Staking activity |
+| `identity_verified` | Identity Verified | On-chain identity |
+| `parachain_explorer` | Parachain Explorer | Cross-chain activity |
 
 ---
 
 ## Filtering Badges
 
-### By Earned Status
+### By Badge Key
 
 ```typescript
 const badges = await client.getBadges(address);
 
-const earnedBadges = badges.badges.filter(b => b.earned);
-const inProgressBadges = badges.badges.filter(b => !b.earned && b.progress > 0);
-const lockedBadges = badges.badges.filter(b => !b.earned && (!b.progress || b.progress === 0));
-
-console.log(`Earned: ${earnedBadges.length}`);
-console.log(`In Progress: ${inProgressBadges.length}`);
-console.log(`Locked: ${lockedBadges.length}`);
+const governanceBadges = badges.badges.filter(b =>
+  b.badgeKey.includes('governance')
+);
 ```
 
-### By Tier
+### By Level
 
 ```typescript
 const badges = await client.getBadges(address);
 
-const tierOrder = ['diamond', 'platinum', 'gold', 'silver', 'bronze'];
-const sortedBadges = badges.badges.sort((a, b) =>
-  tierOrder.indexOf(a.tier) - tierOrder.indexOf(b.tier)
-);
+const highLevelBadges = badges.badges.filter(b => b.achievedLevel >= 3);
+console.log(`Gold+ badges: ${highLevelBadges.length}`);
+```
+
+### Sort by Achievement Date
+
+```typescript
+const badges = await client.getBadges(address);
+
+const sortedBadges = badges.badges
+  .filter(b => b.earnedAt)
+  .sort((a, b) => new Date(b.earnedAt!).getTime() - new Date(a.earnedAt!).getTime());
+
+console.log('Recent achievements:', sortedBadges.slice(0, 5));
 ```
 
 ---

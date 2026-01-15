@@ -102,6 +102,64 @@ export async function checkRateLimit(apiKeyId: string): Promise<RateLimitResult>
 }
 
 /**
+ * Refresh rate limit counters - reset any expired windows without checking limits
+ * Call this when returning user stats to ensure accurate display
+ */
+export async function refreshRateLimitCounters(apiKeyId: string): Promise<{
+  hourly: number;
+  daily: number;
+  monthly: number;
+}> {
+  const apiKey = await ApiKey.findById(apiKeyId);
+  if (!apiKey) {
+    throw new Error('API key not found');
+  }
+
+  const now = new Date();
+  const usage = apiKey.usage;
+  let needsSave = false;
+
+  // Check and reset hour window
+  const hoursSinceHourStart =
+    (now.getTime() - usage.currentHourWindowStart.getTime()) / (1000 * 60 * 60);
+  if (hoursSinceHourStart >= 1) {
+    usage.currentHourRequests = 0;
+    usage.currentHourWindowStart = now;
+    needsSave = true;
+  }
+
+  // Check and reset day window
+  const daysSinceDayStart =
+    (now.getTime() - usage.currentDayStart.getTime()) / (1000 * 60 * 60 * 24);
+  if (daysSinceDayStart >= 1) {
+    usage.currentDayRequests = 0;
+    usage.currentDayStart = now;
+    needsSave = true;
+  }
+
+  // Check and reset month window (30 days)
+  const daysSinceMonthStart =
+    (now.getTime() - usage.currentMonthStart.getTime()) / (1000 * 60 * 60 * 24);
+  if (daysSinceMonthStart >= 30) {
+    usage.currentMonthRequests = 0;
+    usage.currentMonthStart = now;
+    needsSave = true;
+  }
+
+  // Save if any resets occurred
+  if (needsSave) {
+    await apiKey.save();
+    logger.debug('Rate limit counters refreshed', { apiKeyId, resets: needsSave });
+  }
+
+  return {
+    hourly: usage.currentHourRequests,
+    daily: usage.currentDayRequests,
+    monthly: usage.currentMonthRequests,
+  };
+}
+
+/**
  * Track API key usage (increment counters)
  */
 export async function trackApiKeyUsage(apiKeyId: string): Promise<void> {

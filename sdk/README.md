@@ -13,7 +13,7 @@
 [![Tests](https://img.shields.io/badge/Tests-236%20passed-success?style=flat-square)](./src/__tests__)
 [![Coverage](https://img.shields.io/badge/Coverage-86%25-success?style=flat-square)](./)
 
-[Getting Started](#-quick-start) • [API Reference](#-api-client) • [Widgets](#-embeddable-widgets) • [Examples](#-examples) • [Contributing](#-contributing)
+[Getting Started](#quick-start) • [API Reference](#api-client) • [Widgets](#embeddable-widgets) • [Examples](#examples) • [Contributing](#contributing)
 
 </div>
 
@@ -32,27 +32,27 @@ This SDK provides:
 
 ## Table of Contents
 
-- [Quick Start](#-quick-start)
-- [Installation](#-installation)
-- [Environment Configuration](#-environment-configuration)
-- [Features](#-features)
-- [API Client](#-api-client)
-- [Embeddable Widgets](#-embeddable-widgets)
-- [Widget Gallery](#-widget-gallery)
-- [Configuration Reference](#-configuration-reference)
-- [Framework Integration](#-framework-integration)
-- [Wallet Integration](#-wallet-integration)
-- [Error Handling](#-error-handling)
-- [TypeScript Support](#-typescript-support)
-- [Examples](#-examples)
-- [Testing](#-testing)
-- [Contributing](#-contributing)
-- [Author](#-author)
-- [License](#-license)
+- [Quick Start](#quick-start)
+- [Installation](#installation)
+- [Environment Configuration](#environment-configuration)
+- [Features](#features)
+- [API Client](#api-client)
+- [Embeddable Widgets](#embeddable-widgets)
+- [Widget Gallery](#widget-gallery)
+- [Configuration Reference](#configuration-reference)
+- [Framework Integration](#framework-integration)
+- [Wallet Integration](#wallet-integration)
+- [Error Handling](#error-handling)
+- [TypeScript Support](#typescript-support)
+- [Examples](#examples)
+- [Testing](#testing)
+- [Contributing](#contributing)
+- [Author](#author)
+- [License](#license)
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Install the SDK
 
@@ -94,7 +94,7 @@ console.log(`Total Score: ${scores.totalScore}`);
 
 ---
 
-## 📦 Installation
+## Installation
 
 ### NPM / Yarn / PNPM
 
@@ -127,7 +127,7 @@ pnpm add @dotpassport/sdk
 
 ---
 
-## 🔧 Environment Configuration
+## Environment Configuration
 
 By default, the SDK connects to the **production API** (`https://api.dotpassport.com`). For local development, you have several options:
 
@@ -183,7 +183,7 @@ resetToProductionUrl();
 
 ---
 
-## ✨ Features
+## Features
 
 ### 🔌 Complete API Coverage
 Access all DotPassport endpoints including profiles, scores, badges, and metadata.
@@ -213,7 +213,7 @@ Smart caching for widget data with configurable TTL to minimize API calls.
 
 ---
 
-## 📡 API Client
+## API Client
 
 The `DotPassportClient` provides programmatic access to all DotPassport API endpoints.
 
@@ -324,7 +324,7 @@ const scores = await client.getScores(address, { signal: controller.signal });
 
 ---
 
-## 🎨 Embeddable Widgets
+## Embeddable Widgets
 
 DotPassport SDK includes four beautiful, customizable widgets that work with any framework.
 
@@ -339,7 +339,7 @@ DotPassport SDK includes four beautiful, customizable widgets that work with any
 
 ---
 
-## 🖼️ Widget Gallery
+## Widget Gallery
 
 ### Reputation Widget
 *Displays total reputation score with category breakdown*
@@ -450,7 +450,7 @@ createWidget({
 
 ---
 
-## ⚙️ Configuration Reference
+## Configuration Reference
 
 ### Common Widget Options
 
@@ -502,7 +502,7 @@ createWidget({
 
 ---
 
-## 🔗 Framework Integration
+## Framework Integration
 
 ### React
 
@@ -664,7 +664,7 @@ watch(
 
 ---
 
-## 🔐 Wallet Integration
+## Wallet Integration
 
 Connect DotPassport SDK with popular Polkadot wallets to display reputation data for connected users.
 
@@ -799,7 +799,7 @@ function App() {
 
 ---
 
-## 🎨 Custom Styling
+## Custom Styling
 
 Widgets support CSS variable overrides for custom styling:
 
@@ -829,7 +829,7 @@ Widgets support CSS variable overrides for custom styling:
 
 ---
 
-## ❌ Error Handling
+## Error Handling
 
 The SDK provides structured error handling through `DotPassportError`:
 
@@ -877,7 +877,7 @@ try {
 
 ---
 
-## 📘 TypeScript Support
+## TypeScript Support
 
 The SDK is written in TypeScript with complete type definitions.
 
@@ -928,7 +928,7 @@ badges.badges[0].badgeKey; // ✅ string
 
 ---
 
-## 📖 Examples
+## Examples
 
 ### Complete Dashboard Example
 
@@ -1023,7 +1023,7 @@ window.addEventListener('beforeunload', () => {
 
 ---
 
-## 🧪 Testing
+## Testing
 
 The SDK includes comprehensive test coverage with 236+ tests.
 
@@ -1057,7 +1057,7 @@ npm run test:integration
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions from the community! Here's how you can help:
 
@@ -1113,7 +1113,7 @@ refactor: improve widget rendering performance
 
 ---
 
-## 👨‍💻 Author
+## Author
 
 <div align="center">
   <img src="https://github.com/SachinCoder1.png" width="100" style="border-radius: 50%;" alt="Sachin" />
@@ -1128,7 +1128,7 @@ refactor: improve widget rendering performance
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the **MIT License** - see the [LICENSE](./LICENSE) file for details.
 
@@ -1146,7 +1146,7 @@ copies of the Software...
 
 ---
 
-## 🔗 Links
+## Links
 
 <div align="center">
 

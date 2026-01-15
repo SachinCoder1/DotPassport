@@ -29,20 +29,26 @@ None required.
 
 ```typescript
 interface BadgeDefinitions {
-  count: number;
   badges: BadgeDefinition[];
 }
 
 interface BadgeDefinition {
   key: string;
   title: string;
-  description: string;
-  icon: string;
-  tier: 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond';
-  category: string;
-  requirements: string;
-  order: number;
-  active: boolean;
+  shortDescription: string;
+  longDescription: string;
+  metric: string;
+  imageUrl?: string;
+  levels: BadgeLevel[];
+}
+
+interface BadgeLevel {
+  level: number;
+  key: string;
+  value: number;
+  title: string;
+  shortDescription: string;
+  longDescription: string;
 }
 ```
 
@@ -55,18 +61,19 @@ const client = new DotPassportClient({ apiKey: 'your_api_key' });
 
 const definitions = await client.getBadgeDefinitions();
 
-console.log(`Total Badges Available: ${definitions.count}`);
+console.log(`Total Badges Available: ${definitions.badges.length}`);
 
-// Group by tier
-const byTier = definitions.badges.reduce((acc, badge) => {
-  acc[badge.tier] = acc[badge.tier] || [];
-  acc[badge.tier].push(badge);
-  return acc;
-}, {} as Record<string, BadgeDefinition[]>);
+// Display badge information
+definitions.badges.forEach(badge => {
+  console.log(`\n${badge.title}`);
+  console.log(`  ${badge.shortDescription}`);
+  console.log(`  Levels: ${badge.levels.length}`);
 
-console.log(`Diamond badges: ${byTier.diamond?.length || 0}`);
-console.log(`Platinum badges: ${byTier.platinum?.length || 0}`);
-console.log(`Gold badges: ${byTier.gold?.length || 0}`);
+  // Show level progression
+  badge.levels.forEach(level => {
+    console.log(`    Level ${level.level}: ${level.title} (${level.value} ${badge.metric})`);
+  });
+});
 ```
 
 ### Use Cases
@@ -96,7 +103,6 @@ None required.
 
 ```typescript
 interface CategoryDefinitions {
-  count: number;
   categories: CategoryDefinition[];
 }
 
@@ -106,17 +112,21 @@ interface CategoryDefinition {
   short_description: string;
   long_description: string;
   order: number;
-  active: boolean;
-  reasons: ScoringReason[];
+  reasons: ReasonDetail[];
 }
 
-interface ScoringReason {
+interface ReasonDetail {
   key: string;
   points: number;
   title: string;
   description: string;
-  thresholds: { label: string; description: string }[];
+  thresholds: ThresholdDetail[];
   advices: string[];
+}
+
+interface ThresholdDetail {
+  label: string;
+  description: string;
 }
 ```
 
@@ -125,7 +135,7 @@ interface ScoringReason {
 ```typescript
 const definitions = await client.getCategoryDefinitions();
 
-console.log(`Scoring Categories: ${definitions.count}`);
+console.log(`Scoring Categories: ${definitions.categories.length}`);
 
 // Display category info
 definitions.categories.forEach(category => {

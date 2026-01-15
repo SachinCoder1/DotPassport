@@ -45,7 +45,7 @@ const client = new DotPassportClient({
 const scores = await client.getScores('5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY');
 
 console.log('Total Score:', scores.totalScore);
-console.log('Percentile:', scores.percentile);
+console.log('Calculated At:', scores.calculatedAt);
 ```
 
 ---
@@ -89,8 +89,9 @@ createWidget({
   apiKey: 'your_api_key',
   address: '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY',
   type: 'profile',
-  showScore: true,
-  showBadgeCount: true
+  showIdentities: true,
+  showSocials: true,
+  showBio: true
 }).mount('#container');
 ```
 
@@ -118,13 +119,15 @@ const scores = await client.getScores(address);
 
 // Response
 {
+  address: '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY',
   totalScore: 847,
-  percentile: 92,
+  calculatedAt: '2025-01-12T10:30:00Z',
   categories: {
-    longevity: { title: 'Account Longevity', score: 85, maxScore: 100 },
-    governance: { title: 'Governance', score: 72, maxScore: 100 },
+    longevity: { title: 'Account Longevity', score: 85, reason: 'Account active for 3+ years' },
+    governance: { title: 'Governance', score: 72, reason: 'Active voter in referenda' },
     // ... more categories
-  }
+  },
+  source: 'api'
 }
 ```
 
@@ -135,13 +138,14 @@ const badges = await client.getBadges(address);
 
 // Response
 {
-  earned: 12,
-  total: 24,
+  address: '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY',
   badges: [
-    { key: 'early_adopter', title: 'Early Adopter', earned: true, tier: 'gold' },
-    { key: 'voter', title: 'Active Voter', earned: true, tier: 'silver' },
+    { badgeKey: 'early_adopter', achievedLevel: 2, achievedLevelKey: 'gold', achievedLevelTitle: 'Gold Early Adopter', earnedAt: '2024-06-15T10:00:00Z' },
+    { badgeKey: 'voter', achievedLevel: 1, achievedLevelKey: 'bronze', achievedLevelTitle: 'Active Voter', earnedAt: '2024-08-20T14:30:00Z' },
     // ... more badges
-  ]
+  ],
+  count: 12,
+  source: 'api'
 }
 ```
 
@@ -154,9 +158,14 @@ const profile = await client.getProfile(address);
 {
   address: '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY',
   displayName: 'Alice',
+  avatarUrl: 'https://example.com/avatar.png',
   bio: 'Polkadot enthusiast',
-  verified: true,
-  socialLinks: { twitter: '@alice' }
+  socialLinks: { twitter: 'https://twitter.com/alice', github: 'https://github.com/alice' },
+  polkadotIdentities: [
+    { address: '1...', display: 'Alice', twitter: '@alice' }
+  ],
+  nftCount: 5,
+  source: 'api'
 }
 ```
 

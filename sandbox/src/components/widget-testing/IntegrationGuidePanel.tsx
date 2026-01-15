@@ -562,12 +562,12 @@ function MyApp() {
                   <p>
                     Check the full documentation at{' '}
                     <a
-                      href="https://docs.dotpassport.com"
+                      href="https://docs.dotpassport.io"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="underline hover:no-underline"
                     >
-                      docs.dotpassport.com
+                      docs.dotpassport.io
                     </a>{' '}
                     or contact support.
                   </p>

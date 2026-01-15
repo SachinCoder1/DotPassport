@@ -103,10 +103,10 @@ const profile = await client.getProfile(
   '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY'
 );
 
-console.log(profile.displayName);        // "Alice"
-console.log(profile.bio);                // "Polkadot enthusiast..."
-console.log(profile.identities.length);  // 2
-console.log(profile.socials.twitter);    // "@alice_dot"
+console.log(profile.displayName);                // "Alice"
+console.log(profile.bio);                        // "Polkadot enthusiast..."
+console.log(profile.polkadotIdentities?.length); // 2
+console.log(profile.socialLinks?.twitter);       // "https://twitter.com/alice"
 ```
 
 **Response Type:**
@@ -114,27 +114,28 @@ console.log(profile.socials.twitter);    // "@alice_dot"
 ```typescript
 interface UserProfile {
   address: string;
-  displayName: string;
+  displayName?: string;
+  avatarUrl?: string;
   bio?: string;
-  avatar?: string;
-  identities: Identity[];
-  socials: {
-    twitter?: string;
-    github?: string;
-    discord?: string;
-    telegram?: string;
-    email?: string;
-    website?: string;
-  };
-  joinedAt: string;  // ISO 8601 date
-  updatedAt: string; // ISO 8601 date
+  socialLinks?: Record<string, string>;
+  polkadotIdentities?: PolkadotIdentity[];
+  nftCount?: number;
+  source?: 'app' | 'api';
 }
 
-interface Identity {
-  chain: string;      // "polkadot", "kusama", etc.
+interface PolkadotIdentity {
   address: string;
-  displayName?: string;
-  verified: boolean;
+  display?: string;
+  legal?: string;
+  web?: string;
+  email?: string;
+  twitter?: string;
+  github?: string;
+  matrix?: string;
+  discord?: string;
+  riot?: string;
+  judgements?: Array<{ index: number; judgement: string }>;
+  role?: string;
 }
 ```
 
@@ -168,9 +169,8 @@ const scores = await client.getScores(
 );
 
 console.log(scores.totalScore);              // 850
-console.log(scores.categories.longevity);    // { score: 120, title: "Account Longevity", ... }
-console.log(scores.rank);                    // 42
-console.log(scores.percentile);              // 95.5
+console.log(scores.calculatedAt);            // "2025-01-12T10:30:00Z"
+console.log(scores.categories?.longevity);   // { score: 120, title: "Account Longevity", reason: "..." }
 ```
 
 **Response Type:**
@@ -179,18 +179,15 @@ console.log(scores.percentile);              // 95.5
 interface UserScores {
   address: string;
   totalScore: number;
-  categories: Record<string, CategoryScore>;
-  rank?: number;
-  percentile?: number;
   calculatedAt: string;  // ISO 8601 date
+  categories?: Record<string, CategoryScore>;
+  source?: 'app' | 'api';
 }
 
 interface CategoryScore {
   score: number;
+  reason: string;
   title: string;
-  key: string;
-  reason?: string;
-  maxPossible?: number;
 }
 ```
 
@@ -243,11 +240,9 @@ interface SpecificCategoryScore {
   address: string;
   category: {
     key: string;
-    score: number;
-    title: string;
-    reason?: string;
+    score: CategoryScore;  // Contains score, reason, title
   };
-  definition: CategoryDefinition;
+  definition: CategoryDefinition | null;
   calculatedAt: string;
 }
 
@@ -257,17 +252,21 @@ interface CategoryDefinition {
   short_description: string;
   long_description: string;
   order: number;
-  active: boolean;
-  reasons: ScoringReason[];
+  reasons: ReasonDetail[];
 }
 
-interface ScoringReason {
+interface ReasonDetail {
   key: string;
   points: number;
   title: string;
   description: string;
-  thresholds: { label: string; description: string }[];
+  thresholds: ThresholdDetail[];
   advices: string[];
+}
+
+interface ThresholdDetail {
+  label: string;
+  description: string;
 }
 ```
 
@@ -300,10 +299,10 @@ const badges = await client.getBadges(
   '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY'
 );
 
-console.log(badges.count);              // 5
-console.log(badges.badges.length);      // 5
-console.log(badges.badges[0].title);    // "Relay Chain Initiate"
-console.log(badges.badges[0].earned);   // true
+console.log(badges.count);                      // 5
+console.log(badges.badges.length);              // 5
+console.log(badges.badges[0].achievedLevelTitle); // "Gold Early Adopter"
+console.log(badges.badges[0].badgeKey);         // "early_adopter"
 ```
 
 **Response Type:**
@@ -311,31 +310,21 @@ console.log(badges.badges[0].earned);   // true
 ```typescript
 interface UserBadges {
   address: string;
+  badges: UserBadge[];
   count: number;
-  badges: Badge[];
+  source?: 'app' | 'api';
 }
 
-interface Badge {
-  key: string;
-  title: string;
-  description: string;
-  icon: string;
-  tier: 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond';
-  earned: boolean;
+interface UserBadge {
+  badgeKey: string;
+  achievedLevel: number;
+  achievedLevelKey: string;
+  achievedLevelTitle: string;
   earnedAt?: string;  // ISO 8601 date
-  progress?: number;  // 0-100 percentage
 }
 ```
 
-**Badge Tiers:**
-
-| Tier | Description | Color |
-|------|-------------|-------|
-| `bronze` | Entry-level achievement | #CD7F32 |
-| `silver` | Intermediate achievement | #C0C0C0 |
-| `gold` | Advanced achievement | #FFD700 |
-| `platinum` | Expert achievement | #E5E4E2 |
-| `diamond` | Legendary achievement | #B9F2FF |
+**Note:** All badges in the `badges` array are earned badges. The badge level system allows users to progress through multiple levels within each badge type.
 
 ### getBadge()
 
@@ -362,10 +351,10 @@ const badge = await client.getBadge(
   'relay_chain_initiate'
 );
 
-console.log(badge.badge.title);                // "Relay Chain Initiate"
-console.log(badge.badge.earned);               // true
-console.log(badge.badge.earnedAt);             // "2024-01-15T10:30:00Z"
-console.log(badge.definition.requirements);    // "Complete 10 transactions"
+console.log(badge.badge?.achievedLevelTitle);  // "Gold Early Adopter"
+console.log(badge.earned);                     // true
+console.log(badge.definition?.title);          // "Relay Chain Initiate"
+console.log(badge.definition?.shortDescription); // "Complete transactions on relay chain"
 ```
 
 **Response Type:**
@@ -373,20 +362,29 @@ console.log(badge.definition.requirements);    // "Complete 10 transactions"
 ```typescript
 interface SpecificUserBadge {
   address: string;
-  badge: Badge;
-  definition: BadgeDefinition;
+  badge: UserBadge | null;
+  earned?: boolean;
+  definition: BadgeDefinition | null;
+  source?: 'app' | 'api';
 }
 
 interface BadgeDefinition {
   key: string;
   title: string;
-  description: string;
-  icon: string;
-  tier: 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond';
-  category: string;
-  requirements: string;
-  order: number;
-  active: boolean;
+  shortDescription: string;
+  longDescription: string;
+  metric: string;
+  imageUrl?: string;
+  levels: BadgeLevel[];
+}
+
+interface BadgeLevel {
+  level: number;
+  key: string;
+  value: number;
+  title: string;
+  shortDescription: string;
+  longDescription: string;
 }
 ```
 
@@ -426,17 +424,16 @@ async getBadgeDefinitions(): Promise<BadgeDefinitions>
 ```typescript
 const definitions = await client.getBadgeDefinitions();
 
-console.log(definitions.count);                          // 15
 console.log(definitions.badges.length);                  // 15
 console.log(definitions.badges[0].title);                // "Relay Chain Initiate"
-console.log(definitions.badges[0].requirements);         // "Complete 10 transactions"
+console.log(definitions.badges[0].shortDescription);     // "Complete transactions on relay chain"
+console.log(definitions.badges[0].levels.length);        // 5
 ```
 
 **Response Type:**
 
 ```typescript
 interface BadgeDefinitions {
-  count: number;
   badges: BadgeDefinition[];
 }
 ```
@@ -463,7 +460,6 @@ async getCategoryDefinitions(): Promise<CategoryDefinitions>
 ```typescript
 const definitions = await client.getCategoryDefinitions();
 
-console.log(definitions.count);                          // 6
 console.log(definitions.categories.length);              // 6
 console.log(definitions.categories[0].displayName);      // "Account Longevity"
 console.log(definitions.categories[0].reasons.length);   // 5
@@ -473,7 +469,6 @@ console.log(definitions.categories[0].reasons.length);   // 5
 
 ```typescript
 interface CategoryDefinitions {
-  count: number;
   categories: CategoryDefinition[];
 }
 ```

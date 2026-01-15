@@ -2,28 +2,9 @@
 
 Optimize performance with intelligent caching.
 
-## Built-in Widget Caching
+## Overview
 
-Widgets include automatic caching with configurable TTL:
-
-```typescript
-createWidget({
-  apiKey: 'your_api_key',
-  address: '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY',
-  type: 'reputation',
-  cacheTTL: 300000 // 5 minutes (default)
-});
-```
-
----
-
-## Cache Configuration Options
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `cacheTTL` | `number` | `300000` | Cache duration in milliseconds |
-| `cacheKey` | `string` | Auto-generated | Custom cache key |
-| `disableCache` | `boolean` | `false` | Disable caching entirely |
+The DotPassport SDK does not include built-in caching - this allows you to implement caching strategies that best fit your application's needs. This guide shows common patterns for caching API responses.
 
 ---
 

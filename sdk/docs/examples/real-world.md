@@ -296,11 +296,12 @@ export function DAOVoting({ userAddress }: { userAddress: string }) {
     async function fetchData() {
       try {
         // Fetch governance score
-        const score = await client.getCategoryScore(userAddress, 'governance');
-        setUserGovernanceScore(score.score);
+        const result = await client.getCategoryScore(userAddress, 'governance');
+        const governanceScore = result.category.score.score;
+        setUserGovernanceScore(governanceScore);
 
         // Calculate voting power (governance score * multiplier)
-        setVotingPower(Math.floor(score.score * 10));
+        setVotingPower(Math.floor(governanceScore * 10));
 
         // Fetch proposals from your backend
         const res = await fetch('/api/proposals');
@@ -470,7 +471,7 @@ export default function ProfilePage({ address, profile, scores, badges }: Profil
           <h1>{profile.displayName || 'Anonymous'}</h1>
           <p className="address">{address}</p>
           {profile.bio && <p className="bio">{profile.bio}</p>}
-          {profile.verified && <span className="verified-badge">✓ Verified</span>}
+          {profile.polkadotIdentities?.length > 0 && <span className="verified-badge">✓ On-chain Identity</span>}
         </div>
       </header>
 
@@ -480,12 +481,12 @@ export default function ProfilePage({ address, profile, scores, badges }: Profil
           <span className="label">Reputation</span>
         </div>
         <div className="stat">
-          <span className="value">Top {100 - scores.percentile}%</span>
-          <span className="label">Percentile</span>
+          <span className="value">{new Date(scores.calculatedAt).toLocaleDateString()}</span>
+          <span className="label">Last Updated</span>
         </div>
         <div className="stat">
-          <span className="value">{badges.earned}/{badges.total}</span>
-          <span className="label">Badges</span>
+          <span className="value">{badges.count}</span>
+          <span className="label">Badges Earned</span>
         </div>
       </div>
 

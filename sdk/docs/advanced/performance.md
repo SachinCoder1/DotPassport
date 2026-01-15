@@ -106,18 +106,9 @@ lazyLoadWidget('#widget-container', '5Grwva...');
 
 ## Caching Strategies
 
-### Widget-Level Caching
-
-```typescript
-createWidget({
-  apiKey: 'your_api_key',
-  address: '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY',
-  type: 'reputation',
-  cacheTTL: 300000 // Cache for 5 minutes
-});
-```
-
 ### API Response Caching
+
+Implement caching at the application level for best results:
 
 ```typescript
 const cache = new Map();
@@ -282,8 +273,7 @@ const widgets = addresses.map(address =>
   createWidget({
     apiKey: API_KEY,
     address,
-    type: 'reputation',
-    cacheTTL: 300000 // Share cache settings
+    type: 'reputation'
   })
 );
 

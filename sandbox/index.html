@@ -8,13 +8,10 @@
   </head>
   <body>
     <script>
-      // Prevent flash of light mode on page load
+      // Force light mode - dark mode is not supported yet
       try {
-        const theme = localStorage.getItem('sandbox-theme');
-        const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        if (theme === 'dark' || (!theme && systemDark)) {
-          document.documentElement.classList.add('dark');
-        }
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('sandbox-theme', 'light');
       } catch (e) {}
     </script>
     <div id="root"></div>

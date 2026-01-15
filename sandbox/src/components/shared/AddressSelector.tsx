@@ -252,7 +252,7 @@ export function AddressSelector({
   const suggestedOptions = filteredOptions.filter((o) => !o.isCustom);
   const customOptions = filteredOptions.filter((o) => o.isCustom);
 
-  const renderOption = (option: AddressOption, index: number, globalIndex: number) => {
+  const renderOption = (option: AddressOption, _index: number, globalIndex: number) => {
     const selected = option.value === value;
     const highlighted = globalIndex === highlightedIndex;
 
