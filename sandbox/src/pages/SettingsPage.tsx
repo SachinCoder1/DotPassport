@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Settings as SettingsIcon,
   Copy,
@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { useWalletStore } from '~/store/walletStore';
 import { useSandboxStore, isValidPolkadotAddress } from '~/store/sandboxStore';
-import { regenerateApiKey, requestChallenge } from '~/service/authService';
+import { regenerateApiKey, requestChallenge, getOrigins, updateOrigins } from '~/service/authService';
 import { maskApiKey } from '~/service/apiKeyService';
 import { stringToHex } from '@polkadot/util';
 import { toast } from 'sonner';
@@ -45,6 +45,78 @@ export function SettingsPage() {
   const [addressError, setAddressError] = useState('');
   const [editingAddress, setEditingAddress] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
+
+  // Allowed origins state
+  const [origins, setOrigins] = useState<string[]>([]);
+  const [maxOrigins, setMaxOrigins] = useState(3);
+  const [isLoadingOrigins, setIsLoadingOrigins] = useState(true);
+  const [isSavingOrigins, setIsSavingOrigins] = useState(false);
+  const [newOrigin, setNewOrigin] = useState('');
+  const [originError, setOriginError] = useState('');
+
+  // Load origins on mount
+  useEffect(() => {
+    const loadOrigins = async () => {
+      try {
+        const response = await getOrigins();
+        setOrigins(response.origins);
+        setMaxOrigins(response.maxOrigins);
+      } catch (error) {
+        console.error('Failed to load origins:', error);
+      } finally {
+        setIsLoadingOrigins(false);
+      }
+    };
+    if (user) {
+      loadOrigins();
+    }
+  }, [user]);
+
+  const handleAddOrigin = () => {
+    setOriginError('');
+    if (!newOrigin.trim()) {
+      setOriginError('Please enter an origin URL');
+      return;
+    }
+    try {
+      const url = new URL(newOrigin);
+      if (!['http:', 'https:'].includes(url.protocol)) {
+        setOriginError('Only http and https protocols are allowed');
+        return;
+      }
+    } catch {
+      setOriginError('Please enter a valid URL (e.g., https://example.com)');
+      return;
+    }
+    if (origins.includes(newOrigin)) {
+      setOriginError('This origin is already added');
+      return;
+    }
+    if (origins.length >= maxOrigins) {
+      setOriginError(`Maximum ${maxOrigins} origins allowed`);
+      return;
+    }
+    setOrigins([...origins, newOrigin]);
+    setNewOrigin('');
+  };
+
+  const handleRemoveOrigin = (originToRemove: string) => {
+    setOrigins(origins.filter((o) => o !== originToRemove));
+  };
+
+  const handleSaveOrigins = async () => {
+    setIsSavingOrigins(true);
+    try {
+      await updateOrigins(origins);
+      toast.success('Allowed origins saved successfully!');
+    } catch (error) {
+      console.error('Failed to save origins:', error);
+      const message = error instanceof Error ? error.message : 'Failed to save origins';
+      toast.error(message);
+    } finally {
+      setIsSavingOrigins(false);
+    }
+  };
 
   const handleRegenerateKey = async () => {
     if (!user || !selectedAccount) {
@@ -332,6 +404,117 @@ export function SettingsPage() {
             </>
           )}
         </button>
+      </div>
+
+      {/* Allowed Origins */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-8 border border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+              Allowed Origins
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              Configure which domains can use your API key (max {maxOrigins})
+            </p>
+          </div>
+        </div>
+
+        {isLoadingOrigins ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500"></div>
+          </div>
+        ) : (
+          <>
+            {/* Current Origins List */}
+            {origins.length > 0 ? (
+              <div className="space-y-3 mb-6">
+                {origins.map((origin) => (
+                  <div
+                    key={origin}
+                    className="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700"
+                  >
+                    <code className="text-sm font-mono text-gray-800 dark:text-gray-200 truncate flex-1 mr-4">
+                      {origin}
+                    </code>
+                    <button
+                      onClick={() => handleRemoveOrigin(origin)}
+                      className="p-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                      title="Remove origin"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-6 mb-6 bg-gray-50 dark:bg-gray-900 rounded-lg border border-dashed border-gray-300 dark:border-gray-600">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  No custom origins configured yet.
+                </p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                  Add origins to restrict where your API key can be used.
+                </p>
+              </div>
+            )}
+
+            {/* Add New Origin */}
+            {origins.length < maxOrigins && (
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Add New Origin
+                </label>
+                <div className="flex gap-3">
+                  <input
+                    type="url"
+                    value={newOrigin}
+                    onChange={(e) => {
+                      setNewOrigin(e.target.value);
+                      setOriginError('');
+                    }}
+                    onKeyDown={(e) => e.key === 'Enter' && handleAddOrigin()}
+                    placeholder="https://example.com"
+                    className="flex-1 px-4 py-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  />
+                  <button
+                    onClick={handleAddOrigin}
+                    className="px-6 py-3 bg-pink-600 text-white rounded-lg font-medium hover:bg-pink-700 transition-colors inline-flex items-center gap-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add
+                  </button>
+                </div>
+                {originError && (
+                  <p className="text-sm text-red-600 dark:text-red-400 mt-2">
+                    {originError}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Save Button */}
+            <button
+              onClick={handleSaveOrigins}
+              disabled={isSavingOrigins}
+              className="w-full bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:from-pink-600 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
+            >
+              {isSavingOrigins ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  <span>Saving...</span>
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="w-4 h-4" />
+                  Save Allowed Origins
+                </>
+              )}
+            </button>
+
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
+              Only requests from these origins will be allowed. Leave empty to allow requests from any origin.
+            </p>
+          </>
+        )}
       </div>
 
       {/* Rate Limits */}

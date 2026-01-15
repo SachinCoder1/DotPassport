@@ -8,6 +8,7 @@ import {
   generateTokens,
   verifyRefreshToken,
   checkUserExists,
+  SYSTEM_ORIGINS,
 } from '../service/sandboxService';
 import {
   getRequestLogs,
@@ -407,6 +408,119 @@ export async function getStatsHandler(
     logger.error('Error in getStatsHandler', { error: err });
     return next(
       err instanceof HttpError ? err : new HttpError(500, 'Failed to get statistics')
+    );
+  }
+}
+
+/**
+ * Get user's custom allowed origins (excludes system origins)
+ * GET /api/v1/sandbox/origins
+ */
+export async function getOriginsHandler(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    if (!req.sandboxUser?.polkadotAddress) {
+      throw new HttpError(401, 'Unauthorized');
+    }
+
+    const apiKey = await getApiKeyByAddress(req.sandboxUser.polkadotAddress);
+    if (!apiKey) {
+      throw new HttpError(404, 'API key not found');
+    }
+
+    // Filter out system origins and localhost (which are managed internally)
+    const customOrigins = apiKey.allowedOrigins.filter(
+      (origin) =>
+        !SYSTEM_ORIGINS.includes(origin) && !origin.includes('localhost')
+    );
+
+    res.json({
+      success: true,
+      origins: customOrigins,
+      maxOrigins: 3,
+    });
+  } catch (err: any) {
+    logger.error('Error in getOriginsHandler', { error: err });
+    return next(
+      err instanceof HttpError ? err : new HttpError(500, 'Failed to get origins')
+    );
+  }
+}
+
+/**
+ * Update user's custom allowed origins (max 3)
+ * PATCH /api/v1/sandbox/origins
+ */
+export async function updateOriginsHandler(
+  req: Request<{}, {}, { origins: string[] }>,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    if (!req.sandboxUser?.polkadotAddress) {
+      throw new HttpError(401, 'Unauthorized');
+    }
+
+    const { origins } = req.body;
+
+    // Validation
+    if (!Array.isArray(origins)) {
+      throw new HttpError(400, 'Origins must be an array');
+    }
+
+    if (origins.length > 3) {
+      throw new HttpError(400, 'Maximum 3 custom origins allowed');
+    }
+
+    // Validate each origin is a valid URL
+    for (const origin of origins) {
+      if (typeof origin !== 'string' || !origin.trim()) {
+        throw new HttpError(400, 'Each origin must be a non-empty string');
+      }
+      try {
+        const url = new URL(origin);
+        // Only allow http and https protocols
+        if (!['http:', 'https:'].includes(url.protocol)) {
+          throw new HttpError(400, `Invalid protocol for origin: ${origin}`);
+        }
+      } catch (e) {
+        if (e instanceof HttpError) throw e;
+        throw new HttpError(400, `Invalid origin URL: ${origin}`);
+      }
+    }
+
+    // Get current API key
+    const apiKey = await getApiKeyByAddress(req.sandboxUser.polkadotAddress);
+    if (!apiKey) {
+      throw new HttpError(404, 'API key not found');
+    }
+
+    // Keep existing system origins and localhost (if present), add new custom origins
+    const existingSystemOrigins = apiKey.allowedOrigins.filter(
+      (origin) => SYSTEM_ORIGINS.includes(origin) || origin.includes('localhost')
+    );
+
+    // Combine system origins with new custom origins
+    apiKey.allowedOrigins = [...existingSystemOrigins, ...origins];
+    await apiKey.save();
+
+    logger.info('Custom origins updated', {
+      polkadotAddress: req.sandboxUser.polkadotAddress,
+      customOrigins: origins,
+    });
+
+    res.json({
+      success: true,
+      origins: origins, // Return only custom origins
+      message: 'Origins updated successfully',
+    });
+  } catch (err: any) {
+    logger.error('Error in updateOriginsHandler', { error: err });
+    return next(
+      err instanceof HttpError ? err : new HttpError(500, 'Failed to update origins')
     );
   }
 }

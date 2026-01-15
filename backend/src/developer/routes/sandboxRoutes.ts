@@ -9,6 +9,8 @@ import {
   regenerateKeyHandler,
   getRequestLogsHandler,
   getStatsHandler,
+  getOriginsHandler,
+  updateOriginsHandler,
 } from '../controller/sandboxController';
 import {
   challengeSchema,
@@ -92,5 +94,19 @@ router.get('/logs', sandboxAuth, getRequestLogsHandler);
  * @access  Protected (JWT)
  */
 router.get('/stats', sandboxAuth, getStatsHandler);
+
+/**
+ * @route   GET /api/v1/sandbox/origins
+ * @desc    Get user's custom allowed origins (excludes system origins)
+ * @access  Protected (JWT)
+ */
+router.get('/origins', sandboxAuth, getOriginsHandler);
+
+/**
+ * @route   PATCH /api/v1/sandbox/origins
+ * @desc    Update user's custom allowed origins (max 3)
+ * @access  Protected (JWT)
+ */
+router.patch('/origins', sandboxAuth, updateOriginsHandler);
 
 export default router;

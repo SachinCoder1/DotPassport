@@ -110,3 +110,38 @@ export const regenerateApiKey = async (payload: {
   const response = await api.post('/sandbox/regenerate-key', payload);
   return response.data;
 };
+
+// --- ALLOWED ORIGINS MANAGEMENT ---
+
+interface OriginsResponse {
+  success: boolean;
+  origins: string[];
+  maxOrigins: number;
+}
+
+interface UpdateOriginsResponse {
+  success: boolean;
+  origins: string[];
+  message: string;
+}
+
+/**
+ * Gets the user's custom allowed origins.
+ * System origins (sandbox.dotpassport.io, localhost) are excluded.
+ * @returns {Promise<OriginsResponse>} Custom origins and max limit.
+ */
+export const getOrigins = async (): Promise<OriginsResponse> => {
+  const response = await api.get<OriginsResponse>('/sandbox/origins');
+  return response.data;
+};
+
+/**
+ * Updates the user's custom allowed origins.
+ * Maximum 3 custom origins allowed.
+ * @param {string[]} origins Array of custom origin URLs.
+ * @returns {Promise<UpdateOriginsResponse>} Updated origins.
+ */
+export const updateOrigins = async (origins: string[]): Promise<UpdateOriginsResponse> => {
+  const response = await api.patch<UpdateOriginsResponse>('/sandbox/origins', { origins });
+  return response.data;
+};

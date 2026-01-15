@@ -11,6 +11,7 @@ import {
   getMe,
 } from '~/service/authService';
 import type { SandboxUser, WalletStatus } from '~/types';
+import { useSandboxStore } from './sandboxStore';
 
 // State and Action Interfaces
 interface WalletState {
@@ -91,6 +92,9 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
             // Store API key if returned from /me endpoint
             if (userData.apiKey) {
               localStorage.setItem('sandbox_api_key', userData.apiKey);
+              // Initialize SDK client with the restored API key
+              const { initializeClient } = useSandboxStore.getState();
+              initializeClient(userData.apiKey);
             }
 
             set({

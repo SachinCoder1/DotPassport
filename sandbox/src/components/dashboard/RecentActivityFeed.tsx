@@ -26,11 +26,11 @@ export function RecentActivityFeed({
     return 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400';
   };
 
-  const getResponseTimeColor = (time: number) => {
-    if (time < 100) return 'text-green-600 dark:text-green-400';
-    if (time < 300) return 'text-yellow-600 dark:text-yellow-400';
-    return 'text-red-600 dark:text-red-400';
-  };
+  // const getResponseTimeColor = (time: number) => {
+  //   if (time < 100) return 'text-green-600 dark:text-green-400';
+  //   if (time < 300) return 'text-yellow-600 dark:text-yellow-400';
+  //   return 'text-red-600 dark:text-red-400';
+  // };
 
   const getMethodColor = (method: string) => {
     if (method === 'GET') return 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400';
@@ -126,13 +126,13 @@ export function RecentActivityFeed({
               </span>
 
               {/* Response time */}
-              <span
+              {/* <span
                 className={`flex-shrink-0 text-sm font-medium ${getResponseTimeColor(
                   log.responseTime
                 )}`}
               >
                 {log.responseTime}ms
-              </span>
+              </span> */}
 
               {/* Timestamp */}
               <div className="flex-shrink-0 flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">

@@ -6,6 +6,11 @@ import { HttpError } from '~/errors/HttpError';
 import { logger } from '~/utils/logger';
 import { generateApiKey, hashApiKey } from './apiKeyService';
 import { encryptApiKey } from '../utils/encryption';
+import { ENV } from '~/config';
+import { ENV_TYPE } from '~/types/enum';
+
+// System origins that are always included but hidden from users
+export const SYSTEM_ORIGINS = ['https://sandbox.dotpassport.io'];
 
 // Use same JWT secret as main app
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
@@ -133,10 +138,10 @@ export async function createSandboxUser(data: {
       contactEmail,
       tier: ApiKeyTier.FREE,
       polkadotAddress,
-      allowedOrigins: [
-        'http://localhost:5173',
-        'https://sandbox.dotpassport.io',
-      ],
+      // In production, only include system origins. In dev, also add localhost for testing.
+      allowedOrigins: ENV === ENV_TYPE.PRODUCTION
+        ? [...SYSTEM_ORIGINS]
+        : ['http://localhost:5173', ...SYSTEM_ORIGINS],
       rateLimits,
       metadata: {
         source: 'sandbox',
