@@ -135,7 +135,7 @@ export async function createSandboxUser(data: {
       polkadotAddress,
       allowedOrigins: [
         'http://localhost:5173',
-        'https://sandbox.dotpassport.com',
+        'https://sandbox.dotpassport.io',
       ],
       rateLimits,
       metadata: {
