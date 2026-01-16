@@ -10,7 +10,7 @@ All API requests require authentication via an API key. The SDK handles authenti
 
 ### Step 1: Create an Account
 
-1. Visit [dotpassport.com/developers](https://dotpassport.com/developers)
+1. Visit [dotpassport.io/developers](https://dotpassport.io/developers)
 2. Sign up for a developer account
 3. Verify your email address
 

@@ -92,7 +92,7 @@ interface DotPassportConfig {
 
 ### API Key
 
-Your authentication key. Get it from the [developer dashboard](https://dotpassport.com/developers).
+Your authentication key. Get it from the [developer dashboard](https://dotpassport.io/developers).
 
 \`\`\`typescript
 const client = new DotPassportClient({
@@ -107,7 +107,7 @@ Override the default API URL (useful for testing):
 \`\`\`typescript
 const client = new DotPassportClient({
   apiKey: 'test_key',
-  baseUrl: 'https://api-staging.dotpassport.com'
+  baseUrl: 'https://api-staging.dotpassport.io'
 });
 \`\`\`
 
@@ -118,7 +118,7 @@ const client = new DotPassportClient({
 \`\`\`typescript
 const client = new DotPassportClient({
   apiKey: process.env.DOTPASSPORT_TEST_KEY!,
-  baseUrl: 'https://api-staging.dotpassport.com'
+  baseUrl: 'https://api-staging.dotpassport.io'
 });
 \`\`\`
 
@@ -569,7 +569,7 @@ Yes, the SDK is free and open source (MIT license). API usage has rate limits ba
 
 ### How do I get an API key?
 
-Sign up at [dotpassport.com/developers](https://dotpassport.com/developers) and generate a key from your dashboard.
+Sign up at [dotpassport.io/developers](https://dotpassport.io/developers) and generate a key from your dashboard.
 
 ### Can I use the same key for development and production?
 
@@ -629,7 +629,7 @@ Still have questions?
 
 - [GitHub Issues](https://github.com/dotpassport/sdk/issues)
 - [Discord Community](https://discord.gg/dotpassport)
-- [Email Support](mailto:support@dotpassport.com)
+- [Email Support](mailto:support@dotpassport.io)
 `
 };
 

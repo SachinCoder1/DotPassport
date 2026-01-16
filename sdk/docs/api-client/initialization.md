@@ -23,7 +23,7 @@ interface DotPassportConfig {
 
 ### API Key
 
-Your authentication key. Get it from the [developer dashboard](https://dotpassport.com/developers).
+Your authentication key. Get it from the [developer dashboard](https://dotpassport.io/developers).
 
 ```typescript
 const client = new DotPassportClient({
@@ -38,7 +38,7 @@ Override the default API URL (useful for testing):
 ```typescript
 const client = new DotPassportClient({
   apiKey: 'test_key',
-  baseUrl: 'https://api-staging.dotpassport.com'
+  baseUrl: 'https://api-staging.dotpassport.io'
 });
 ```
 
@@ -49,7 +49,7 @@ const client = new DotPassportClient({
 ```typescript
 const client = new DotPassportClient({
   apiKey: process.env.DOTPASSPORT_TEST_KEY!,
-  baseUrl: 'https://api-staging.dotpassport.com'
+  baseUrl: 'https://api-staging.dotpassport.io'
 });
 ```
 

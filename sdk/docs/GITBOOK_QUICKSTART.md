@@ -153,7 +153,7 @@ Content goes here...
 ### Custom Domain
 
 1. In GitBook: Settings → Domain
-2. Add your domain (e.g., `docs.dotpassport.com`)
+2. Add your domain (e.g., `docs.dotpassport.io`)
 3. Add DNS CNAME record:
    ```
    Type: CNAME

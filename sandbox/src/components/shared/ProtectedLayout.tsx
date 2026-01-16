@@ -25,7 +25,7 @@ export function ProtectedLayout() {
     <Layout>
       {/* Wallet Reconnect Banner */}
       {showReconnectBanner && (
-        <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-3">
+        <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-3 mt-14">
           <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <RefreshCw className="w-5 h-5 flex-shrink-0" />

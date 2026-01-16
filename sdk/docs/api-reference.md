@@ -53,7 +53,7 @@ const client = new DotPassportClient({
 // Custom base URL (for testing or enterprise)
 const client = new DotPassportClient({
   apiKey: 'test_your_api_key_here',
-  baseUrl: 'https://api-staging.dotpassport.com'
+  baseUrl: 'https://api-staging.dotpassport.io'
 });
 ```
 
@@ -76,7 +76,7 @@ const client = new DotPassportClient({
 
 **Getting an API Key:**
 
-1. Sign up at [dotpassport.com/developers](https://dotpassport.com/developers)
+1. Sign up at [dotpassport.io/developers](https://dotpassport.io/developers)
 2. Navigate to API Keys section
 3. Generate a new key for your application
 4. Store securely (never commit to version control)
@@ -724,12 +724,12 @@ class CachedClient {
 - [Widget Guide](./widgets.md)
 - [Examples](../examples/)
 - [NPM Package](https://www.npmjs.com/package/@dotpassport/sdk)
-- [API Documentation](https://docs.dotpassport.com)
+- [API Documentation](https://docs.dotpassport.io)
 - [Support](https://github.com/dotpassport/sdk/issues)
 
 ## Need Help?
 
-- **Documentation**: [docs.dotpassport.com](https://docs.dotpassport.com)
+- **Documentation**: [docs.dotpassport.io](https://docs.dotpassport.io)
 - **GitHub Issues**: [github.com/dotpassport/sdk/issues](https://github.com/dotpassport/sdk/issues)
 - **Discord**: [discord.gg/dotpassport](https://discord.gg/dotpassport)
-- **Email**: support@dotpassport.com
+- **Email**: support@dotpassport.io

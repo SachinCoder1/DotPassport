@@ -230,7 +230,7 @@ const widget = createWidget({
     document.getElementById('container').innerHTML = `
       <div class="no-profile">
         <p>This address doesn't have a DotPassport profile yet.</p>
-        <a href="https://dotpassport.com/create">Create Profile</a>
+        <a href="https://dotpassport.io/create">Create Profile</a>
       </div>
     `;
   }

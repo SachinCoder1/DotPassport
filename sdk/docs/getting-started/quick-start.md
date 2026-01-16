@@ -10,7 +10,7 @@ npm install @dotpassport/sdk
 
 ## Step 2: Get Your API Key
 
-1. Sign up at [dotpassport.com/developers](https://dotpassport.com/developers)
+1. Sign up at [dotpassport.io/developers](https://dotpassport.io/developers)
 2. Navigate to the API Keys section
 3. Generate a new API key
 4. Copy your key (starts with `live_` or `test_`)
