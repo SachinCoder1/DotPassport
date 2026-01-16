@@ -4,7 +4,7 @@ info:
   description: A comprehensive API for managing user authentication, profiles, reputation scores, and badges for a Polkadot-based application.
   version: 1.0.0
 servers:
-  - url: https://api.dotpassport.com/v1
+  - url: https://api.dotpassport.io/v1
     description: Production server
 tags:
   - name: Authentication

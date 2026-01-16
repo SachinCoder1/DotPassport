@@ -185,7 +185,7 @@ const client: DotPassportClient = new DotPassportClient({ apiKey: 'key' });
 #### API Methods
 
 ```markdown
-{% swagger method="get" path="/api/v2/profile/:address" baseUrl="https://api.dotpassport.com" summary="Get User Profile" %}
+{% swagger method="get" path="/api/v2/profile/:address" baseUrl="https://api.dotpassport.io" summary="Get User Profile" %}
 {% swagger-description %}
 Retrieves the profile for a given address.
 {% endswagger-description %}
@@ -231,7 +231,7 @@ If using GitBook CLI:
 ### Setup
 
 1. In GitBook, go to **Space Settings → Domain**
-2. Enter your custom domain (e.g., `docs.dotpassport.com`)
+2. Enter your custom domain (e.g., `docs.dotpassport.io`)
 3. Add DNS records:
 
 ```

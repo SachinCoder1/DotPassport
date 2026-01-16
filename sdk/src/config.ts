@@ -13,7 +13,7 @@
 /**
  * Default API base URL (production)
  */
-const PRODUCTION_URL = 'https://api.dotpassport.com';
+const PRODUCTION_URL = 'https://api.dotpassport.io';
 
 /**
  * Local development URL
@@ -48,7 +48,7 @@ export function getDefaultBaseUrl(): string {
  * setDefaultBaseUrl(LOCAL_URL);
  *
  * // Or use a custom URL
- * setDefaultBaseUrl('https://staging.dotpassport.com');
+ * setDefaultBaseUrl('https://staging.dotpassport.io');
  * ```
  */
 export function setDefaultBaseUrl(url: string): void {

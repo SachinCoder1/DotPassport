@@ -129,7 +129,7 @@ pnpm add @dotpassport/sdk
 
 ## Environment Configuration
 
-By default, the SDK connects to the **production API** (`https://api.dotpassport.com`). For local development, you have several options:
+By default, the SDK connects to the **production API** (`https://api.dotpassport.io`). For local development, you have several options:
 
 ### Option 1: Global Configuration (Recommended for Development)
 
@@ -140,7 +140,7 @@ import { setDefaultBaseUrl, LOCAL_URL } from '@dotpassport/sdk';
 setDefaultBaseUrl(LOCAL_URL); // 'http://localhost:4000'
 
 // Or use a custom URL
-setDefaultBaseUrl('https://staging.dotpassport.com');
+setDefaultBaseUrl('https://staging.dotpassport.io');
 ```
 
 ### Option 2: Per-Client Configuration
@@ -171,7 +171,7 @@ import {
   resetToProductionUrl,
   isLocalMode,
   LOCAL_URL,        // 'http://localhost:4000'
-  PRODUCTION_URL    // 'https://api.dotpassport.com'
+  PRODUCTION_URL    // 'https://api.dotpassport.io'
 } from '@dotpassport/sdk';
 
 // Check current mode
